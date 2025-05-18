@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Mod;
 
-public interface IModLoader
+public class ModLoadException : Exception
 {
-    IGameMod[] LoadMods(string modsRootDirPath);
+    public ModLoadException(string message) : base(message) { }
 }

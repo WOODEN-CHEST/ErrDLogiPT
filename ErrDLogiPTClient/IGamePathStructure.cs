@@ -13,4 +13,6 @@ public interface IGamePathStructure
     string LogRoot { get; }
     string LogArchiveRoot { get; }
     string LatestLogPath { get; }
+    string AssetRoot { get; }
+    string ModRoot { get; }
 }

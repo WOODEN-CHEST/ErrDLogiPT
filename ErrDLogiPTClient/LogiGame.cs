@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace ErrDLogiPTClient
 {
@@ -62,7 +63,7 @@ namespace ErrDLogiPTClient
 
             try
             {
-                new GHLogger
+                ILogger Logger =
             }
             catch (Exception e)
             {

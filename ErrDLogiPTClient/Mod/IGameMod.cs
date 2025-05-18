@@ -8,4 +8,10 @@ namespace ErrDLogiPTClient.Mod;
 
 public interface IGameMod
 {
+    // Fields.
+    string ModName { get; }
+    string ModDescription { get; }
+
+
+    // Methods.
 }
