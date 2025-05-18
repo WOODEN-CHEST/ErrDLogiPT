@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient;
 
-public interface IFrameExecutor : ITimeUpdatable
+public interface IFrameExecutor : IDisposable
 {
     // Fields.
     IGameFrame? CurrentFrame { get; }
@@ -16,4 +16,5 @@ public interface IFrameExecutor : ITimeUpdatable
 
     // Methods.
     void SetFrame(IGameFrame frame);
+    void Render(IProgramTime time);
 }
