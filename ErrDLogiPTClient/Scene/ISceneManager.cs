@@ -16,9 +16,10 @@ public interface ISceneManager : ITimeUpdatable
 
     event EventHandler<SceneLoadFinishEventArgs>? SceneLoadFinish;
     event EventHandler<NextSceneChangeEventArgs>? NextSceneChange;
+    event EventHandler<SceneChangeEventArgs>? ActiveSceneChange;
 
 
     // Methods.
     void SetNextScene(IGameScene? scene);
-    bool ScheduleJumpToNextScene();
+    void ScheduleJumpToNextScene(bool shouldJump);
 }

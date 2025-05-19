@@ -49,7 +49,6 @@ public abstract class SceneBase : IGameScene
     {
         HandleUnload(Services.AssetProvider);
         Services.AssetProvider.ReleaseUserAssets(this);
-        IsLoaded = false;
     }
 
     public void Update(IProgramTime time) { }

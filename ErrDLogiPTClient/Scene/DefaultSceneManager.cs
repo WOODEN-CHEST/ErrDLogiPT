@@ -1,4 +1,5 @@
 ﻿using GHEngine;
+using GHEngine.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,75 +12,181 @@ namespace ErrDLogiPTClient.Scene;
 public class DefaultSceneManager : ISceneManager
 {
     // Fields.
-    public IGameScene? CurrentScene { get; private set; }
+    public IGameScene? CurrentScene
+    {
+        get
+        {
+            lock (_lockObject)
+            {
+                return _currentScene;
+            }
+        }
+    }
 
-    public bool IsNextSceneLoaded => throw new NotImplementedException();
+    public bool IsNextSceneLoaded
+    {
+        get
+        {
+            lock (_lockObject)
+            {
+                return _isNextSceneLoaded;
+            }
+        }
+    }
 
-    public bool IsNextSceneAvailable => throw new NotImplementedException();
+    public bool IsNextSceneAvailable
+    {
+        get
+        {
+            lock (_lockObject)
+            {
+                return _isNextSceneAvailable;
+            }
+        }
+    }
 
     public event EventHandler<SceneLoadFinishEventArgs>? SceneLoadFinish;
     public event EventHandler<NextSceneChangeEventArgs>? NextSceneChange;
+    public event EventHandler<SceneChangeEventArgs>? ActiveSceneChange;
 
 
     // Private fields.
-    private IGameScene? _nextScene = null;
-    private bool _isSceneScheduledToJump = false;
+    private readonly object _lockObject = new();
+    private readonly ILogger? _logger;
     private readonly ConcurrentQueue<Action> _scheduledActions = new();
 
+    private IGameScene? _nextScene = null;
+    private bool _isSceneScheduledToJump = false;
+    private IGameScene? _currentScene = null;
+    private bool _isNextSceneLoaded = false;
+    private bool _isNextSceneAvailable = false;
+
+
+    // Constructors.
+    public DefaultSceneManager(ILogger? logger)
+    {
+        _logger = logger;
+    }
 
 
     // Private methods.
-    private void DisposeScene(IGameScene scene)
+    private void ExecuteScheduledActions()
     {
-
+        while (_scheduledActions.TryDequeue(out Action? TargetAction))
+        {
+            TargetAction.Invoke();
+        }
     }
 
-    private void JumpToNextScene()
+    private void DisposeScene(IGameScene scene)
     {
-        IGameScene? OldScene = CurrentScene;
-        CurrentScene = _nextScene;
-        _nextScene = null;
-
-        if (OldScene != null)
+        try
         {
-            DisposeScene(OldScene);
+            scene.Unload();
         }
+        catch (Exception e)
+        {
+            _logger?.Error($"Unhandled exception while unloading scene: {e}");
+        }
+    }
+
+    private void LoadNextScene(IGameScene scene)
+    {
+        try
+        {
+            scene.Load();
+            lock (_lockObject)
+            {
+                if (_nextScene != scene)
+                {
+                    DisposeScene(scene);
+                    return;
+                }
+
+                _isNextSceneLoaded = true;
+                _scheduledActions.Enqueue(() => SceneLoadFinish?.Invoke(this, new(scene)));
+            }
+        }
+        catch (Exception e)
+        {
+            _logger?.Error($"Unhandled exception while loading next scene: {e}");
+        }
+    }
+
+    private bool TrySwitchScene()
+    {
+        IGameScene? OldScene, NewScene;
+        lock (_lockObject)
+        {
+            if (!(_isNextSceneAvailable && _isNextSceneLoaded && _isSceneScheduledToJump))
+            {
+                return false;
+            }
+
+            OldScene = _currentScene;
+            NewScene = _nextScene;
+
+            _currentScene = NewScene;
+            _nextScene = null;
+
+            _isNextSceneLoaded = false;
+            _isSceneScheduledToJump = false;
+
+            if (OldScene != null)
+            {
+                OldScene.OnEnd();
+                Task.Run(() => DisposeScene(OldScene));
+            }
+
+            _currentScene?.OnStart();
+        }
+
+        ActiveSceneChange?.Invoke(this, new(OldScene, NewScene));
+        return true;
     }
 
 
     // Inherited methods.
-    public bool ScheduleJumpToNextScene()
+    public void ScheduleJumpToNextScene(bool shouldJump)
     {
-        if ((_nextScene == null) || !IsNextSceneLoaded)
+        lock (_lockObject)
         {
-            return false;
+            _isSceneScheduledToJump = shouldJump;
         }
-
-        _isSceneScheduledToJump = true;
-        return true;
     }
 
-    public void SetNextScene(IGameScene? scene)
+    public void SetNextScene(IGameScene? nextScene)
     {
-        if (_nextScene != null)
-        {
+        IGameScene? CurrentlyActiveScene;
 
+        lock (_lockObject)
+        {
+            if (nextScene == _nextScene)
+            {
+                return;
+            }
+
+            _isNextSceneLoaded = false;
+            _nextScene = nextScene;
+
+            _isNextSceneAvailable = nextScene != null;
+            if (_isNextSceneAvailable)
+            {
+                Task.Run(() => LoadNextScene(nextScene!));
+            }
+            CurrentlyActiveScene = _currentScene;
         }
 
-        _nextScene = scene;
+        NextSceneChange?.Invoke(this, new(CurrentlyActiveScene, nextScene));
     }
 
     public void Update(IProgramTime time)
     {
-        if (_isSceneScheduledToJump)
-        {
-            if (_nextScene !=  null)
-            {
-                JumpToNextScene();
-            }
-            _isSceneScheduledToJump = false;
-        }
-        else
+        ExecuteScheduledActions();
+
+        bool WasSceneSwitched = TrySwitchScene();
+
+        if (!WasSceneSwitched)
         {
             CurrentScene?.Update(time);
         }
