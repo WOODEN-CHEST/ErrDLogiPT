@@ -1,4 +1,5 @@
-﻿using GHEngine.Assets;
+﻿using GHEngine;
+using GHEngine.Assets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +38,7 @@ public abstract class SceneBase : IGameScene
     {
         HandleLoad(Services.AssetProvider);
         IsLoaded = true;
+        SceneLoadFinish?.Invoke(this, new(this));
     }
 
     public virtual void OnEnd() { }
@@ -49,4 +51,6 @@ public abstract class SceneBase : IGameScene
         Services.AssetProvider.ReleaseUserAssets(this);
         IsLoaded = false;
     }
+
+    public void Update(IProgramTime time) { }
 }

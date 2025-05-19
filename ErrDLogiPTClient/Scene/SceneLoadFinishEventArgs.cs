@@ -1,11 +1,10 @@
-﻿using ErrDLogiPTClient.Scene;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient;
+namespace ErrDLogiPTClient.Scene;
 
 public class SceneLoadFinishEventArgs : EventArgs
 {

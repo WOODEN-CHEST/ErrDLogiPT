@@ -6,6 +6,16 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-internal class IntroScene
+internal class IntroScene : SceneBase
 {
+    // Private fields.
+
+
+    // Constructors.
+    public IntroScene(IGameServices services) : base(services)
+    {
+    }
+
+
+    // Private methods.
 }
