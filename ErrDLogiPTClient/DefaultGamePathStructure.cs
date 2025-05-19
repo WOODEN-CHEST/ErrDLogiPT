@@ -15,7 +15,7 @@ public class DefaultGamePathStructure : IGamePathStructure
     public const string DIR_NAME_LOG_NAME = "latest.log";
     public const string DIR_NAME_ASSET_ROOT = "asset";
     public const string DIR_NAME_ASSET_DEF_ROOT = "definition";
-    public const string DIR_NAME_MOD_ROOT = "asset";
+    public const string DIR_NAME_MOD_ROOT = "mod";
     public const string DIR_NAME_USER_DATA = "err_d_logi_pt";
 
 

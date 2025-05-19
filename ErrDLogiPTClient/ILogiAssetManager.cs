@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Mod;
+namespace ErrDLogiPTClient;
 
-public interface IModLoader
+public interface ILogiAssetManager
 {
-    ModPackage[] LoadMods(string modsRootDirPath);
+    // Methods.
+    
 }

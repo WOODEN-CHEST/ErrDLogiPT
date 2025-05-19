@@ -10,7 +10,7 @@ namespace ErrDLogiPTClient.Mod;
 public interface IModManager
 {
     // Fields.
-    public IEnumerable<IGameMod> Mods { get; }
+    public IEnumerable<ModPackage> Mods { get; }
     int ModCount { get; }
 
 

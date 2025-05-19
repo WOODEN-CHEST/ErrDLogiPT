@@ -14,6 +14,7 @@ public class ModMetaReader
     // Private static fields.
     private const string KEY_NAME = "name";
     private const string KEY_DESCRIPTION = "description";
+    private const string KEY_ENTRY_POINT = "entry_point";
 
     // Private fields.
     private readonly ILogger? _logger;
@@ -60,11 +61,13 @@ public class ModMetaReader
 
         string Name = Compound.GetVerified<string>(KEY_NAME);
         string Description = Compound.GetVerified<string>(KEY_DESCRIPTION);
+        string EntryPoint = Compound.GetVerified<string>(KEY_ENTRY_POINT);
 
         return new ModMetaInfo()
         {
             Name = Name,
-            Description = Description
+            Description = Description,
+            EntryPoint = EntryPoint
         };
     }
 }

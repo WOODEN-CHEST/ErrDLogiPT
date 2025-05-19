@@ -76,7 +76,7 @@ namespace ErrDLogiPTClient
             IAssetProvider AssetProvider = new GHAssetProvider(AssetLoader, AssetDefinitions, Logger);
 
             IFrameExecutor FrameExecutor = new DefaultFrameExecutor(_graphics.GraphicsDevice, Display);
-            ISceneManager SceneManager = new DefaultSceneManager();
+            ISceneManager SceneManager = new DefaultSceneManager(Logger);
 
             _services = new DefaultGameServices()
             {

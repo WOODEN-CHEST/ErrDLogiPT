@@ -33,7 +33,7 @@ public class DefaultModLoader : IModLoader
 
 
     // Private methods.
-    private IGameMod? LoadSingleMod(string path)
+    private ModPackage? LoadSingleMod(string path)
     {
         try
         {
@@ -58,7 +58,7 @@ public class DefaultModLoader : IModLoader
         return null;
     }
 
-    private IGameMod? LoadModFromDirectory(string dirPath)
+    private ModPackage? LoadModFromDirectory(string dirPath)
     {
         string MetaInfoPath = Path.Combine(dirPath, META_FILE_NAME);
         if (!File.Exists(MetaInfoPath))
@@ -74,10 +74,10 @@ public class DefaultModLoader : IModLoader
             LoadedAssemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(AssemblyFile));
         }
 
-        return CreateModFromAssembly(LoadedAssemblies, LoadedAssemblies.Count, MetaInfo.EntryPoint);
+        return CreateModFromAssembly(LoadedAssemblies, LoadedAssemblies.Count, MetaInfo);
     }
 
-    private IGameMod? LoadModFromArchive(string archivePath)
+    private ModPackage? LoadModFromArchive(string archivePath)
     {
         using ZipArchive Archive = new(File.OpenRead(archivePath));
 
@@ -96,10 +96,10 @@ public class DefaultModLoader : IModLoader
             LoadedAssemblies.Add(AssemblyLoadContext.Default.LoadFromStream(AssemblyStream));
         }
 
-        return CreateModFromAssembly(LoadedAssemblies, LoadedAssemblies.Count, MetaInfo.EntryPoint);
+        return CreateModFromAssembly(LoadedAssemblies, LoadedAssemblies.Count, MetaInfo);
     }
 
-    private IGameMod CreateModFromAssembly(IEnumerable<Assembly> modAssemblies, int assemblyCount, string entryPoint)
+    private ModPackage CreateModFromAssembly(IEnumerable<Assembly> modAssemblies, int assemblyCount, ModMetaInfo metaInfo)
     {
         if (assemblyCount == 0)
         {
@@ -107,51 +107,51 @@ public class DefaultModLoader : IModLoader
         }
 
         Assembly[] AssembliesWithEntryPoint = modAssemblies
-            .Where(assembly => assembly.GetType(entryPoint) != null)
+            .Where(assembly => assembly.GetType(metaInfo.EntryPoint) != null)
             .ToArray();
 
         if (AssembliesWithEntryPoint.Length > 1)
         {
-            throw new ModLoadException($"Multiple assemblies with entry point \"{entryPoint}\" found, " +
+            throw new ModLoadException($"Multiple assemblies with entry point \"{metaInfo.EntryPoint}\" found, " +
                 $"expected only one.");
         }
         if (AssembliesWithEntryPoint.Length < 0)
         {
-            throw new ModLoadException($"No assemblies with entry point \"{entryPoint}\" found.");
+            throw new ModLoadException($"No assemblies with entry point \"{metaInfo.EntryPoint}\" found.");
         }
 
-        Type ModType = AssembliesWithEntryPoint[0].GetType(entryPoint)!;
+        Type ModType = AssembliesWithEntryPoint[0].GetType(metaInfo.EntryPoint)!;
 
         if (!ModType.IsAssignableFrom(typeof(IGameMod)))
         {
-            throw new ModLoadException($"Entry point \"{entryPoint}\" does not implement IGameMod interface.");
+            throw new ModLoadException($"Entry point \"{metaInfo.EntryPoint}\" does not implement IGameMod interface.");
         }
 
         ConstructorInfo? EmptyConstructor = ModType.GetConstructor(Array.Empty<Type>());
 
         if (EmptyConstructor == null)
         {
-            throw new ModLoadException($"Entry point \"{entryPoint}\" does not have a default constructor.");
+            throw new ModLoadException($"Entry point \"{metaInfo.EntryPoint}\" does not have a default constructor.");
         }
-        return (IGameMod)EmptyConstructor.Invoke(null);
+        return new(metaInfo.Name, metaInfo.Description, (IGameMod)EmptyConstructor.Invoke(null));
     }
 
     // Inherited methods.
-    public IGameMod[] LoadMods(string modsRootDirPath)
+    public ModPackage[] LoadMods(string modsRootDirPath)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(modsRootDirPath, nameof(modsRootDirPath));
 
         if (!Directory.Exists(modsRootDirPath))
         {
-            return Array.Empty<IGameMod>();
+            return Array.Empty<ModPackage>();
         }
 
         try
         {
-            List<IGameMod> Mods = new();
+            List<ModPackage> Mods = new();
             foreach (string Entry in Directory.GetFileSystemEntries(modsRootDirPath))
             {
-                IGameMod? Mod = LoadSingleMod(Entry);
+                ModPackage? Mod = LoadSingleMod(Entry);
                 if (Mod != null)
                 {
                     Mods.Add(Mod);
@@ -163,6 +163,6 @@ public class DefaultModLoader : IModLoader
         {
             _logger?.Error($"Failed to load mods: {e}");
         }
-        return Array.Empty<IGameMod>();
+        return Array.Empty<ModPackage>();
     }
 }

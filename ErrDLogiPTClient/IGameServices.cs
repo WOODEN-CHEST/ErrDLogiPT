@@ -33,5 +33,4 @@ public interface IGameServices : IDisposable
     IGamePathStructure Structure { get; set; }
     IModifiableProgramTime Time { get; set; }
     ISceneManager SceneManager { get; set; }
-    IModManager ModManager { get; set; }
 }
