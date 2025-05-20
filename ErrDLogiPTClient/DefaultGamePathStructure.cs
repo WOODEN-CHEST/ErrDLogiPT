@@ -16,6 +16,7 @@ public class DefaultGamePathStructure : IGamePathStructure
     public const string DIR_NAME_ASSET_ROOT = "asset";
     public const string DIR_NAME_ASSET_DEF_ROOT = "definition";
     public const string DIR_NAME_MOD_ROOT = "mod";
+    public const string DIR_NAME_RESOURCE_PACK_ROOT = "resource_pack";
     public const string DIR_NAME_USER_DATA = "err_d_logi_pt";
 
 
@@ -29,6 +30,7 @@ public class DefaultGamePathStructure : IGamePathStructure
     public virtual string AssetValueRoot { get; init; }
     public virtual string ModRoot { get; init; }
     public virtual string UserDataRoot { get; init; }
+    public string ResourcePackRoot { get; init; }
 
 
     // Constructors.
@@ -47,5 +49,7 @@ public class DefaultGamePathStructure : IGamePathStructure
         AssetValueRoot = AssetRoot;
 
         ModRoot = Path.Combine(UserDataRoot, DIR_NAME_MOD_ROOT);
+
+        ResourcePackRoot = Path.Combine(UserDataRoot, DIR_NAME_RESOURCE_PACK_ROOT);
     }
 }

@@ -18,25 +18,27 @@ public abstract class SceneBase : IGameScene
 
     // Protected fields.
     protected IGameServices Services { get; private init; }
+    protected ISceneAssetProvider AssetProvider { get; private init; }
 
 
     // Constructors.
     public SceneBase(IGameServices services)
     {
         Services = services ?? throw new ArgumentNullException(nameof(services));
+        AssetProvider = new DefaultSceneAssetProvider(this, services.AssetProvider);
     }
 
 
     // Protected methods.
-    protected virtual void HandleLoad(IAssetProvider assetProvider) { }
+    protected virtual void HandleLoad() { }
 
-    protected void HandleUnload(IAssetProvider assetProvider) { }
+    protected virtual void HandleUnload() { }
 
 
     // Inherited methods.
     public void Load()
     {
-        HandleLoad(Services.AssetProvider);
+        HandleLoad();
         IsLoaded = true;
         SceneLoadFinish?.Invoke(this, new(this));
     }
@@ -47,7 +49,7 @@ public abstract class SceneBase : IGameScene
 
     public void Unload()
     {
-        HandleUnload(Services.AssetProvider);
+        HandleUnload();
         Services.AssetProvider.ReleaseUserAssets(this);
     }
 

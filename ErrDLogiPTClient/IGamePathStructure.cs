@@ -18,4 +18,5 @@ public interface IGamePathStructure
     string AssetDefRoot { get; }
     string AssetValueRoot { get; }
     string ModRoot { get; }
+    string ResourcePackRoot { get; }
 }

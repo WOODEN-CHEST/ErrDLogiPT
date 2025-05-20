@@ -1,4 +1,5 @@
-﻿using GHEngine.Logging;
+﻿using GHEngine.Assets.Def;
+using GHEngine.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,12 +14,6 @@ namespace ErrDLogiPTClient.Mod;
 
 public class DefaultModLoader : IModLoader
 {
-    // Private static fields.
-    private const string ARCHIVE_EXTENSION = ".zip";
-    private const string META_FILE_NAME = "meta.json";
-    private const string ASSEMBLY_EXTENSION = ".dll";
-
-
     // Private fields.
     private readonly ILogger? _logger;
     private readonly ModMetaReader _metaReader;
@@ -41,14 +36,10 @@ public class DefaultModLoader : IModLoader
             {
                 return LoadModFromDirectory(path);
             }
-            else if (File.Exists(path) && (Path.GetExtension(path) == ARCHIVE_EXTENSION))
-            {
-                return LoadModFromArchive(path);
-            }
             else
             {
                 _logger?.Warning("Unknown file \"path\" in mod directory. " +
-                    "Expected directory or zip archive.");
+                    "Expected directory for mod.");
             }
         }
         catch (Exception e)
@@ -60,46 +51,42 @@ public class DefaultModLoader : IModLoader
 
     private ModPackage? LoadModFromDirectory(string dirPath)
     {
-        string MetaInfoPath = Path.Combine(dirPath, META_FILE_NAME);
-        if (!File.Exists(MetaInfoPath))
+        IModPathStructure ModPathStructure = new DefaultModPathStructure(dirPath);
+
+        if (!File.Exists(ModPathStructure.MetaInfo))
         {
-            throw new ModLoadException($"No meta info \"{META_FILE_NAME}\" file found in mod directory.");
+            throw new ModLoadException($"No meta info \"{ModPathStructure.MetaInfo}\" file found in mod directory.");
         }
-        ModMetaInfo? MetaInfo = _metaReader.ReadMetaInfo(File.OpenRead(MetaInfoPath))
+        ModMetaInfo? MetaInfo = _metaReader.ReadMetaInfo(File.OpenRead(ModPathStructure.MetaInfo))
             ?? throw new ModLoadException($"Failed to read mod meta info from directory.");
 
         List<Assembly> LoadedAssemblies = new();
-        foreach (string AssemblyFile in Directory.GetFiles(dirPath, $"*{ASSEMBLY_EXTENSION}", SearchOption.TopDirectoryOnly))
+        foreach (string AssemblyFile in ModPathStructure.Assemblies)
         {
             LoadedAssemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(AssemblyFile));
         }
 
-        return CreateModFromAssembly(LoadedAssemblies, LoadedAssemblies.Count, MetaInfo);
+        IGameMod EntryPointObject = CreateModEntryPointObject(LoadedAssemblies, LoadedAssemblies.Count, MetaInfo);
+        IAssetDefinitionCollection AssetDefinitions = GetModAssetDefinitions(ModPathStructure);
+        return new(ModPathStructure, MetaInfo.Name, MetaInfo.Description, EntryPointObject, AssetDefinitions);
     }
 
-    private ModPackage? LoadModFromArchive(string archivePath)
+    private IAssetDefinitionCollection GetModAssetDefinitions(IModPathStructure structure)
     {
-        using ZipArchive Archive = new(File.OpenRead(archivePath));
+        IAllAssetDefinitionConverter Reader = new JSONAllAssetDefinitionConverter(_logger);
+        IAssetDefinitionCollection Definitions = new GHAssetDefinitionCollection();
 
-        using Stream MetaInfoStream = Archive.GetEntry(META_FILE_NAME)?.Open()
-            ?? throw new ModLoadException($"No meta info \"{META_FILE_NAME}\" file found in archive");
-        ModMetaInfo? MetaInfo = _metaReader.ReadMetaInfo(MetaInfoStream);
-        if (MetaInfo == null)
+        if (structure.AssetDefRoot != null)
         {
-            throw new ModLoadException($"Failed to read mod meta info from archive.");
+            Reader.Read(Definitions, structure.AssetDefRoot);
         }
 
-        List<Assembly> LoadedAssemblies = new();
-        foreach (ZipArchiveEntry Entry in Archive.Entries.Where(entry => entry.Name.EndsWith(ASSEMBLY_EXTENSION)))
-        {
-            using Stream AssemblyStream = Entry.Open();
-            LoadedAssemblies.Add(AssemblyLoadContext.Default.LoadFromStream(AssemblyStream));
-        }
-
-        return CreateModFromAssembly(LoadedAssemblies, LoadedAssemblies.Count, MetaInfo);
+        return Definitions;
     }
 
-    private ModPackage CreateModFromAssembly(IEnumerable<Assembly> modAssemblies, int assemblyCount, ModMetaInfo metaInfo)
+    private IGameMod CreateModEntryPointObject(IEnumerable<Assembly> modAssemblies, 
+        int assemblyCount, 
+        ModMetaInfo metaInfo)
     {
         if (assemblyCount == 0)
         {
@@ -133,7 +120,7 @@ public class DefaultModLoader : IModLoader
         {
             throw new ModLoadException($"Entry point \"{metaInfo.EntryPoint}\" does not have a default constructor.");
         }
-        return new(metaInfo.Name, metaInfo.Description, (IGameMod)EmptyConstructor.Invoke(null));
+        return (IGameMod)EmptyConstructor.Invoke(null);
     }
 
     // Inherited methods.
