@@ -35,12 +35,29 @@ public class LogiAssetManager : ILogiAssetManager
 
         foreach (ModPackage Package in _modManager.Mods)
         {
-
+            foreach (AssetDefinition Definition in Package.AssetDefinitions)
+            {
+                AssetDefinitions.Add(Definition);
+            }
         }
     }
 
-    public void SetUsedResourcePacks(params string[] resourcePackDirNames)
+    public void SetAsserRootPaths(params string[] resourcePackDirNames)
     {
-        throw new NotImplementedException();
+        List<string> AssetPaths = new();
+
+        AssetPaths.AddRange(resourcePackDirNames);
+
+        foreach (ModPackage Package in _modManager.Mods)
+        {
+            if (Package.Structure.AssetRoot != null)
+            {
+                AssetPaths.Add(Package.Structure.AssetRoot);
+            }
+        }
+
+        AssetPaths.Add(_services.Structure.AssetValueRoot);
+
+        _services.AssetStreamOpener.SetAssetPaths(AssetPaths.ToArray());
     }
 }

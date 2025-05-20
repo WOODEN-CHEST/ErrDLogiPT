@@ -24,7 +24,15 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
     // Inherited methods.
     public T? GetAsset<T>(AssetType type, string name) where T : class
     {
-        return _assetProvider.GetAsset<T>(_scene, type, name);
+        T? Asset = _assetProvider.GetAsset<T>(_scene, type, name);
+
+        if (Asset == null)
+        {
+            throw new SceneAssetMissingException($"Missing scene asset of type \"{type}\", " +
+                $"name \"{name}\" for scene {_scene.GetType().FullName}");
+        }
+
+        return Asset;
     }
 
     public void ReleaseAllAssets()

@@ -1,0 +1,11 @@
+{
+    "animation": [
+        {
+            "name": "main_logo",
+            "frames": [
+                "main/logo/0"
+            ],
+            "is_animated": false
+        }
+    ]
+}

@@ -12,6 +12,7 @@ public interface IFrameExecutor : IDisposable
 {
     // Fields.
     IGameFrame? CurrentFrame { get; }
+    IFrameRenderer Renderer { get; }
 
 
     // Methods.

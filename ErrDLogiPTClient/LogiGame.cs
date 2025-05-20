@@ -1,9 +1,11 @@
 ﻿using ErrDLogiPTClient.Mod;
 using ErrDLogiPTClient.Scene;
+using ErrDLogiPTClient.Scene.Intro;
 using GHEngine;
 using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Assets.Loader;
+using GHEngine.Audio;
 using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
@@ -67,13 +69,19 @@ namespace ErrDLogiPTClient
 
             IGamePathStructure Structure = new DefaultGamePathStructure(ExecutableRootPath);
             ILogger Logger = new LogInitializer().InitializeLogger(Structure);
+            _latestLogPath = Structure.LatestLogPath;
             IDisplay Display = new GHDisplay(_graphics, Window);
+            Display.Initialize();
             IUserInput Input = new GHUserInput(Window, this);
+            IAudioEngine AudioEngine = new GHAudioEngine(10);
 
             IAssetDefinitionCollection AssetDefinitions = new GHAssetDefinitionCollection();
             GHAssetStreamOpener AssetStreamOpener = new();
             GHGenericAssetLoader AssetLoader = new();
             IAssetProvider AssetProvider = new GHAssetProvider(AssetLoader, AssetDefinitions, Logger);
+            AssetLoader.SetTypeLoader(AssetType.Animation, new AnimationLoader(AssetStreamOpener, _graphics.GraphicsDevice));
+            AssetLoader.SetTypeLoader(AssetType.Sound, new SoundLoader(AssetStreamOpener, AudioEngine.WaveFormat));
+            AssetLoader.SetTypeLoader(AssetType.Font, new FontLoader(AssetStreamOpener, _graphics.GraphicsDevice));
 
             IFrameExecutor FrameExecutor = new DefaultFrameExecutor(_graphics.GraphicsDevice, Display);
             ISceneManager SceneManager = new DefaultSceneManager(Logger);
@@ -84,6 +92,7 @@ namespace ErrDLogiPTClient
                 Logger = Logger,
                 Input = Input,
                 Display = Display,
+                AudioEngine = AudioEngine,
                 AssetDefinitions = AssetDefinitions,
                 AssetLoader = AssetLoader,
                 AssetProvider = AssetProvider,
@@ -96,8 +105,9 @@ namespace ErrDLogiPTClient
             IModManager ModManager = new DefaultModManager(_services);
             ModManager.LoadMods();
 
-            IGameScene StartingScene = null!;
+            IGameScene StartingScene = new IntroScene(_services, ModManager);
             _services.SceneManager.SetNextScene(StartingScene);
+            _services.SceneManager.ScheduleJumpToNextScene(true);
         }
 
 
@@ -128,6 +138,7 @@ namespace ErrDLogiPTClient
                 ProgramTime.PassedTime = ElapsedTime;
 
                 _services.Input.RefreshInput();
+                _services.SceneManager.Update(ProgramTime);
             }
             catch (Exception e)
             {

@@ -10,5 +10,5 @@ public interface ILogiAssetManager
 {
     // Methods.
     void LoadAssetDefinitions();
-    void SetUsedResourcePacks(params string[] resourcePackDirNames);
+    void SetAsserRootPaths(string[] resourcePackDirNames);
 }

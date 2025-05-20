@@ -109,7 +109,7 @@ public class DefaultSceneManager : ISceneManager
         }
         catch (Exception e)
         {
-            _logger?.Error($"Unhandled exception while loading next scene: {e}");
+            _scheduledActions.Enqueue(() => throw new Exception($"Unhandled exception while loading next scene: {e}"));
         }
     }
 

@@ -4,6 +4,7 @@ using GHEngine;
 using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Assets.Loader;
+using GHEngine.Audio;
 using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
@@ -29,6 +30,7 @@ public class DefaultGameServices : IGameServices
     public required IGamePathStructure Structure { get; set; }
     public required IModifiableProgramTime Time { get; set; }
     public required ISceneManager SceneManager { get; set; }
+    public required IAudioEngine AudioEngine { get; set; }
 
 
 
@@ -38,5 +40,6 @@ public class DefaultGameServices : IGameServices
         Display.Dispose();
         Logger?.Dispose();
         AssetProvider.ReleaseAllAssets();
+        AudioEngine.Dispose();
     }
 }

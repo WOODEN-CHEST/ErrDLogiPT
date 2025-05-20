@@ -4,6 +4,7 @@ using GHEngine;
 using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Assets.Loader;
+using GHEngine.Audio;
 using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
@@ -23,6 +24,7 @@ namespace ErrDLogiPTClient;
 public interface IGameServices : IDisposable
 {
     IFrameExecutor FrameExecutor { get; set; }
+    IAudioEngine AudioEngine { get; set; }  
     ILogger? Logger { get; set; }
     IUserInput Input { get; set; }
     IDisplay Display { get; set; }

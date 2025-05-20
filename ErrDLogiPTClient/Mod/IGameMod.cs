@@ -10,5 +10,5 @@ public interface IGameMod
 {
     // Methods.
     void OnGameLoad(IGameServices services);
-    void OnGameClose(IGameServices sservices);
+    void OnGameClose(IGameServices services);
 }

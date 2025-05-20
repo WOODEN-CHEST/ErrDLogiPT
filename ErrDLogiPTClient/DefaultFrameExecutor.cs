@@ -16,30 +16,31 @@ public class DefaultFrameExecutor : IFrameExecutor
     // Fields.
     public IGameFrame? CurrentFrame { get; private set; }
 
+    public IFrameRenderer Renderer { get; private init; }
+
 
     // Private fields.
-    private readonly IFrameRenderer _renderer;
     private readonly Game _game;
 
 
     // Constructors.
     public DefaultFrameExecutor(GraphicsDevice device, IDisplay display)
     {
-        _renderer = GHRenderer.Create(device, display);
+        Renderer = GHRenderer.Create(device, display);
     }
 
 
     // Inherited methods,
     public void Dispose()
     {
-        _renderer.Dispose();
+        Renderer.Dispose();
     }
 
     public void Render(IProgramTime time)
     {
         if (CurrentFrame != null)
         {
-            _renderer.RenderFrame(CurrentFrame, time);
+            Renderer.RenderFrame(CurrentFrame, time);
         }
     }
 

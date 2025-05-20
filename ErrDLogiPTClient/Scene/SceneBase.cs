@@ -19,6 +19,7 @@ public abstract class SceneBase : IGameScene
     // Protected fields.
     protected IGameServices Services { get; private init; }
     protected ISceneAssetProvider AssetProvider { get; private init; }
+    protected List<ISceneComponent> Components { get; } = new();
 
 
     // Constructors.
@@ -31,7 +32,6 @@ public abstract class SceneBase : IGameScene
 
     // Protected methods.
     protected virtual void HandleLoad() { }
-
     protected virtual void HandleUnload() { }
 
 
@@ -39,19 +39,45 @@ public abstract class SceneBase : IGameScene
     public void Load()
     {
         HandleLoad();
+        foreach (ISceneComponent Component in Components)
+        {
+            Component.OnLoad();
+        }
         IsLoaded = true;
         SceneLoadFinish?.Invoke(this, new(this));
     }
 
-    public virtual void OnEnd() { }
+    public virtual void OnEnd()
+    {
+        foreach (ISceneComponent Component in Components)
+        {
+            Component.OnEnd();
+        }
+    }
 
-    public virtual void OnStart() { }
+    public virtual void OnStart()
+    {
+        foreach (ISceneComponent Component in Components)
+        {
+            Component.OnStart();
+        }
+    }
 
-    public void Unload()
+    public virtual void Unload()
     {
         HandleUnload();
+        foreach (ISceneComponent Component in Components)
+        {
+            Component.OnUnload();
+        }
         Services.AssetProvider.ReleaseUserAssets(this);
     }
 
-    public void Update(IProgramTime time) { }
+    public virtual void Update(IProgramTime time)
+    {
+        foreach (ISceneComponent Component in Components)
+        {
+            Component.Update(time);
+        }
+    }
 }
