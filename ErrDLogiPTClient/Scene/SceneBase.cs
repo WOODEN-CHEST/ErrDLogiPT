@@ -11,7 +11,23 @@ namespace ErrDLogiPTClient.Scene;
 public abstract class SceneBase : IGameScene
 {
     // Fields.
-    public bool IsLoaded { get; private set; } = false;
+    public bool IsLoaded
+    {
+        get
+        {
+            lock (_lockObject)
+            {
+                return _isLoaded;
+            }
+        }
+        private set
+        {
+            lock (_lockObject)
+            {
+                _isLoaded = value;
+            }
+        }
+    }
 
     public event EventHandler<SceneLoadFinishEventArgs>? SceneLoadFinish;
 
@@ -20,6 +36,11 @@ public abstract class SceneBase : IGameScene
     protected IGameServices Services { get; private init; }
     protected ISceneAssetProvider AssetProvider { get; private init; }
     protected List<ISceneComponent> Components { get; } = new();
+
+
+    // Private fields.
+    private object _lockObject = new();
+    private bool _isLoaded = false;
 
 
     // Constructors.
@@ -63,7 +84,7 @@ public abstract class SceneBase : IGameScene
         }
     }
 
-    public virtual void Unload()
+    public void Unload()
     {
         HandleUnload();
         foreach (ISceneComponent Component in Components)

@@ -131,15 +131,15 @@ public class DefaultSceneManager : ISceneManager
 
             _isNextSceneLoaded = false;
             _isSceneScheduledToJump = false;
-
-            if (OldScene != null)
-            {
-                OldScene.OnEnd();
-                Task.Run(() => DisposeScene(OldScene));
-            }
-
-            _currentScene?.OnStart();
         }
+
+        if (OldScene != null)
+        {
+            OldScene.OnEnd();
+            Task.Run(() => DisposeScene(OldScene));
+        }
+
+        NewScene?.OnStart();
 
         ActiveSceneChange?.Invoke(this, new(OldScene, NewScene));
         return true;

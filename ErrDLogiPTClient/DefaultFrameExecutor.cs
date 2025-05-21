@@ -15,18 +15,14 @@ public class DefaultFrameExecutor : IFrameExecutor
 {
     // Fields.
     public IGameFrame? CurrentFrame { get; private set; }
-
     public IFrameRenderer Renderer { get; private init; }
-
-
-    // Private fields.
-    private readonly Game _game;
 
 
     // Constructors.
     public DefaultFrameExecutor(GraphicsDevice device, IDisplay display)
     {
         Renderer = GHRenderer.Create(device, display);
+        Renderer.ScreenColor = Color.Black;
     }
 
 
@@ -44,8 +40,8 @@ public class DefaultFrameExecutor : IFrameExecutor
         }
     }
 
-    public void SetFrame(IGameFrame frame)
+    public void SetFrame(IGameFrame? frame)
     {
-        CurrentFrame = frame ?? throw new ArgumentNullException(nameof(frame));
+        CurrentFrame = frame;
     }
 }

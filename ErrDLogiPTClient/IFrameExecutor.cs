@@ -16,6 +16,6 @@ public interface IFrameExecutor : IDisposable
 
 
     // Methods.
-    void SetFrame(IGameFrame frame);
+    void SetFrame(IGameFrame? frame);
     void Render(IProgramTime time);
 }

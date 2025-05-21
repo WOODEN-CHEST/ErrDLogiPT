@@ -14,19 +14,29 @@ namespace ErrDLogiPTClient.Scene.Intro;
 
 public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
 {
+    // Fields.
+    public event EventHandler<EventArgs>? LogoShowFinish;
+
+
     // Private static fields.
     private const string ASSET_NAME_LOGO = "main_logo";
-    private static readonly TimeSpan FADE_IN_DURATION = TimeSpan.FromSeconds(1d);
+    private static readonly TimeSpan FADE_IN_DURATION = TimeSpan.FromSeconds(2d);
     private static readonly TimeSpan FADE_STAY_DURATION = TimeSpan.FromSeconds(3d);
-    private static readonly TimeSpan FADE_OUT_DURATION = TimeSpan.FromSeconds(1d);
+    private static readonly TimeSpan FADE_OUT_DURATION = TimeSpan.FromSeconds(2d);
+    private static readonly TimeSpan FULL_FADE_DURATION = FADE_IN_DURATION + FADE_STAY_DURATION + FADE_OUT_DURATION;
     private const float SCALE_START = 0.6f;
-    private const float SIZE_END = 0.8f;
+    private const float SCALE_END = 0.8f;
 
 
     // Private fields.
     private SpriteItem _logo;
     private TimeSpan _fadeTime;
+
     private readonly ILayer _logoLayer;
+
+    private Vector2 _logoSizeMax;
+    private Vector2 _logoSizeMin;
+    private bool _isFadeFinished = false;
 
 
     // Constructors.
@@ -39,11 +49,27 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
     }
 
 
+    // Methods.
+    public void SkipAnimation()
+    {
+        _fadeTime = FADE_IN_DURATION + FADE_STAY_DURATION + FADE_OUT_DURATION;
+        _logo.Opacity = 0f;
+        _isFadeFinished = true;
+    }
+
+
     // Private methods.
     private void UpdateLogoAnimation(IProgramTime time)
     {
-        _logo.Position += new Vector2((float)(time.PassedTime.TotalSeconds * 10d), 0f);
         _fadeTime += time.PassedTime;
+
+        if (_fadeTime > FULL_FADE_DURATION)
+        {
+            _isFadeFinished = true;
+            _logo.Opacity = 0f;
+            LogoShowFinish?.Invoke(this, EventArgs.Empty);
+            return;
+        }
 
         if (_fadeTime < FADE_IN_DURATION)
         {
@@ -53,10 +79,13 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
         {
             _logo.Opacity = 1f;
         }
-        else
+        else if (_fadeTime < FULL_FADE_DURATION)
         {
             _logo.Opacity = 1f - (float)((_fadeTime - (FADE_IN_DURATION + FADE_STAY_DURATION)) / FADE_OUT_DURATION);
         }
+
+        float SizeLerpAmount = (float)(_fadeTime.TotalSeconds / (FULL_FADE_DURATION).TotalSeconds);
+        _logo.Size = _logoSizeMin + ((_logoSizeMax - _logoSizeMin) * SizeLerpAmount);
     }
 
 
@@ -68,10 +97,15 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
         ISpriteAnimation Animation = AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO)!;
 
         _logo = new(Animation.CreateInstance());
-        _logo.Size = new Vector2(1f, _logo.FrameSize.Y / _logo.FrameSize.X) * SCALE_START;
+
+        Vector2 LogoBaseSize = new Vector2(1f, _logo.FrameSize.Y / _logo.FrameSize.X);
+        _logoSizeMin = LogoBaseSize * SCALE_START;
+        _logoSizeMax = LogoBaseSize * SCALE_END;
+
         _logo.Origin = new(0.5f, 0.5f);
         _logo.Position = new(0.5f, 0.5f);
         _logo.IsSizeAdjusted = true;
+        _logo.Opacity = 0f;
 
         _logoLayer.AddItem(_logo);
     }
@@ -79,12 +113,15 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
     public override void OnStart()
     {
         base.OnStart();
-        _logo.Opacity = 0f;
     }
 
     public override void Update(IProgramTime time)
     {
         base.Update(time);
-        UpdateLogoAnimation(time);
+
+        if (!_isFadeFinished)
+        {
+            UpdateLogoAnimation(time);
+        }
     }
 }
