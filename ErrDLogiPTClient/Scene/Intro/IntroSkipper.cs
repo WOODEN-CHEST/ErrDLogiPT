@@ -1,4 +1,5 @@
 ﻿using GHEngine;
+using GHEngine.IO;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
@@ -17,12 +18,13 @@ public class IntroSkipper : SceneComponentBase<IntroScene>
     // Private fields.
     private readonly Keys[] _introSkipKeys = new Keys[] { Keys.Enter, Keys.Escape, Keys.Back };
     private bool _wasIntroSkipped = false;
+    private readonly IUserInput _input;
 
 
     // Constructors.
-    public IntroSkipper(IntroScene scene, ISceneAssetProvider assetProvider, IGameServices services)
-        : base(scene, assetProvider, services)
+    public IntroSkipper(IntroScene scene, IUserInput input) : base(scene)
     {
+        _input = input ?? throw new ArgumentNullException(nameof(input));
     }
 
 
@@ -42,7 +44,7 @@ public class IntroSkipper : SceneComponentBase<IntroScene>
 
         foreach (Keys Key in _introSkipKeys)
         {
-            if (Services.Input.WereKeysJustPressed(Key))
+            if (_input.WereKeysJustPressed(Key))
             {
                 SkipIntro();
             }

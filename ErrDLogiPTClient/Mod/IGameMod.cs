@@ -9,6 +9,6 @@ namespace ErrDLogiPTClient.Mod;
 public interface IGameMod
 {
     // Methods.
-    void OnGameLoad(IGameServices services);
-    void OnGameClose(IGameServices services);
+    void OnStart(GameServices services);
+    void OnEnd(GameServices services);
 }

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-internal class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
+public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
 {
     // Fields.
     public bool IsDisplayed

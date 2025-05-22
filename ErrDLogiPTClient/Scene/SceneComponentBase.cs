@@ -11,17 +11,13 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 {
     // Protected fields.
     protected T Scene { get; private init; }
-    protected ISceneAssetProvider AssetProvider { get; private init; }
-    protected IGameServices Services { get; private init; }
     protected List<ISceneComponent> SubComponents { get; } = new();
 
 
     // Constructors.
-    public SceneComponentBase(T scene, ISceneAssetProvider assetProvider, IGameServices services)
+    public SceneComponentBase(T scene)
     {
         Scene = scene ?? throw new ArgumentNullException(nameof(scene));
-        Services = services ?? throw new ArgumentNullException(nameof(services));
-        AssetProvider = assetProvider ?? throw new ArgumentNullException(nameof(assetProvider));
     }
 
 

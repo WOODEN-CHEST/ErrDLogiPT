@@ -1,8 +1,10 @@
 ﻿using GHEngine;
+using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Frame;
 using GHEngine.Frame.Animation;
 using GHEngine.Frame.Item;
+using GHEngine.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -13,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-public class IntroFrameExecutor : SceneComponentBase<IntroScene>
+public class IntroRenderExecutor : SceneComponentBase<IntroScene>
 {
     // Fields.
     public bool IsLoadingShown { get; set; } = true;
@@ -27,16 +29,19 @@ public class IntroFrameExecutor : SceneComponentBase<IntroScene>
 
 
     // Private fields.
+    private readonly ISceneAssetProvider _assetProvider;
+    private readonly 
+
     private readonly IntroLogoDisplayer _logoDisplayer;
     private readonly IntroLoadingDisplayer _loadingDisplayer;
     private readonly IGameFrame _frame;
 
 
     // Constructors.
-    public IntroFrameExecutor(IntroScene scene, 
+    public IntroRenderExecutor(IntroScene scene,
         ISceneAssetProvider assetProvider,
-        IGameServices services)
-        : base(scene, assetProvider, services)
+        IFrameExecutor frameExecutor)
+        : base(scene)
     {
         _frame = new GHGameFrame();
 

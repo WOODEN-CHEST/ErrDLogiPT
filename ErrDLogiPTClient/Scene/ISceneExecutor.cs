@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Scene.Event;
+using GHEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene;
 
-public interface ISceneManager : ITimeUpdatable
+public interface ISceneExecutor : ITimeUpdatable
 {
     // Fields.
     public IGameScene? CurrentScene { get; }

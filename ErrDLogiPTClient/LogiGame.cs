@@ -10,7 +10,6 @@ using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -22,7 +21,7 @@ namespace ErrDLogiPTClient
     {
         // Private fields.
         private readonly GraphicsDeviceManager _graphics;
-        private IGameServices? _services;
+        private GameServices? _services;
         private string _latestLogPath;
 
 
@@ -66,14 +65,18 @@ namespace ErrDLogiPTClient
         private void InitializeGame()
         {
             string ExecutableRootPath = Path.GetDirectoryName(Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location)!;
-
             IGamePathStructure Structure = new DefaultGamePathStructure(ExecutableRootPath);
+
             ILogger Logger = new LogInitializer().InitializeLogger(Structure);
             _latestLogPath = Structure.LatestLogPath;
+
             IDisplay Display = new GHDisplay(_graphics, Window);
             Display.Initialize();
+
             IUserInput Input = new GHUserInput(Window, this);
+
             IAudioEngine AudioEngine = new GHAudioEngine(10);
+            AudioEngine.Start();
 
             IAssetDefinitionCollection AssetDefinitions = new GHAssetDefinitionCollection();
             GHAssetStreamOpener AssetStreamOpener = new();
@@ -84,30 +87,29 @@ namespace ErrDLogiPTClient
             AssetLoader.SetTypeLoader(AssetType.Font, new FontLoader(AssetStreamOpener, _graphics.GraphicsDevice));
 
             IFrameExecutor FrameExecutor = new DefaultFrameExecutor(_graphics.GraphicsDevice, Display);
-            ISceneManager SceneManager = new DefaultSceneManager(Logger);
+            ISceneExecutor SceneManager = new DefaultSceneExecutor(Logger);
 
-            _services = new DefaultGameServices()
+            IModManager ModManager = new DefaultModManager(Logger);
+            ILogiAssetLoader AssetManager = new DefaultLogiAssetLoader(ModManager, Structure, Logger, AssetDefinitions, AssetStreamOpener);
+
+            _services = new GameServices()
             {
                 FrameExecutor = FrameExecutor,
                 Logger = Logger,
                 Input = Input,
                 Display = Display,
                 AudioEngine = AudioEngine,
-                AssetDefinitions = AssetDefinitions,
-                AssetLoader = AssetLoader,
                 AssetProvider = AssetProvider,
-                AssetStreamOpener = AssetStreamOpener,
                 Structure = Structure,
                 Time = new GenericProgramTime(),
-                SceneManager = SceneManager
+                SceneExecutor = SceneManager,
+                ModManager = ModManager,
+                AssetManager = AssetManager,
             };
 
-            IModManager ModManager = new DefaultModManager(_services);
-            ModManager.LoadMods();
-
-            IGameScene StartingScene = new IntroScene(_services, ModManager);
-            _services.SceneManager.SetNextScene(StartingScene);
-            _services.SceneManager.ScheduleJumpToNextScene(true);
+            IGameScene StartingScene = new IntroScene(_services);
+            _services.SceneExecutor.SetNextScene(StartingScene);
+            _services.SceneExecutor.ScheduleJumpToNextScene(true);
         }
 
 
@@ -138,7 +140,7 @@ namespace ErrDLogiPTClient
                 ProgramTime.PassedTime = ElapsedTime;
 
                 _services.Input.RefreshInput();
-                _services.SceneManager.Update(ProgramTime);
+                _services.SceneExecutor.Update(ProgramTime);
             }
             catch (Exception e)
             {

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using GHEngine.IO;
+using GHEngine.Screen;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +10,13 @@ namespace ErrDLogiPTClient.Scene.Intro;
 
 public class GamePropertiesInitializer : SceneComponentBase<IntroScene>
 {
+    // Private fields.
+    private readonly 
+
+
     // Constructors.
-    public GamePropertiesInitializer(IntroScene scene,
-        ISceneAssetProvider assetProvider,
-        IGameServices services)
-        : base(scene, assetProvider, services) { }
+    public GamePropertiesInitializer(IntroScene scene, IDisplay display, IUserInput input)
+        : base(scene) { }
 
 
     // Inherited methods.

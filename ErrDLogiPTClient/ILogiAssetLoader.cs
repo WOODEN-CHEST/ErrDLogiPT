@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient;
 
-public interface ILogiAssetManager
+public interface ILogiAssetLoader
 {
     // Methods.
     void LoadAssetDefinitions();
-    void SetAsserRootPaths(string[] resourcePackDirNames);
+    void SetAssetRootPaths(string[] resourcePackDirNames);
 }

@@ -11,7 +11,7 @@ namespace ErrDLogiPTClient.Scene.MainMenu;
 public class MainMenuScene : SceneBase
 {
     // Constructors.
-    public MainMenuScene(IGameServices services, IModManager modManager, ILogiAssetManager assetManager)
+    public MainMenuScene(IGameServices services, IModManager modManager, ILogiAssetLoader assetManager)
         : base(services)
     {
         Components.Add(new GameHotkeyExecutor(this, AssetProvider, Services));

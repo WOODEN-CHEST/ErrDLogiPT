@@ -28,5 +28,6 @@ public class ModPackage
         Structure = structure ?? throw new ArgumentNullException(nameof(structure));
         Description = description ?? throw new ArgumentNullException(nameof(description));
         EntryPointObject = entryPoint ?? throw new ArgumentNullException(nameof(entryPoint));
+        AssetDefinitions = assetDefinitions ?? throw new ArgumentNullException(nameof(assetDefinitions));
     }
 }

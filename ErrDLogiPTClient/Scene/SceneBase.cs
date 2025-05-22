@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Scene.Event;
+using GHEngine;
 using GHEngine.Assets;
 using System;
 using System.Collections.Generic;
@@ -30,24 +31,41 @@ public abstract class SceneBase : IGameScene
     }
 
     public event EventHandler<SceneLoadFinishEventArgs>? SceneLoadFinish;
+    public event EventHandler<SceneComponentPreAddEventArgs>? SceneComponentPreAdd;
+    public event EventHandler<SceneComponentPreRemoveEventArgs>? SceneComponentPreRemove;
+    public event EventHandler<SceneComponentPreAddEventArgs>? SceneComponentPostAdd;
+    public event EventHandler<SceneComponentPostRemoveEventArgs>? SceneComponentPostRemove;
 
-
-    // Protected fields.
-    protected IGameServices Services { get; private init; }
-    protected ISceneAssetProvider AssetProvider { get; private init; }
-    protected List<ISceneComponent> Components { get; } = new();
+    public GameServices Services { get; private init; }
+    public ISceneAssetProvider AssetProvider { get; private init; }
+    public IEnumerable<ISceneComponent> Components => _components;
+    public int ComponentCount => _components.Count;
 
 
     // Private fields.
+    private readonly List<ISceneComponent> _components = new();
     private object _lockObject = new();
     private bool _isLoaded = false;
 
 
     // Constructors.
-    public SceneBase(IGameServices services)
+    public SceneBase(GameServices services)
     {
         Services = services ?? throw new ArgumentNullException(nameof(services));
         AssetProvider = new DefaultSceneAssetProvider(this, services.AssetProvider);
+    }
+
+    event EventHandler<SceneComponentPostRemoveEventArgs>? IGameScene.SceneComponentPreRemove
+    {
+        add
+        {
+            throw new NotImplementedException();
+        }
+
+        remove
+        {
+            throw new NotImplementedException();
+        }
     }
 
 
@@ -60,7 +78,7 @@ public abstract class SceneBase : IGameScene
     public void Load()
     {
         HandleLoad();
-        foreach (ISceneComponent Component in Components)
+        foreach (ISceneComponent Component in _components)
         {
             Component.OnLoad();
         }
@@ -70,7 +88,7 @@ public abstract class SceneBase : IGameScene
 
     public virtual void OnEnd()
     {
-        foreach (ISceneComponent Component in Components)
+        foreach (ISceneComponent Component in _components)
         {
             Component.OnEnd();
         }
@@ -78,7 +96,7 @@ public abstract class SceneBase : IGameScene
 
     public virtual void OnStart()
     {
-        foreach (ISceneComponent Component in Components)
+        foreach (ISceneComponent Component in _components)
         {
             Component.OnStart();
         }
@@ -87,7 +105,7 @@ public abstract class SceneBase : IGameScene
     public void Unload()
     {
         HandleUnload();
-        foreach (ISceneComponent Component in Components)
+        foreach (ISceneComponent Component in _components)
         {
             Component.OnUnload();
         }
@@ -96,9 +114,43 @@ public abstract class SceneBase : IGameScene
 
     public virtual void Update(IProgramTime time)
     {
-        foreach (ISceneComponent Component in Components)
+        foreach (ISceneComponent Component in _components)
         {
             Component.Update(time);
         }
+    }
+
+    public void AddComponent(ISceneComponent component)
+    {
+        ArgumentNullException.ThrowIfNull(component, nameof(component));
+
+        SceneComponentPreAddEventArgs AddArgs = new(this, component);
+        SceneComponentPreAdd?.Invoke(this, AddArgs);
+
+        if (!AddArgs.IsCancelled)
+        {
+            _components.Add(component);
+            SceneComponentPostAdd?.Invoke(this, new(this, component));
+        }
+    }
+
+    public void GetComponent(int index)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void InsertComponent(ISceneComponent component, int index)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RemoveComponent(ISceneComponent component)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ClearComponents()
+    {
+        throw new NotImplementedException();
     }
 }

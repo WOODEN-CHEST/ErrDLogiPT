@@ -15,47 +15,50 @@ public class DefaultModManager : IModManager
 
 
     // Private fields.
-    private readonly IGameServices _services;
+    private readonly ILogger _logger;
     private ModPackage[] _mods;
 
 
     // Constructors
-    public DefaultModManager(IGameServices services)
+    public DefaultModManager(ILogger? logger)
     {
-        _services = services ?? throw new ArgumentNullException(nameof(services));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
 
     // Inherited methods.
-    public void LoadMods()
+    public void LoadMods(string modRootDirPath)
     {
-        IModLoader Loader = new DefaultModLoader(_services.Logger);
-        _mods = Loader.LoadMods(_services.Structure.ModRoot);
+        IModLoader Loader = new DefaultModLoader(_logger);
+        _mods = Loader.LoadMods(modRootDirPath);
+    }
 
+    public void InitializeMods(IGameServices services)
+    {
         foreach (ModPackage Mod in _mods)
         {
             try
             {
-                Mod.EntryPointObject.OnGameLoad(_services);
+                Mod.EntryPointObject.OnGameLoad(services);
             }
             catch (Exception e)
             {
-                _services.Logger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameLoad call: {e}");
+                services.Logger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameLoad call: {e}");
             }
         }
     }
 
-    public void OnGameClose()
+    public void DeinitializeMods(IGameServices services)
     {
         foreach (ModPackage Mod in _mods)
         {
             try
             {
-                Mod.EntryPointObject.OnGameClose(_services);
+                Mod.EntryPointObject.OnGameClose(services);
             }
             catch (Exception e)
             {
-                _services.Logger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameClose call: {e}");
+                services.Logger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameClose call: {e}");
             }
         }
     }

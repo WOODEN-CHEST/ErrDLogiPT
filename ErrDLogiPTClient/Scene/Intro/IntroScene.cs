@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Mod;
+using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.MainMenu;
 using GHEngine;
 using GHEngine.Frame;
@@ -13,25 +14,23 @@ namespace ErrDLogiPTClient.Scene.Intro;
 public class IntroScene : SceneBase
 {
     // Private fields.
-    private readonly IModManager _modManager;
-    private readonly ILogiAssetManager _logiAssetManager;
-
-    private readonly IGameScene _mainMenuScene;
-    
-    private readonly IntroFrameExecutor _frameExecutor;
+    private readonly IGameScene _nextSceneMainMenu;
+    private readonly IntroRenderExecutor _frameExecutor;
+    private readonly IntroSkipper _introSkipper;
 
 
     // Constructors.
-    public IntroScene(IGameServices services, IModManager modManager) : base(services)
+    public IntroScene(GameServices services) : base(services)
     {
-        _modManager = modManager ?? throw new ArgumentNullException(nameof(modManager));
-        _logiAssetManager = new LogiAssetManager(Services, modManager);
-        _frameExecutor = new(this, AssetProvider, Services);
+        _frameExecutor = new(this, AssetProvider, services.FrameExecutor);
         _frameExecutor.AnimationDone += OnAnimationFinishEvent;
 
         Components.Add(_frameExecutor);
         Components.Add(new GamePropertiesInitializer(this, AssetProvider, Services));
         Components.Add(new GameHotkeyExecutor(this, AssetProvider, Services));
+
+        _introSkipper = new(this, services.Input);
+        Components.Add(_introSkipper);
 
         _mainMenuScene = new MainMenuScene(Services, modManager, _logiAssetManager);
     }
@@ -40,18 +39,18 @@ public class IntroScene : SceneBase
     // Private methods.
     private void OnNextSceneLoadEvent(object? sender, SceneLoadFinishEventArgs args)
     {
-        if ((_mainMenuScene == args.Scene) && _frameExecutor.IsAnimationDone)
+        if ((_nextSceneMainMenu == args.Scene) && _frameExecutor.IsAnimationDone)
         {
-            Services.SceneManager.ScheduleJumpToNextScene(true);
+            Services.SceneExecutor.ScheduleJumpToNextScene(true);
         }
         _frameExecutor.IsLoadingShown = false;
     }
 
     private void OnAnimationFinishEvent(object? sender, EventArgs args)
     {
-        if (_mainMenuScene.IsLoaded)
+        if (_nextSceneMainMenu.IsLoaded)
         {
-            Services.SceneManager.ScheduleJumpToNextScene(true);
+            Services.SceneExecutor.ScheduleJumpToNextScene(true);
         }
     }
 
@@ -61,15 +60,17 @@ public class IntroScene : SceneBase
     {
         base.HandleLoad();
 
-        _logiAssetManager.LoadAssetDefinitions();
-        _logiAssetManager.SetAsserRootPaths(Array.Empty<string>());
+        Services.ModManager.LoadMods(Services.Structure.ModRoot);
+        Services.ModManager.InitializeMods(Services);
+        Services.AssetManager.SetAssetRootPaths(Array.Empty<string>());
+        Services.AssetManager.LoadAssetDefinitions();
     }
 
     public override void OnStart()
     {
         base.OnStart();
 
-        Services.SceneManager.SceneLoadFinish += OnNextSceneLoadEvent;
-        Services.SceneManager.SetNextScene(_mainMenuScene);
+        Services.SceneExecutor.SceneLoadFinish += OnNextSceneLoadEvent;
+        Services.SceneExecutor.SetNextScene(_nextSceneMainMenu);
     }
 }

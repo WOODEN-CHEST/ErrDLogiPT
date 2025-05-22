@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Scene.Event;
+using GHEngine;
 using GHEngine.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene;
 
-public class DefaultSceneManager : ISceneManager
+public class DefaultSceneExecutor : ISceneExecutor
 {
     // Fields.
     public IGameScene? CurrentScene
@@ -63,7 +64,7 @@ public class DefaultSceneManager : ISceneManager
 
 
     // Constructors.
-    public DefaultSceneManager(ILogger? logger)
+    public DefaultSceneExecutor(ILogger? logger)
     {
         _logger = logger;
     }

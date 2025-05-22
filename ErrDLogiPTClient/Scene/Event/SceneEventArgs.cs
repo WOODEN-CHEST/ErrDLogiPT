@@ -4,16 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene;
+namespace ErrDLogiPTClient.Scene.Event;
 
-public class SceneLoadFinishEventArgs : EventArgs
+public class SceneEventArgs : EventArgs
 {
     // Fields.
     public IGameScene Scene { get; private init; }
 
 
     // Constructors.
-    public SceneLoadFinishEventArgs(IGameScene scene)
+    public SceneEventArgs(IGameScene scene)
     {
         Scene = scene ?? throw new ArgumentNullException(nameof(scene));
     }
