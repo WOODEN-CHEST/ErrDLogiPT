@@ -71,6 +71,6 @@ public class IntroScene : SceneBase
         base.OnStart();
 
         Services.SceneExecutor.SceneLoadFinish += OnNextSceneLoadEvent;
-        Services.SceneExecutor.SetNextScene(_nextSceneMainMenu);
+        Services.SceneExecutor.ScheduleNextSceneSet(_nextSceneMainMenu);
     }
 }

@@ -6,9 +6,15 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Event;
 
-public class SceneLoadFinishEventArgs : SceneEventArgs
+public class SceneLoadFinishEventArgs
 {
-    public SceneLoadFinishEventArgs(IGameScene scene) : base(scene)
+    // Fields.
+    public IGameScene Scene { get; private init; }
+
+
+    // Constructors.
+    public SceneLoadFinishEventArgs(IGameScene scene)
     {
+        Scene = scene ?? throw new ArgumentNullException(nameof(scene));
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient;
 
-public abstract class CancellableEventBase : ICancellableEventArgs
+public abstract class CancellableEventBase : EventArgs, ICancellableEventArgs
 {
     // Fields.
     public bool IsCancelled { get; set; } = false;

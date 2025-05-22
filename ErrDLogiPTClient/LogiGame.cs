@@ -108,7 +108,7 @@ namespace ErrDLogiPTClient
             };
 
             IGameScene StartingScene = new IntroScene(_services);
-            _services.SceneExecutor.SetNextScene(StartingScene);
+            _services.SceneExecutor.ScheduleNextSceneSet(StartingScene);
             _services.SceneExecutor.ScheduleJumpToNextScene(true);
         }
 

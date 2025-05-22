@@ -16,7 +16,7 @@ public interface IGameScene : ITimeUpdatable
     event EventHandler<SceneComponentPreAddEventArgs>? SceneComponentPostAdd;
     event EventHandler<SceneComponentPostRemoveEventArgs>? SceneComponentPreRemove;
     event EventHandler<SceneComponentPostRemoveEventArgs>? SceneComponentPostRemove;
-    bool IsLoaded { get; }
+    SceneLoadStatus LoadStatus { get; }
     IEnumerable<ISceneComponent> Components { get; }
     int ComponentCount { get; }
     GameServices Services { get; }

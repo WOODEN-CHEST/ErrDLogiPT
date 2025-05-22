@@ -10,6 +10,13 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene;
 
+/// <summary>
+/// The default scene executor.
+/// <para>Event success actions for this implementation are ran <b>after</b> performing the event related work.</para>
+/// <para>Setting the next scene schedules it to be set on the next
+/// time this executor is updated via call to <c>Update()</c></para>
+/// <para>If a jump to the next scene is scheduled, it also is executed on the next update call.</para>
+/// </summary>
 public class DefaultSceneExecutor : ISceneExecutor
 {
     // Fields.
@@ -17,7 +24,7 @@ public class DefaultSceneExecutor : ISceneExecutor
     {
         get
         {
-            lock (_lockObject)
+            lock (LockObject)
             {
                 return _currentScene;
             }
@@ -28,7 +35,7 @@ public class DefaultSceneExecutor : ISceneExecutor
     {
         get
         {
-            lock (_lockObject)
+            lock (LockObject)
             {
                 return _isNextSceneLoaded;
             }
@@ -39,7 +46,7 @@ public class DefaultSceneExecutor : ISceneExecutor
     {
         get
         {
-            lock (_lockObject)
+            lock (LockObject)
             {
                 return _isNextSceneAvailable;
             }
@@ -51,11 +58,13 @@ public class DefaultSceneExecutor : ISceneExecutor
     public event EventHandler<SceneChangeEventArgs>? ActiveSceneChange;
 
 
-    // Private fields.
-    private readonly object _lockObject = new();
-    private readonly ILogger? _logger;
-    private readonly ConcurrentQueue<Action> _scheduledActions = new();
+    // Protected fields.
+    protected readonly object LockObject = new();
+    protected readonly ILogger? Logger;
 
+
+    // Private fields.
+    private readonly ConcurrentQueue<Action> _scheduledActions = new();
     private IGameScene? _nextScene = null;
     private bool _isSceneScheduledToJump = false;
     private IGameScene? _currentScene = null;
@@ -66,12 +75,17 @@ public class DefaultSceneExecutor : ISceneExecutor
     // Constructors.
     public DefaultSceneExecutor(ILogger? logger)
     {
-        _logger = logger;
+        Logger = logger;
     }
 
 
-    // Private methods.
-    private void ExecuteScheduledActions()
+    // Protected methods.
+    protected void EnqueueScheduledAction(Action action)
+    {
+        _scheduledActions.Enqueue(action);
+    }
+
+    protected void ExecuteScheduledActions()
     {
         while (_scheduledActions.TryDequeue(out Action? TargetAction))
         {
@@ -79,6 +93,13 @@ public class DefaultSceneExecutor : ISceneExecutor
         }
     }
 
+    protected void ClearScheduledActions()
+    {
+        _scheduledActions.Clear();
+    }
+
+
+    // Private methods.
     private void DisposeScene(IGameScene scene)
     {
         try
@@ -87,7 +108,7 @@ public class DefaultSceneExecutor : ISceneExecutor
         }
         catch (Exception e)
         {
-            _logger?.Error($"Unhandled exception while unloading scene: {e}");
+            Logger?.Error($"Unhandled exception while unloading scene: {e}");
         }
     }
 
@@ -96,36 +117,50 @@ public class DefaultSceneExecutor : ISceneExecutor
         try
         {
             scene.Load();
-            lock (_lockObject)
+            bool IsCorrectSceneLoaded;
+            lock (LockObject)
             {
-                if (_nextScene != scene)
-                {
-                    DisposeScene(scene);
-                    return;
-                }
+                IsCorrectSceneLoaded = _nextScene == scene;
+                _isNextSceneLoaded = IsCorrectSceneLoaded;
+            }
 
-                _isNextSceneLoaded = true;
+            if (IsCorrectSceneLoaded)
+            {
                 _scheduledActions.Enqueue(() => SceneLoadFinish?.Invoke(this, new(scene)));
+            }
+            else
+            {
+                DisposeScene(scene);
             }
         }
         catch (Exception e)
         {
-            _scheduledActions.Enqueue(() => throw new Exception($"Unhandled exception while loading next scene: {e}"));
+            EnqueueScheduledAction(() => throw new Exception($"Unhandled exception while loading next scene: {e}"));
         }
     }
 
     private bool TrySwitchScene()
     {
         IGameScene? OldScene, NewScene;
-        lock (_lockObject)
+
+        OldScene = _currentScene;
+        NewScene = _nextScene;
+
+        SceneChangeEventArgs ChangeEventArgs = new(OldScene, NewScene);
+        ActiveSceneChange?.Invoke(this, ChangeEventArgs);
+
+        if (ChangeEventArgs.IsCancelled)
+        {
+            ChangeEventArgs.ExecuteActions();
+            return false;
+        }
+
+        lock (LockObject)
         {
             if (!(_isNextSceneAvailable && _isNextSceneLoaded && _isSceneScheduledToJump))
             {
                 return false;
             }
-
-            OldScene = _currentScene;
-            NewScene = _nextScene;
 
             _currentScene = NewScene;
             _nextScene = null;
@@ -141,47 +176,57 @@ public class DefaultSceneExecutor : ISceneExecutor
         }
 
         NewScene?.OnStart();
+        ChangeEventArgs.ExecuteActions();
 
-        ActiveSceneChange?.Invoke(this, new(OldScene, NewScene));
         return true;
     }
 
 
     // Inherited methods.
-    public void ScheduleJumpToNextScene(bool shouldJump)
+    public virtual void ScheduleJumpToNextScene(bool shouldJump)
     {
-        lock (_lockObject)
+        lock (LockObject)
         {
             _isSceneScheduledToJump = shouldJump;
         }
     }
 
-    public void SetNextScene(IGameScene? nextScene)
+    public virtual void ScheduleNextSceneSet(IGameScene? nextScene)
     {
-        IGameScene? CurrentlyActiveScene;
-
-        lock (_lockObject)
+        EnqueueScheduledAction(() =>
         {
-            if (nextScene == _nextScene)
+            if (_currentScene == nextScene)
             {
                 return;
             }
 
-            _isNextSceneLoaded = false;
+            NextSceneChangeEventArgs SceneChangeArgs = new(_currentScene, nextScene);
+            NextSceneChange?.Invoke(this, SceneChangeArgs);
+            
+            if (SceneChangeArgs.IsCancelled)
+            {
+                SceneChangeArgs.ExecuteActions();
+                return;
+            }
+
             _nextScene = nextScene;
 
-            _isNextSceneAvailable = nextScene != null;
-            if (_isNextSceneAvailable)
+            lock (LockObject)
             {
-                Task.Run(() => LoadNextScene(nextScene!));
-            }
-            CurrentlyActiveScene = _currentScene;
-        }
+                _isNextSceneLoaded = false;
 
-        NextSceneChange?.Invoke(this, new(CurrentlyActiveScene, nextScene));
+                _isNextSceneAvailable = nextScene != null;
+                if (_isNextSceneAvailable)
+                {
+                    Task.Run(() => LoadNextScene(nextScene!));
+                }
+            }
+
+            SceneChangeArgs.ExecuteActions();
+        });
     }
 
-    public void Update(IProgramTime time)
+    public virtual void Update(IProgramTime time)
     {
         ExecuteScheduledActions();
 

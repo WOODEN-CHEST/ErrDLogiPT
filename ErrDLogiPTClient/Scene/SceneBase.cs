@@ -12,20 +12,20 @@ namespace ErrDLogiPTClient.Scene;
 public abstract class SceneBase : IGameScene
 {
     // Fields.
-    public bool IsLoaded
+    public SceneLoadStatus LoadStatus
     {
         get
         {
             lock (_lockObject)
             {
-                return _isLoaded;
+                return _loadStatus;
             }
         }
         private set
         {
             lock (_lockObject)
             {
-                _isLoaded = value;
+                _loadStatus = value;
             }
         }
     }
@@ -45,7 +45,7 @@ public abstract class SceneBase : IGameScene
     // Private fields.
     private readonly List<ISceneComponent> _components = new();
     private object _lockObject = new();
-    private bool _isLoaded = false;
+    private SceneLoadStatus _loadStatus = SceneLoadStatus.NotLoaded;
 
 
     // Constructors.
@@ -53,19 +53,6 @@ public abstract class SceneBase : IGameScene
     {
         Services = services ?? throw new ArgumentNullException(nameof(services));
         AssetProvider = new DefaultSceneAssetProvider(this, services.AssetProvider);
-    }
-
-    event EventHandler<SceneComponentPostRemoveEventArgs>? IGameScene.SceneComponentPreRemove
-    {
-        add
-        {
-            throw new NotImplementedException();
-        }
-
-        remove
-        {
-            throw new NotImplementedException();
-        }
     }
 
 
@@ -77,12 +64,18 @@ public abstract class SceneBase : IGameScene
     // Inherited methods.
     public void Load()
     {
+        if (LoadStatus != SceneLoadStatus.NotLoaded)
+        {
+            return;
+        }
+
+        LoadStatus = SceneLoadStatus.Loading;
         HandleLoad();
         foreach (ISceneComponent Component in _components)
         {
             Component.OnLoad();
         }
-        IsLoaded = true;
+        LoadStatus = SceneLoadStatus.Loaded;
         SceneLoadFinish?.Invoke(this, new(this));
     }
 
