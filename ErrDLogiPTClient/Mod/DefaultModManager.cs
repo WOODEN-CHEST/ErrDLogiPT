@@ -33,28 +33,34 @@ public class DefaultModManager : IModManager
         _mods = Loader.LoadMods(modRootDirPath);
     }
 
-    public void InitializeMods(IGameServices services)
+    public void InitializeMods(GameServices services)
     {
         foreach (ModPackage Mod in _mods)
         {
+            ModLogger? Logger = null;
             try
             {
-                Mod.EntryPointObject.OnGameLoad(services);
+                Logger = new(services.Logger, Mod.Name);
+                Logger.Initialize();
+
+                Mod.EntryPointObject.Logger = Logger;
+                Mod.EntryPointObject.OnStart(services);
             }
             catch (Exception e)
             {
+                Logger?.Dispose();
                 services.Logger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameLoad call: {e}");
             }
         }
     }
 
-    public void DeinitializeMods(IGameServices services)
+    public void DeinitializeMods(GameServices services)
     {
         foreach (ModPackage Mod in _mods)
         {
             try
             {
-                Mod.EntryPointObject.OnGameClose(services);
+                Mod.EntryPointObject.OnEnd(services);
             }
             catch (Exception e)
             {

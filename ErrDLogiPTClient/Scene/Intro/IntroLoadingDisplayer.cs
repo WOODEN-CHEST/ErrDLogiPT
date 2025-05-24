@@ -51,8 +51,10 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
     private const string LOADING_TEXT_VALUE = "Loading";
     private const char PERIOD = '.';
     private static readonly TimeSpan TIME_PER_TEXT_UPDATE = TimeSpan.FromSeconds(1d);
+    
 
     // Private fields.
+    private readonly ISceneAssetProvider _assetProvider;
     private readonly ILayer _targetLayer;
     private TextBox _loadingText;
     private int _periodCount = 0;
@@ -62,13 +64,10 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
 
 
     // Constructors,
-    public IntroLoadingDisplayer(IntroScene scene, 
-        ISceneAssetProvider assetProvider, 
-        IGameServices services,
-        ILayer targetLayer)
-        : base(scene, assetProvider, services)
+    public IntroLoadingDisplayer(IntroScene scene, ISceneAssetProvider assetProvider, ILayer targetLayer) : base(scene)
     {
         _targetLayer = targetLayer ?? throw new ArgumentNullException(nameof(targetLayer));
+        _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(assetProvider));
     }
 
 
@@ -98,7 +97,7 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
     {
         base.OnLoad();
 
-        GHFontFamily Font = AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_FONT_MAIN);
+        GHFontFamily Font = _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_FONT_MAIN);
 
         _loadingText = new()
         {
@@ -114,5 +113,6 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
         _loadingText.Add(_mainComponent);
         _periodCount = 0;
         _loadingText.Origin = new(0.5f);
+        _assetProvider.RegisterRenderedItem(_loadingText);
     }
 }

@@ -6,6 +6,15 @@
                 "main/logo/0"
             ],
             "is_animated": false
+        },
+        {
+            "name": "main_button",
+            "frames": [
+                "main/button/0",
+                "main/button/1",
+                "main/button/2"
+            ],
+            "is_animated": false
         }
     ]
 }

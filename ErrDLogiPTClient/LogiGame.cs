@@ -10,6 +10,7 @@ using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -112,6 +113,17 @@ namespace ErrDLogiPTClient
             _services.SceneExecutor.ScheduleJumpToNextScene(true);
         }
 
+        private void TryChangeFullScreenMode(IUserInput input)
+        {
+            if (input.WereKeysJustPressed(Keys.F11)
+                || (input.WereKeysJustPressed(Keys.Enter) && input.AreKeysDown(Keys.LeftAlt)))
+            {
+                IDisplay Display = _services!.Display;
+                Display.FullScreenSize = Display.ScreenSize;
+                Display.IsFullScreen = !Display.IsFullScreen;
+            }
+        }
+
 
         // Inherited methods.
         protected override void Initialize()
@@ -140,6 +152,7 @@ namespace ErrDLogiPTClient
                 ProgramTime.PassedTime = ElapsedTime;
 
                 _services.Input.RefreshInput();
+                TryChangeFullScreenMode(_services.Input);
                 _services.SceneExecutor.Update(ProgramTime);
             }
             catch (Exception e)

@@ -126,7 +126,7 @@ public class DefaultSceneExecutor : ISceneExecutor
 
             if (IsCorrectSceneLoaded)
             {
-                _scheduledActions.Enqueue(() => SceneLoadFinish?.Invoke(this, new(scene)));
+                EnqueueScheduledAction(() => SceneLoadFinish?.Invoke(this, new(scene)));
             }
             else
             {

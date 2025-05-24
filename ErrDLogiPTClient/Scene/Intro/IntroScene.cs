@@ -22,17 +22,16 @@ public class IntroScene : SceneBase
     // Constructors.
     public IntroScene(GameServices services) : base(services)
     {
-        _frameExecutor = new(this, AssetProvider, services.FrameExecutor);
+        _frameExecutor = new(this, AssetProvider, Services.Input, services.FrameExecutor);
         _frameExecutor.AnimationDone += OnAnimationFinishEvent;
 
-        Components.Add(_frameExecutor);
-        Components.Add(new GamePropertiesInitializer(this, AssetProvider, Services));
-        Components.Add(new GameHotkeyExecutor(this, AssetProvider, Services));
+        AddComponent(_frameExecutor);
+        AddComponent(new GamePropertiesInitializer(this, Services.Display, Services.Input));
 
         _introSkipper = new(this, services.Input);
-        Components.Add(_introSkipper);
+        AddComponent(_introSkipper);
 
-        _mainMenuScene = new MainMenuScene(Services, modManager, _logiAssetManager);
+        _nextSceneMainMenu = new MainMenuScene(Services);
     }
 
 
@@ -48,7 +47,7 @@ public class IntroScene : SceneBase
 
     private void OnAnimationFinishEvent(object? sender, EventArgs args)
     {
-        if (_nextSceneMainMenu.IsLoaded)
+        if (_nextSceneMainMenu.LoadStatus == SceneLoadStatus.FinishedLoading)
         {
             Services.SceneExecutor.ScheduleJumpToNextScene(true);
         }
@@ -56,9 +55,9 @@ public class IntroScene : SceneBase
 
 
     // Inherited methods.
-    protected override void HandleLoad()
+    protected override void HandleLoadPreComponent()
     {
-        base.HandleLoad();
+        base.HandleLoadPreComponent();
 
         Services.ModManager.LoadMods(Services.Structure.ModRoot);
         Services.ModManager.InitializeMods(Services);

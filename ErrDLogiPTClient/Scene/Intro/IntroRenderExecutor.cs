@@ -29,8 +29,7 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
 
 
     // Private fields.
-    private readonly ISceneAssetProvider _assetProvider;
-    private readonly 
+    private readonly IFrameExecutor _frameExecutor;
 
     private readonly IntroLogoDisplayer _logoDisplayer;
     private readonly IntroLoadingDisplayer _loadingDisplayer;
@@ -40,22 +39,25 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
     // Constructors.
     public IntroRenderExecutor(IntroScene scene,
         ISceneAssetProvider assetProvider,
+        IUserInput userInput,
         IFrameExecutor frameExecutor)
         : base(scene)
     {
+        _frameExecutor = frameExecutor ?? throw new ArgumentNullException(nameof(frameExecutor));
+
         _frame = new GHGameFrame();
 
         ILayer TargetLayer = new GHLayer(LOGO_LAYER_NAME);
         _frame.AddLayer(TargetLayer);
 
-        _logoDisplayer = new(Scene, AssetProvider, Services, TargetLayer);
+        _logoDisplayer = new(TypedScene, TargetLayer, assetProvider);
         _logoDisplayer.LogoShowFinish += OnLogoShowFinishEvent;
         SubComponents.Add(_logoDisplayer);
 
-        _loadingDisplayer = new(Scene, AssetProvider, Services, TargetLayer);
+        _loadingDisplayer = new(TypedScene, assetProvider, TargetLayer);
         SubComponents.Add(_loadingDisplayer);
 
-        IntroSkipper Skipper = new(Scene, AssetProvider, Services);
+        IntroSkipper Skipper = new(TypedScene, userInput);
         Skipper.SkippedIntro += OnIntroSkipEvent;
         SubComponents.Add(Skipper);
     }
@@ -84,7 +86,7 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
     // Inherited methods.
     public override void OnLoad()
     {
-        Services.FrameExecutor.SetFrame(_frame);
+        _frameExecutor.SetFrame(_frame);
         base.OnLoad();
     }
 

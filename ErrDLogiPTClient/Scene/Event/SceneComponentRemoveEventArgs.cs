@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Event;
 
-public class SceneComponentPostAddEventArgs : SceneComponentEventArgs
+public class SceneComponentRemoveEventArgs : SceneComponentEventArgs
 {
     // Constructors.
-    public SceneComponentPostAddEventArgs(IGameScene scene, ISceneComponent component)
+    public SceneComponentRemoveEventArgs(IGameScene scene, ISceneComponent component)
         : base(scene, component) { }
 }

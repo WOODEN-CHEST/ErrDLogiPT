@@ -10,5 +10,5 @@ public enum SceneLoadStatus
 {
     NotLoaded,
     Loading,
-    Loaded
+    FinishedLoading
 }

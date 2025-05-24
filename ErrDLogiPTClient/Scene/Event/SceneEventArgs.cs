@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Event;
 
-public class SceneEventArgs : EventArgs
+public class SceneEventArgs : CancellableEventBase
 {
     // Fields.
     public IGameScene Scene { get; private init; }

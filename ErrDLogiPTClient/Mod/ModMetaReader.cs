@@ -63,6 +63,11 @@ public class ModMetaReader
         string Description = Compound.GetVerified<string>(KEY_DESCRIPTION);
         string EntryPoint = Compound.GetVerified<string>(KEY_ENTRY_POINT);
 
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            throw new ModLoadException("Mod must name non-empty name.");
+        }
+
         return new ModMetaInfo()
         {
             Name = Name,

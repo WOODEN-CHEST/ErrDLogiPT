@@ -8,14 +8,12 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene;
 
-public interface IGameScene : ITimeUpdatable
+public interface IGameScene : ITimeUpdatable, ISceneComponentHolder
 {
     // Fields.
     event EventHandler<SceneLoadFinishEventArgs>? SceneLoadFinish;
-    event EventHandler<SceneComponentPreAddEventArgs>? SceneComponentPreAdd;
-    event EventHandler<SceneComponentPreAddEventArgs>? SceneComponentPostAdd;
-    event EventHandler<SceneComponentPostRemoveEventArgs>? SceneComponentPreRemove;
-    event EventHandler<SceneComponentPostRemoveEventArgs>? SceneComponentPostRemove;
+    event EventHandler<SceneComponentAddEventArgs>? SceneComponentAdd;
+    event EventHandler<SceneComponentRemoveEventArgs>? SceneComponentRemove;
     SceneLoadStatus LoadStatus { get; }
     IEnumerable<ISceneComponent> Components { get; }
     int ComponentCount { get; }
@@ -28,9 +26,4 @@ public interface IGameScene : ITimeUpdatable
     void OnStart();
     void OnEnd();
     void Unload();
-    void AddComponent(ISceneComponent component);
-    void GetComponent(int index);
-    void InsertComponent(ISceneComponent component, int index);
-    void RemoveComponent(ISceneComponent component);
-    void ClearComponents();
 }

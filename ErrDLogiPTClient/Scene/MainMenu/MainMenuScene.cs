@@ -10,26 +10,20 @@ namespace ErrDLogiPTClient.Scene.MainMenu;
 
 public class MainMenuScene : SceneBase
 {
+    // Fields.
+
+
+
+
     // Constructors.
-    public MainMenuScene(IGameServices services, IModManager modManager, ILogiAssetLoader assetManager)
-        : base(services)
+    public MainMenuScene(GameServices services) : base(services)
     {
-        Components.Add(new GameHotkeyExecutor(this, AssetProvider, Services));
     }
 
 
     // Inherited methods.
-    protected override void HandleLoad()
+    protected override void HandleLoadPreComponent()
     {
-        base.HandleLoad();
-
-        Task.Delay(TimeSpan.FromSeconds(4)).Wait();
-    }
-
-    public override void OnStart()
-    {
-        base.OnStart();
-
-        Services.FrameExecutor.SetFrame(new GHGameFrame());
+        base.HandleLoadPreComponent();
     }
 }

@@ -29,23 +29,21 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
 
 
     // Private fields.
-    private SpriteItem _logo;
-    private TimeSpan _fadeTime;
-
+    private readonly ISceneAssetProvider _assetProvider;
     private readonly ILayer _logoLayer;
 
+    private SpriteItem _logo;
+    private TimeSpan _fadeTime;
     private Vector2 _logoSizeMax;
     private Vector2 _logoSizeMin;
     private bool _isFadeFinished = false;
 
 
     // Constructors.
-    public IntroLogoDisplayer(IntroScene scene,
-        ISceneAssetProvider assetProvider,
-        IGameServices services,
-        ILayer logoLayer) : base(scene, assetProvider, services)
+    public IntroLogoDisplayer(IntroScene scene, ILayer logoLayer, ISceneAssetProvider assetProvider) : base(scene)
     {
         _logoLayer = logoLayer ?? throw new ArgumentNullException(nameof(logoLayer));
+        _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(_assetProvider));
     }
 
 
@@ -94,7 +92,7 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
     {
         base.OnLoad();
 
-        ISpriteAnimation Animation = AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO)!;
+        ISpriteAnimation Animation = _assetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO)!;
 
         _logo = new(Animation.CreateInstance());
 
@@ -108,6 +106,7 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
         _logo.Opacity = 0f;
 
         _logoLayer.AddItem(_logo);
+        _assetProvider.RegisterRenderedItem(_logo);
     }
 
     public override void OnStart()

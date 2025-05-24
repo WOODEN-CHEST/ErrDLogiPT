@@ -11,12 +11,17 @@ namespace ErrDLogiPTClient.Scene.Intro;
 public class GamePropertiesInitializer : SceneComponentBase<IntroScene>
 {
     // Private fields.
-    private readonly 
+    private readonly IDisplay _display;
+    private readonly IUserInput _userInput;
 
 
     // Constructors.
     public GamePropertiesInitializer(IntroScene scene, IDisplay display, IUserInput input)
-        : base(scene) { }
+        : base(scene)
+    {
+        _display = display ?? throw new ArgumentNullException(nameof(display));
+        _userInput = input ?? throw new ArgumentNullException(nameof(input));
+    }
 
 
     // Inherited methods.
@@ -24,8 +29,8 @@ public class GamePropertiesInitializer : SceneComponentBase<IntroScene>
     {
         base.OnStart();
 
-        Services.Display.IsUserResizingAllowed = true;
-        Services.Input.IsMouseVisible = true;
-        Services.Input.IsAltF4Allowed = true;
+        _display.IsUserResizingAllowed = true;
+        _userInput.IsMouseVisible = true;
+        _userInput.IsAltF4Allowed = true;
     }
 }
