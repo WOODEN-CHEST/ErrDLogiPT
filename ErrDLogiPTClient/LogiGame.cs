@@ -72,9 +72,12 @@ namespace ErrDLogiPTClient
             _latestLogPath = Structure.LatestLogPath;
 
             IDisplay Display = new GHDisplay(_graphics, Window);
+            IsFixedTimeStep = false;
             Display.Initialize();
 
             IUserInput Input = new GHUserInput(Window, this);
+            Display.ScreenSizeChange += (sender, args) => Input.InputAreaSizePixels = (Vector2)args.NewSize;
+            Input.InputAreaSizePixels = (Vector2)Display.CurrentWindowSize;
 
             IAudioEngine AudioEngine = new GHAudioEngine(10);
             AudioEngine.Start();

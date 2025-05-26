@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Mod;
+using ErrDLogiPTClient.Scene.MainMenu.UI;
 using GHEngine.Frame;
 using System;
 using System.Collections.Generic;
@@ -10,14 +11,15 @@ namespace ErrDLogiPTClient.Scene.MainMenu;
 
 public class MainMenuScene : SceneBase
 {
-    // Fields.
-
-
+    // Private fields.
+    private readonly MainMenuUIExecutor _uiExecutor;
 
 
     // Constructors.
     public MainMenuScene(GameServices services) : base(services)
     {
+        _uiExecutor = new(this, Services.FrameExecutor, AssetProvider, Services.Input);
+        AddComponent(_uiExecutor);
     }
 
 

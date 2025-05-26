@@ -5,6 +5,7 @@ using GHEngine.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -37,8 +38,14 @@ public class MainUIElementFactory
         _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT);
     }
 
-    public void CreateButton(float lengthSegments)
+    public MainMenuBasicButton CreateButton(float lengthSegments)
     {
+        MainMenuBasicButton Button = new(_input,
+            _assetProvider, 
+            _assetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BUTTON_BASIC),
+            _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT),
+            lengthSegments);
 
+        return Button;
     }
 }

@@ -24,7 +24,6 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         set
         {
             _position = value;
-            SyncPositions();
         }
     }
 
@@ -60,11 +59,23 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         }
     }
 
+    public float Scale
+    {
+        get => _scale;
+        set
+        {
+            _scale = value;
+            
+            SyncSize();
+        }
+    }
+
 
     // Private static fields.
     private const int FRAME_INDEX_LEFT_PART = 0;
     private const int FRAME_INDEX_MIDDLE_PART = 1;
     private const int FRAME_INDEX_RIGHT_PART = 2;
+    private const float POSITION_MARGIN_OF_ERROR = 0.0025f;
 
 
     // Private fields.
@@ -73,12 +84,12 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
     private readonly SpriteItem _leftPartSprite;
     private readonly SpriteItem _middlePartSprite;
     private readonly SpriteItem _rightPartSprite;
-    private float _buttonLength;
-
-    private Vector2 _position;
-
     private readonly TextBox _buttonText;
 
+    private float _buttonLength = 1f;
+    private Vector2 _position = Vector2.Zero;
+    private float _scale = 1f;
+    private Vector2 _buttonArea;
 
 
     // Constructors
@@ -108,6 +119,10 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         _middlePartSprite.Animation.FrameIndex = FRAME_INDEX_MIDDLE_PART;
         _rightPartSprite.Animation.FrameIndex = FRAME_INDEX_RIGHT_PART;
 
+        _leftPartSprite.Origin = new(1f, 0.5f);
+        _middlePartSprite.Origin = new(0.5f, 0.5f);
+        _rightPartSprite.Origin = new(0f, 0.5f);
+
         _buttonText = new TextBox()
         {
             new(font, string.Empty),
@@ -116,12 +131,13 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         _buttonText.FitMethod = TextFitMethod.Resize;
 
         Length =  buttonLength;
-        SyncPositions();
+        
+        SyncSize();
     }
 
 
     // Methods.
-    void Initialize()
+    public void Initialize()
     {
         _assetProvider.RegisterRenderedItem(_buttonText);
         _assetProvider.RegisterRenderedItem(_leftPartSprite);
@@ -129,7 +145,7 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         _assetProvider.RegisterRenderedItem(_rightPartSprite);
     }
 
-    void Deinitialize()
+    public void Deinitialize()
     {
         _assetProvider.UnregisterRenderedItem(_buttonText);
         _assetProvider.UnregisterRenderedItem(_leftPartSprite);
@@ -138,7 +154,36 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
     }
 
     // Private methods.
-    private void SyncPositions()
+    private void SyncPositions(float windowAspectRatio)
+    {
+        /* Margin of error is added to fix visible seams due to floating point inaccuracies. */
+        _middlePartSprite.Position = _position;
+
+        _leftPartSprite.Position = _position - GHMath.GetWindowAdjustedVector(
+            new Vector2((_middlePartSprite.Size.X / 2f) - POSITION_MARGIN_OF_ERROR, 0f), windowAspectRatio);
+
+        _rightPartSprite.Position = _position + GHMath.GetWindowAdjustedVector(
+            new Vector2((_middlePartSprite.Size.X / 2f) - POSITION_MARGIN_OF_ERROR, 0f), windowAspectRatio);
+    }
+
+    private void SyncSize()
+    {
+        Vector2 MiddleFrameSize = _middlePartSprite.FrameSize;
+        _middlePartSprite.Size = new Vector2(1f * _buttonLength, MiddleFrameSize.Y / MiddleFrameSize.X) * _scale;
+
+        _leftPartSprite.Size = new(_leftPartSprite.FrameSize.X / _leftPartSprite.FrameSize.Y
+            * _middlePartSprite.Size.Y, _middlePartSprite.Size.Y);
+
+        _rightPartSprite.Size = new(_rightPartSprite.FrameSize.X / _rightPartSprite.FrameSize.Y
+            * _middlePartSprite.Size.Y, _middlePartSprite.Size.Y);
+    }
+
+    private void UpdateButtonArea()
+    {
+
+    }
+
+    private bool IsMouseOverButton()
     {
 
     }
@@ -153,6 +198,9 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
 
     public void Render(IRenderer renderer, IProgramTime time)
     {
-        
+        SyncPositions(renderer.AspectRatio);
+        _leftPartSprite.Render(renderer, time);
+        _middlePartSprite.Render(renderer, time);
+        _rightPartSprite.Render(renderer, time);
     }
 }

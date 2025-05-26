@@ -10,9 +10,9 @@
         {
             "name": "main_button",
             "frames": [
-                "main/button/0",
-                "main/button/1",
-                "main/button/2"
+                "main/ui/button/0",
+                "main/ui/button/1",
+                "main/ui/button/2"
             ],
             "is_animated": false
         }
