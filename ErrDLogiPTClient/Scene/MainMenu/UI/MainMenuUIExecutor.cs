@@ -1,6 +1,7 @@
 ﻿using GHEngine;
 using GHEngine.Frame;
 using GHEngine.IO;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
     private readonly IFrameExecutor _frameExecutor;
     private readonly MainUIElementFactory _uiElementFactory;
+    private readonly IUserInput _input;
 
     private MainMenuBasicButton _button;
 
@@ -42,6 +44,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _foregroundLayer = new GHLayer(LAYER_NAME_FOREGROUND);
         _frame.AddLayer(_backgroundLayer);
         _frame.AddLayer(_foregroundLayer);
+        _input = input;
 
         _uiElementFactory = new(assetProvider, input);
     }
@@ -77,6 +80,11 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     {
         base.Update(time);
 
+        if (_input.WereKeysJustPressed(Keys.Tab))
+        {
+            _button.IsButtonTargeted = true;
+        }
+            
         _button.Update(time);
     }
 }

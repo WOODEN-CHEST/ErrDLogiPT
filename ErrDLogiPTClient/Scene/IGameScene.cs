@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Event;
+using ErrDLogiPTClient.Scene.Sound;
 using GHEngine;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ public interface IGameScene : ITimeUpdatable, ISceneComponentHolder
     int ComponentCount { get; }
     GameServices Services { get; }
     ISceneAssetProvider AssetProvider { get; }
+    ISceneSoundEngine SoundEngine { get; }
 
 
     // Methods.

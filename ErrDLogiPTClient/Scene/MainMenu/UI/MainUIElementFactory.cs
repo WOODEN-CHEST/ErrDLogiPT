@@ -21,6 +21,7 @@ public class MainUIElementFactory
     // Private fields.
     private readonly ISceneAssetProvider _assetProvider;
     private readonly IUserInput _input;
+    private readonly Iau
 
 
     // Constructors.
