@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Sound;
 
-public class SceneSoundCategory
+public class LogiSoundCategory
 {
     // Static fields.
-    public static SceneSoundCategory UI { get; }
+    public static LogiSoundCategory UI { get; }
         = new("User Interface", "UI elements like buttons, sliders, drop-downs, etc.");
 
-    public static SceneSoundCategory Music { get; }
+    public static LogiSoundCategory Music { get; }
         = new("Music", "Background music");
 
-    public static SceneSoundCategory OS { get; }
+    public static LogiSoundCategory OS { get; }
         = new("Operating System", "Sounds coming from a virtual Logi operating system.");
 
 
@@ -26,7 +26,7 @@ public class SceneSoundCategory
 
 
     // Constructors.
-    public SceneSoundCategory(string name, string description)
+    public LogiSoundCategory(string name, string description)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Description = description ?? throw new ArgumentNullException(nameof(description));

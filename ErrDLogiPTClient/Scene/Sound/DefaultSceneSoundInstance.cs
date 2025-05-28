@@ -5,13 +5,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tests.Audio;
 
 namespace ErrDLogiPTClient.Scene.Sound;
 
-public class DefaultSceneSoundInstance : ISceneSoundInstance
+public class DefaultSceneSoundInstance : ILogiSoundInstance
 {
     // Fields.
-    public bool IsUpdateRequired { get; private set; }
+    public bool IsUpdateRequired
+    {
+        get => _isUpdateRequired;
+        set
+        {
+            if (_isUpdateRequired = value)
+            {
+                return;
+            }
+            _isUpdateRequired = value;
+            SoundDataUpdate?.Invoke(this, new(this));
+        }
+    }
     public TimeSpan Duration => WrappedSoundInstance.Sound.Duration;
 
     public float Volume
@@ -123,48 +136,107 @@ public class DefaultSceneSoundInstance : ISceneSoundInstance
         }
     }
 
-    public TimeSpan Position { get; set; }
-
+    public TimeSpan Position
+    {
+        get => _requestedPosition ?? _syncedPosition;
+        set
+        {
+            _requestedPosition = value;
+            IsUpdateRequired = true;
+        }
+    }
     public IPreSampledSoundInstance WrappedSoundInstance { get; private init; }
+
+    public SceneSoundState State
+    {
+        get => _state;
+        set
+        {
+            if (_state == value)
+            {
+                return;
+            }
+
+            _state = value;
+            IsUpdateRequired = true;
+        }
+    }
+
+    public bool IsLooped
+    {
+        get => _isLooped;
+        set
+        {
+            if (value == _isLooped)
+            {
+                return;
+            }
+
+            _isLooped = value;
+            IsUpdateRequired = true;
+        }
+    }
+
+    public bool IsPositionChangeRequested => _requestedPosition != null;
+
+    public LogiSoundCategory Category
+    {
+        get => _category;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value, nameof(value));
+            if (_category ==  value)
+            {
+                return;
+            }
+            _category = value;
+            IsUpdateRequired = true;
+        }
+    }
+
+    public event EventHandler<LogiSoundEventArgs>? SoundFinish;
+    public event EventHandler<LogiSoundEventArgs>? SoundLoop;
+    public event EventHandler<LogiSoundEventArgs>? SoundDataUpdate;
 
 
     // Private fields.
-    private readonly ISceneSoundEngine _engine;
-
+    private bool _isLooped = false;
     private float _volume = 1f;
     private float? _customSampleRate = null;
     private double _speed = 1d;
     private float? _lowPassFrequency = null;
     private float? _highPassFrequency = null;
     private float _pan = 0f;
+    private TimeSpan? _requestedPosition = null;
+    private TimeSpan _syncedPosition = TimeSpan.Zero;
+    private SceneSoundState _state = SceneSoundState.Playing;
+    private LogiSoundCategory _category;
+    private bool _isUpdateRequired = false;
 
 
     // Constructors.
-    public DefaultSceneSoundInstance(ISceneSoundEngine engine, IPreSampledSoundInstance wrappedSound)
+    public DefaultSceneSoundInstance(IPreSampledSoundInstance wrappedSound, LogiSoundCategory category)
     {
-        _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         WrappedSoundInstance = wrappedSound ?? throw new ArgumentNullException(nameof(wrappedSound));
+        _category = category;
     }
 
 
     // Inherited methods.
-    public void Continue()
+    public void SyncWrappedProperties(TimeSpan newPosition)
     {
-
-    }
-
-    public void Start()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Stop()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SyncProperties()
-    {
+        _requestedPosition = null;
+        _syncedPosition = newPosition;
         IsUpdateRequired = false;
+    }
+
+    public void InvokeLoopEvent()
+    {
+        SoundLoop?.Invoke(this, new(this));
+    }
+
+    public void InvokeFinishEvent()
+    {
+        SoundFinish?.Invoke(this, new(this));
     }
 }

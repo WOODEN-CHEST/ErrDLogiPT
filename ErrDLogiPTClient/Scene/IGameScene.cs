@@ -20,7 +20,7 @@ public interface IGameScene : ITimeUpdatable, ISceneComponentHolder
     int ComponentCount { get; }
     GameServices Services { get; }
     ISceneAssetProvider AssetProvider { get; }
-    ISceneSoundEngine SoundEngine { get; }
+    ILogiSoundEngine SoundEngine { get; }
 
 
     // Methods.

@@ -1,6 +1,7 @@
 ﻿using ErrDLogiPTClient.Mod;
 using ErrDLogiPTClient.Scene;
 using ErrDLogiPTClient.Scene.Intro;
+using ErrDLogiPTClient.Scene.Sound;
 using GHEngine;
 using GHEngine.Assets;
 using GHEngine.Assets.Def;
@@ -79,15 +80,16 @@ namespace ErrDLogiPTClient
             Display.ScreenSizeChange += (sender, args) => Input.InputAreaSizePixels = (Vector2)args.NewSize;
             Input.InputAreaSizePixels = (Vector2)Display.CurrentWindowSize;
 
-            IAudioEngine AudioEngine = new GHAudioEngine(10);
-            AudioEngine.Start();
+            ILogiSoundEngine SoundEngine = new DefaultLogiSoundEngine(new GHAudioEngine(10));
+            SoundEngine.Start();
+            
 
             IAssetDefinitionCollection AssetDefinitions = new GHAssetDefinitionCollection();
             GHAssetStreamOpener AssetStreamOpener = new();
             GHGenericAssetLoader AssetLoader = new();
             IAssetProvider AssetProvider = new GHAssetProvider(AssetLoader, AssetDefinitions, Logger);
             AssetLoader.SetTypeLoader(AssetType.Animation, new AnimationLoader(AssetStreamOpener, _graphics.GraphicsDevice));
-            AssetLoader.SetTypeLoader(AssetType.Sound, new SoundLoader(AssetStreamOpener, AudioEngine.WaveFormat));
+            AssetLoader.SetTypeLoader(AssetType.Sound, new SoundLoader(AssetStreamOpener, SoundEngine.Format));
             AssetLoader.SetTypeLoader(AssetType.Font, new FontLoader(AssetStreamOpener, _graphics.GraphicsDevice));
 
             IFrameExecutor FrameExecutor = new DefaultFrameExecutor(_graphics.GraphicsDevice, Display);
@@ -102,7 +104,7 @@ namespace ErrDLogiPTClient
                 Logger = Logger,
                 Input = Input,
                 Display = Display,
-                AudioEngine = AudioEngine,
+                SoundEngine = SoundEngine,
                 AssetProvider = AssetProvider,
                 Structure = Structure,
                 Time = new GenericProgramTime(),

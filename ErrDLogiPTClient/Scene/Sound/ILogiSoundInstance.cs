@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tests.Audio;
 
 namespace ErrDLogiPTClient.Scene.Sound;
 
-public interface ISceneSoundInstance
+public interface ILogiSoundInstance
 {
     // Fields.
+    LogiSoundCategory Category { get; set; }
+    SceneSoundState State { get; set; }
     bool IsUpdateRequired { get; }
     TimeSpan Duration { get; }
     float Volume { get; set; }
@@ -19,12 +22,16 @@ public interface ISceneSoundInstance
     float? HighPassFrequency { get; set; }
     float Pan { get; set; }
     TimeSpan Position { get; set; }
+    bool IsPositionChangeRequested { get; }
     IPreSampledSoundInstance WrappedSoundInstance { get; }
+    bool IsLooped { get; set; }
+    event EventHandler<LogiSoundEventArgs>? SoundFinish;
+    event EventHandler<LogiSoundEventArgs>? SoundLoop;
+    event EventHandler<LogiSoundEventArgs>? SoundDataUpdate;
 
 
     // Methods.
-    void Start();
-    void Stop();
-    void Continue();
-    void SyncProperties();
+    void SyncWrappedProperties(TimeSpan newPosition);
+    void InvokeLoopEvent();
+    void InvokeFinishEvent();
 }

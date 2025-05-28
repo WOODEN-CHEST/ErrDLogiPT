@@ -1,5 +1,6 @@
 ﻿using ErrDLogiPTClient.Mod;
 using ErrDLogiPTClient.Scene;
+using ErrDLogiPTClient.Scene.Sound;
 using GHEngine;
 using GHEngine.Assets;
 using GHEngine.Assets.Def;
@@ -27,7 +28,7 @@ public class GameServices
     public required IGamePathStructure Structure { get; init; }
     public required IModifiableProgramTime Time { get; init; }
     public required ISceneExecutor SceneExecutor { get; init; }
-    public required IAudioEngine AudioEngine { get; init; }
+    public required ILogiSoundEngine SoundEngine { get; init; }
     public required IModManager ModManager { get; init; }
     public required ILogiAssetLoader AssetManager { get; init; }
 
@@ -38,7 +39,7 @@ public class GameServices
         Display.Dispose();
         Logger?.Dispose();
         AssetProvider.ReleaseAllAssets();
-        AudioEngine.Stop();
-        AudioEngine.Dispose();
+        SoundEngine.Stop();
+        SoundEngine.Dispose();
     }
 }
