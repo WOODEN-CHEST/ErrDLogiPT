@@ -1,4 +1,5 @@
-﻿using GHEngine.Assets.Def;
+﻿using ErrDLogiPTClient.Scene.Sound;
+using GHEngine.Assets.Def;
 using GHEngine.Frame.Animation;
 using GHEngine.GameFont;
 using GHEngine.IO;
@@ -21,13 +22,15 @@ public class MainUIElementFactory
     // Private fields.
     private readonly ISceneAssetProvider _assetProvider;
     private readonly IUserInput _input;
+    private readonly ILogiSoundEngine _soundEngine;
 
 
     // Constructors.
-    public MainUIElementFactory(ISceneAssetProvider assetProvider, IUserInput input)
+    public MainUIElementFactory(ISceneAssetProvider assetProvider, IUserInput input, ILogiSoundEngine soundEngine)
     {
         _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(assetProvider));
         _input = input ?? throw new ArgumentNullException(nameof(input));
+        _soundEngine = soundEngine ?? throw new ArgumentNullException(nameof(soundEngine));
     }
 
 
@@ -40,7 +43,8 @@ public class MainUIElementFactory
 
     public MainMenuBasicButton CreateButton(float lengthSegments)
     {
-        MainMenuBasicButton Button = new(_input,
+        MainMenuBasicButton Button = new(_soundEngine,
+            _input,
             _assetProvider, 
             _assetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BUTTON_BASIC),
             _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT),

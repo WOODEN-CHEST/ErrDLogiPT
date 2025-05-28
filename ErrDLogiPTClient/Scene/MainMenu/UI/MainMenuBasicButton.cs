@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Scene.Sound;
+using GHEngine;
 using GHEngine.Audio;
 using GHEngine.Audio.Source;
 using GHEngine.Collections;
@@ -169,7 +170,7 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
 
 
     // Constructors
-    public MainMenuBasicButton(IAudioEngine audioEngine,
+    public MainMenuBasicButton(ILogiSoundEngine soundEngine,
         IUserInput input,
         ISceneAssetProvider? assetProvider,
         ISpriteAnimation animation,

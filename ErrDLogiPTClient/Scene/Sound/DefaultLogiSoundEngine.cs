@@ -5,6 +5,7 @@ using NAudio.Wave;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +30,12 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
             {
                 throw new ArgumentException($"Invalid master volume: {value}", nameof(value));
             }
+            if (_masterVolume == value)
+            {
+                return;
+            }
+
+            _shouldMasterVolumeUpdate = true;
             _masterVolume = Math.Clamp(value, VOLUME_MIN, VOLUME_MAX);
         }
     }
@@ -50,6 +57,7 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     private readonly SoundInstanceSynchronizer _soundSynchronizer = new();
 
     private float _masterVolume = 1f;
+    private bool _shouldMasterVolumeUpdate = false;
 
 
     // Constructors.
@@ -71,6 +79,28 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     private void OnSoundDataUpdateEvent(object? sender, LogiSoundEventArgs args)
     {
         _soundsToUpdate.Add(args.SoundInstance);
+    }
+
+    private void OnSoundLoopEvent(object? sender, SoundLoopedArgs args)
+    {
+        ScheduleAction(() => 
+        {
+            if (_sounds.TryGetValue(args.Sound, out ILogiSoundInstance? LogiSound))
+            {
+                LogiSound.InvokeLoopEvent();
+            }
+        });
+    }
+
+    private void OnSoundFinishEvent(object? sender, SoundFinishedArgs args)
+    {
+        ScheduleAction(() =>
+        {
+            if (_sounds.TryGetValue(args.Instance, out ILogiSoundInstance? LogiSound))
+            {
+                LogiSound.InvokeFinishEvent();
+            }
+        });
     }
 
     private ILogiSoundInstance[] GetSoundSnapshot(HashSet<ILogiSoundInstance> sounds)
@@ -128,6 +158,41 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         }
     }
 
+    private CategoryVolumeUpdateData[] GetCategoryUpdateDataSnapshot()
+    {
+        if (_categoriesToUpdate.Count == 0)
+        {
+            return Array.Empty<CategoryVolumeUpdateData>();
+        }
+
+        CategoryVolumeUpdateData[] CategoryDataArray = new CategoryVolumeUpdateData[_categoriesToUpdate.Count];
+
+        int Index = 0;
+        foreach (LogiSoundCategory Category in _categoriesToUpdate)
+        {
+            SoundVolumeData[] VolumeData = _sounds.Values
+                .Where(sound => sound.Category == Category)
+                .Select(sound => new SoundVolumeData(sound.WrappedSoundInstance, sound.Volume))
+                .ToArray();
+
+            CategoryDataArray[Index] = new(Category, GetCategoryVolume(Category), VolumeData);
+            Index++;
+        }
+
+        return CategoryDataArray;
+    }
+
+    private void SyncCategoriesToUpdate(CategoryVolumeUpdateData[] categoriesToUpdate)
+    {
+        foreach (CategoryVolumeUpdateData CategoryData in categoriesToUpdate)
+        {
+            foreach (SoundVolumeData VolumeData in CategoryData.Sounds)
+            {
+                VolumeData.WrappedSound.Sampler.Volume = VolumeData.Volume * CategoryData.Volume;
+            }
+        }
+    }
+
 
     // Inherited methods.
     public virtual ILogiSoundInstance CreateSoundInstance(IPreSampledSound sound, LogiSoundCategory category)
@@ -137,7 +202,16 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
 
         ILogiSoundInstance Instance = new DefaultSceneSoundInstance((IPreSampledSoundInstance)sound.CreateInstance(), category);
         _soundsToAdd.Add(Instance);
+
+        Instance.WrappedSoundInstance.SoundLooped += OnSoundLoopEvent;
+        Instance.WrappedSoundInstance.SoundFinished += OnSoundFinishEvent;
         Instance.SoundDataUpdate += OnSoundDataUpdateEvent;
+
+        if (!_categoryVolumes.ContainsKey(category))
+        {
+            SetCategoryVolume(category, VOLUME_DEFAULT);
+        }
+
         return Instance;
     }
 
@@ -156,6 +230,12 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         }
 
         _categoryVolumes[category] = Math.Clamp(volume, VOLUME_MIN, VOLUME_MAX);
+
+        foreach (ILogiSoundInstance SoundInstance in _sounds.Values.Where(sound => sound.Category == category))
+        {
+            _soundsToUpdate.Add(SoundInstance);
+        }
+
         _categoriesToUpdate.Add(category);
     }
 
@@ -192,6 +272,8 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         {
             _soundsToRemove.Add(soundInstance);
             soundInstance.SoundDataUpdate -= OnSoundDataUpdateEvent;
+            soundInstance.WrappedSoundInstance.SoundLooped -= OnSoundLoopEvent;
+            soundInstance.WrappedSoundInstance.SoundFinished -= OnSoundFinishEvent;
         }
     }
 
@@ -217,14 +299,25 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         ILogiSoundInstance[] SoundsToUpdate = GetSoundSnapshot(_soundsToUpdate);
         ILogiSoundInstance[] SoundsToAdd = GetSoundSnapshot(_soundsToAdd);
         ILogiSoundInstance[] SoundsToRemove = GetSoundSnapshot(_soundsToRemove);
+        CategoryVolumeUpdateData[] CategoryVolumeData = GetCategoryUpdateDataSnapshot();
 
         _soundsToUpdate.Clear();
         _soundsToAdd.Clear();
         _soundsToRemove.Clear();
+        _categoriesToUpdate.Clear();
+
+        float NewVolume = MasterVolume;
+        bool UpdateMasterVolume = _shouldMasterVolumeUpdate;
+        _shouldMasterVolumeUpdate = false;
 
         _wrappedEngine.ScheduleAction(() => 
         {
             SyncSoundsToAudioEngine(SoundsToUpdate, SoundsToAdd, SoundsToRemove);
+            SyncCategoriesToUpdate(CategoryVolumeData);
+            if (UpdateMasterVolume)
+            {
+                _wrappedEngine.Volume = NewVolume;
+            }
         });
     }
 
@@ -232,4 +325,9 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     {
         _scheduledActions.Enqueue(action ?? throw new ArgumentNullException(nameof(action)));
     }
+
+
+    // Types.
+    private record class SoundVolumeData(IPreSampledSoundInstance WrappedSound, float Volume);
+    private record class CategoryVolumeUpdateData(LogiSoundCategory Category, float Volume, SoundVolumeData[] Sounds);
 }

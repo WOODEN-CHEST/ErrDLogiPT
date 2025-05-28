@@ -18,7 +18,7 @@ public class MainMenuScene : SceneBase
     // Constructors.
     public MainMenuScene(GameServices services) : base(services)
     {
-        _uiExecutor = new(this, Services.FrameExecutor, AssetProvider, Services.Input);
+        _uiExecutor = new(this, Services.FrameExecutor, AssetProvider, Services.Input, Services.SoundEngine);
         AddComponent(_uiExecutor);
     }
 

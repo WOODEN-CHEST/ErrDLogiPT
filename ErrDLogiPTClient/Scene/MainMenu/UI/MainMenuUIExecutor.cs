@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Scene.Sound;
+using GHEngine;
 using GHEngine.Frame;
 using GHEngine.IO;
 using Microsoft.Xna.Framework.Input;
@@ -33,7 +34,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     public MainMenuUIExecutor(MainMenuScene scene, 
         IFrameExecutor frameExecutor,
         ISceneAssetProvider assetProvider, 
-        IUserInput input)
+        IUserInput input,
+        ILogiSoundEngine soundEngine)
         : base(scene)
     {
         _frameExecutor = frameExecutor ?? throw new ArgumentNullException(nameof(frameExecutor));
@@ -46,7 +48,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _frame.AddLayer(_foregroundLayer);
         _input = input;
 
-        _uiElementFactory = new(assetProvider, input);
+        _uiElementFactory = new(assetProvider, input, soundEngine);
     }
 
 
