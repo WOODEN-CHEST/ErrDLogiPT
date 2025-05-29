@@ -25,6 +25,7 @@ public interface ILogiSoundEngine : ITimeUpdatable, IDisposable
     void RemoveSounds(IPreSampledSound sound);
     void RemoveSound(ILogiSoundInstance soundInstance);
     ILogiSoundInstance CreateSoundInstance(IPreSampledSound sound, LogiSoundCategory category);
+    void AddSoundInstance(ILogiSoundInstance soundInstance);
     void SetCategoryVolume(LogiSoundCategory category, float volume);
     float GetCategoryVolume(LogiSoundCategory category);
     void ScheduleAction(Action action);

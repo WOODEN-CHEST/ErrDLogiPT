@@ -9,7 +9,7 @@ namespace ErrDLogiPTClient.Scene.UI;
 public enum UISoundOrigin
 {
     Unknown,
-    Hover,
-    Unhover,
+    HoverStart,
+    HoverEnd,
     Click
 }

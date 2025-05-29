@@ -154,6 +154,8 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     public event EventHandler<BasicButtonClickEndEventArgs>? ClickEnd;
     public event EventHandler<BasicButtonHoverStartEventArgs>? HoverStart;
     public event EventHandler<BasicButtonHoverEndEventArgs>? HoverEnd;
+    public event EventHandler<BasicButtonSoundEventArgs>? PlaySound;
+    public event EventHandler<BasicButtonScrollEventArgs>? Scroll;
 
 
     // Private static fields.
@@ -194,7 +196,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     private Color _normalButtonColor = Color.White;
     private Color _highlightColor = new Color(173, 255, 110, 255);
-    private Color _clickColor = new Color(173, 255, 110, 255);
+    private Color _clickColor = new Color(79, 299, 240, 255);
     private double _highlightFadeFactor = 0d;
     private double _clickFadeFactor = 0d;
 
@@ -262,6 +264,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         _clickDetector.ClickEnd += OnClickEndEvent;
         _clickDetector.HoverStart += OnHoverStartEvent;
         _clickDetector.HoverEnd += OnHoverEndEvent;
+        _clickDetector.Scroll += OnScrollEvent;
     }
 
     public void Deinitialize()
@@ -275,6 +278,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         _clickDetector.ClickEnd -= OnClickEndEvent;
         _clickDetector.HoverStart -= OnHoverStartEvent;
         _clickDetector.HoverEnd -= OnHoverEndEvent;
+        _clickDetector.Scroll -= OnScrollEvent;
     }
 
     public bool IsPositionOverButton(Vector2 position)
@@ -364,7 +368,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             args.ClickEndLocation, 
             args.ClickDuration)
         {
-            ClickSound = ClickSound
+            Sound = ClickSound
         };
 
         ClickEnd?.Invoke(this, EventArgs);
@@ -375,19 +379,22 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             return;
         }
 
-        if (EventArgs.ClickSound != null)
+        if (EventArgs.Sound != null)
         {
-            ILogiSoundInstance SoundInstance = _soundEngine.CreateSoundInstance(EventArgs.ClickSound, SoundCategory);
-            SoundInstance.Volume = Volume;
+            PlayUISound(UISoundOrigin.Click, EventArgs.Sound);
         }
 
+        _clickFadeFactor = 1d;
         ClickAction?.Invoke(this);
         EventArgs.ExecuteActions();
     }
 
     private void OnHoverStartEvent(object? sender, ClickDetectorHoverStartEventArgs args)
     {
-        BasicButtonHoverStartEventArgs EventArgs = new(this);
+        BasicButtonHoverStartEventArgs EventArgs = new(this)
+        {
+            Sound = GetRandomSound(_onHoverSounds)
+        };
         HoverStart?.Invoke(this, EventArgs);
         
 
@@ -398,6 +405,11 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             
         }
 
+        if (EventArgs.Sound != null)
+        {
+            PlayUISound(UISoundOrigin.HoverStart, EventArgs.Sound);
+        }
+
         _isHovered = true;
         HoverAction?.Invoke(this);
         EventArgs.ExecuteActions();
@@ -405,7 +417,10 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     private void OnHoverEndEvent(object? sender, ClickDetectorHoverEndEventArgs args)
     {
-        BasicButtonHoverEndEventArgs EventArgs = new(this);
+        BasicButtonHoverEndEventArgs EventArgs = new(this)
+        {
+            Sound = GetRandomSound(_onHoverSounds)
+        };
         HoverEnd?.Invoke(this, EventArgs);
         
 
@@ -416,14 +431,48 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             
         }
 
+        if (EventArgs.Sound != null)
+        {
+            PlayUISound(UISoundOrigin.HoverEnd, EventArgs.Sound);
+        }
+
         _isHovered = false;
         UnhoverAction?.Invoke(this);
+        EventArgs.ExecuteActions();
+    }
+
+    private void OnScrollEvent(object? sender, ClickDetectorScrollEventArgs args)
+    {
+        BasicButtonScrollEventArgs EventArgs = new(this, args.ScrollAmount);
+        Scroll?.Invoke(this, EventArgs);
         EventArgs.ExecuteActions();
     }
 
     private IPreSampledSound? GetRandomSound(RandomSequence<IPreSampledSound> sounds)
     {
         return sounds.Count == 0 ? null : sounds.Get();
+    }
+
+    private void PlayUISound(UISoundOrigin origin, IPreSampledSound sound)
+    {
+        ILogiSoundInstance SoundInstance = _soundEngine.CreateSoundInstance(sound, SoundCategory);
+        SoundInstance.Volume = Volume;
+
+        BasicButtonSoundEventArgs EventArgs = new(this, UISoundOrigin.Click, SoundInstance);
+        PlaySound?.Invoke(this, EventArgs);
+
+        if (EventArgs.IsCancelled)
+        {
+            EventArgs.ExecuteActions();
+            return;
+        }
+
+        if (EventArgs.Sound != null)
+        {
+            _soundEngine.AddSoundInstance(EventArgs.Sound);
+        }
+
+        EventArgs.ExecuteActions();
     }
 
     private void ButtonGenericUpdate(IProgramTime time)
@@ -435,7 +484,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             COLOR_FADE_FACTOR_MIN,
             COLOR_FADE_FACTOR_MAX);
 
-        _clickFadeFactor = Math.Clamp(_clickFadeFactor * time.PassedTime.TotalSeconds / COLOR_FADE_DURATION_CLICK.TotalSeconds,
+        _clickFadeFactor = Math.Clamp(_clickFadeFactor - PassedTimeSeconds / COLOR_FADE_DURATION_CLICK.TotalSeconds,
             COLOR_FADE_FACTOR_MIN,
             COLOR_FADE_FACTOR_MAX);
 

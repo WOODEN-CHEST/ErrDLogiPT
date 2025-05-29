@@ -15,7 +15,7 @@ public class BasicButtonClickEndEventArgs : BasicButtonEventArgs
     public Vector2 ClickStartLocation { get; set; }
     public Vector2 ClickEndLocation { get; set; }
     public TimeSpan ClickDuration { get; set; }
-    public IPreSampledSound? ClickSound { get; set; } = null;
+    public IPreSampledSound? Sound { get; set; } = null;
 
 
     // Constructors.

@@ -34,6 +34,9 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private ILogiSoundEngine _soundEngine;
     private ISceneAssetProvider _assetProvider;
 
+    private double _speed = 1d;
+    private const double SPEED_CHANGE = 0.1d;
+
 
     // Constructors.
     public MainMenuUIExecutor(MainMenuScene scene, 
@@ -75,6 +78,27 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _button.Scale = 0.1f;
         
         _button.ClickSounds = new IPreSampledSound[] { _assetProvider.GetAsset<IPreSampledSound>(AssetType.Sound, "test") };
+        _button.Volume = 0.25f;
+
+        _button.Scroll += (sender, args) =>
+        {
+            if (args.ScrollAmount > 0)
+            {
+                _speed += SPEED_CHANGE;
+            }
+            else
+            {
+                _speed -= SPEED_CHANGE;
+            }
+        };
+
+        _button.PlaySound += (sender, args) => 
+        {
+            if ((args.Origin == UISoundOrigin.Click) && (args.Sound != null))
+            {
+                args.Sound.Speed = _speed;
+            }
+        };
     }
 
     public override void OnStart()

@@ -214,7 +214,6 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         ArgumentNullException.ThrowIfNull(category, nameof(category));
 
         ILogiSoundInstance Instance = new DefaultSceneSoundInstance((IPreSampledSoundInstance)sound.CreateInstance(), category);
-        _soundsToAdd.Add(Instance);
         _sounds.Add(Instance.WrappedSoundInstance, Instance);
 
         Instance.WrappedSoundInstance.SoundLooped += OnSoundLoopEvent;
@@ -338,6 +337,11 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     public void ScheduleAction(Action action)
     {
         _scheduledActions.Enqueue(action ?? throw new ArgumentNullException(nameof(action)));
+    }
+
+    public void AddSoundInstance(ILogiSoundInstance soundInstance)
+    {
+        _soundsToAdd.Add(soundInstance);
     }
 
 

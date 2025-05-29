@@ -11,7 +11,9 @@ public class BasicButtonSoundEventArgs : BasicButtonEventArgs
 {
     // Fields.
     public UISoundOrigin Origin { get; }
-    public ILogiSoundInstance Sound { get; }
+    public ILogiSoundInstance? Sound { get; set; }
+
+
 
 
     // Constructors.
