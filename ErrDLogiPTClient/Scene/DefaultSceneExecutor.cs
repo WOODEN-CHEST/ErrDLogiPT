@@ -209,16 +209,16 @@ public class DefaultSceneExecutor : ISceneExecutor
                 return;
             }
 
-            _nextScene = nextScene;
+            IGameScene? FinalNextScene = SceneChangeArgs.NextScene;
+            _nextScene = FinalNextScene;
 
             lock (LockObject)
             {
                 _isNextSceneLoaded = false;
-
-                _isNextSceneAvailable = nextScene != null;
+                _isNextSceneAvailable = FinalNextScene != null;
                 if (_isNextSceneAvailable)
                 {
-                    Task.Run(() => LoadNextScene(nextScene!));
+                    Task.Run(() => LoadNextScene(FinalNextScene!));
                 }
             }
 

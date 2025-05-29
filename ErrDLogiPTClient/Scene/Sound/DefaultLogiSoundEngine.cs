@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -112,13 +113,25 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         return sounds.ToArray();
     }
 
-    private void SyncSoundsToAudioEngine(ILogiSoundInstance[] soundsToUpdate,
+    private SoundUpdateData[] GetSoundUpdateDataSnapshot()
+    {
+        if (_soundsToUpdate.Count == 0)
+        {
+            return Array.Empty<SoundUpdateData>();
+        }
+
+        return _soundsToUpdate
+            .Select(sound => new SoundUpdateData(sound.WrappedSoundInstance, SoundPropertySnapshot.Create(sound)))
+            .ToArray();
+    }
+
+    private void SyncSoundsToAudioEngine(SoundUpdateData[] updateDataSnapsohot,
         ILogiSoundInstance[] soundsToAdd,
         ILogiSoundInstance[] soundsToRemove)
     {
-        foreach (ILogiSoundInstance UpdatedSound in soundsToUpdate)
+        foreach (SoundUpdateData UpdatedSound in updateDataSnapsohot)
         {
-            _soundSynchronizer.SynchronzieSound(UpdatedSound);
+            _soundSynchronizer.SynchronizeSound(UpdatedSound.WrappedSound, UpdatedSound.DataSnapshot);
         }
         foreach (ILogiSoundInstance AddedSound in soundsToAdd)
         {
@@ -153,7 +166,7 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
                 {
                     return;
                 }
-                LogiInstance.Position = Position;
+                LogiInstance.SyncWrappedProperties(Position);
             });
         }
     }
@@ -202,6 +215,7 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
 
         ILogiSoundInstance Instance = new DefaultSceneSoundInstance((IPreSampledSoundInstance)sound.CreateInstance(), category);
         _soundsToAdd.Add(Instance);
+        _sounds.Add(Instance.WrappedSoundInstance, Instance);
 
         Instance.WrappedSoundInstance.SoundLooped += OnSoundLoopEvent;
         Instance.WrappedSoundInstance.SoundFinished += OnSoundFinishEvent;
@@ -224,7 +238,7 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     public virtual void SetCategoryVolume(LogiSoundCategory category, float volume)
     {
         ArgumentNullException.ThrowIfNull(category, nameof(category));
-        if (float.IsNormal(volume) || float.IsInfinity(volume))
+        if (float.IsNaN(volume) || float.IsInfinity(volume))
         {
             throw new ArgumentException($"Invalid category volume: {volume}");
         }
@@ -296,7 +310,7 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     {
         ExecuteScheduledActions();
 
-        ILogiSoundInstance[] SoundsToUpdate = GetSoundSnapshot(_soundsToUpdate);
+        SoundUpdateData[] SoundsToUpdate = GetSoundUpdateDataSnapshot();
         ILogiSoundInstance[] SoundsToAdd = GetSoundSnapshot(_soundsToAdd);
         ILogiSoundInstance[] SoundsToRemove = GetSoundSnapshot(_soundsToRemove);
         CategoryVolumeUpdateData[] CategoryVolumeData = GetCategoryUpdateDataSnapshot();
@@ -330,4 +344,5 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     // Types.
     private record class SoundVolumeData(IPreSampledSoundInstance WrappedSound, float Volume);
     private record class CategoryVolumeUpdateData(LogiSoundCategory Category, float Volume, SoundVolumeData[] Sounds);
+    private record class SoundUpdateData(IPreSampledSoundInstance WrappedSound, SoundPropertySnapshot DataSnapshot);
 }

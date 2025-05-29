@@ -1,6 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
 using GHEngine;
-using GHEngine.Audio;
 using GHEngine.Audio.Source;
 using GHEngine.Collections;
 using GHEngine.Frame;
@@ -12,12 +11,10 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.MainMenu.UI;
+namespace ErrDLogiPTClient.Scene.UI;
 
-public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
+public class UIBasicButton : ITimeUpdatable, IRenderableItem
 {
     // Fields.
     public bool IsEnabled { get; set; }
@@ -30,6 +27,7 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         set
         {
             _position = value;
+            UpdateButtonArea();
         }
     }
 
@@ -53,6 +51,8 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         }
     }
 
+    public Color ClickColor { get; set; } = new Color(79, 229, 240, 255);
+
     public string Text
     {
         get => _buttonText.Text;
@@ -62,18 +62,16 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         }
     }
 
+    public bool IsTextShadowed { get; set; }
+
     public float Length
     {
         get => _buttonLength;
         set
         {
-            if (float.IsNaN(value))
+            if (float.IsNaN(value) || float.IsInfinity(value))
             {
-                throw new ArgumentException("Button length cannot be NaN");
-            }
-            if (float.IsInfinity(value))
-            {
-                throw new ArgumentException("Button length cannot be infinity");
+                throw new ArgumentException($"Invalid button length: {value}");
             }
             if (value < 0f)
             {
@@ -88,6 +86,15 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         get => _scale;
         set
         {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                throw new ArgumentException($"Invalid scale: {value}");
+            }
+            if (value < 0f)
+            {
+                throw new ArgumentException("Button scale cannot be < 0");
+            }
+
             _scale = value;
             
             UpdateSize();
@@ -97,11 +104,8 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
 
     public bool IsButtonTargeted
     {
-        get => _isTargeted;
-        set
-        {
-            _isTargeted = value;
-        }
+        get => _clickDetector.IsTargeted;
+        set => _clickDetector.IsTargeted = value;
     }
 
     public float Volume
@@ -110,23 +114,38 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         set => _volume = value;
     }
 
-    public IEnumerable<ISound> ClickSounds
+    public IEnumerable<IPreSampledSound> ClickSounds
     {
         get => _clickSounds.ToArray()!;
-        set => _clickSounds.SetItems(value?.ToArray() ?? Array.Empty<ISound>());
+        set => _clickSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
     }
 
-    public IEnumerable<ISound> HoverSounds
+    public IEnumerable<IPreSampledSound> HoverSounds
     {
         get => _onHoverSounds.ToArray()!;
-        set => _onHoverSounds.SetItems(value?.ToArray() ?? Array.Empty<ISound>());
+        set => _onHoverSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
     }
 
-    public IEnumerable<ISound> UnhoverSounds
+    public IEnumerable<IPreSampledSound> UnhoverSounds
     {
         get => _onUnhoverSounds.ToArray()!;
-        set => _onUnhoverSounds.SetItems(value?.ToArray() ?? Array.Empty<ISound>());
+        set => _onUnhoverSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
     }
+
+    public LogiSoundCategory SoundCategory
+    {
+        get => _soundCategory;
+        set => _soundCategory = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public ButtonClickMethod ClickMethod { get; set; } = ButtonClickMethod.ActivateOnFullClick;
+
+    public RectangleF ButtonArea => _clickDetector.ElementBounds;
+
+    public event EventHandler<BasicButtonClickEndEventArgs>? ClickEnd;
+    public event EventHandler<BasicButtonClickEndEventArgs>? ClickEnd;
+    public event EventHandler<EventArgs>? HoverStart;
+    public event EventHandler<EventArgs>? HoverEnd;
 
 
     // Private static fields.
@@ -141,7 +160,7 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
 
     // Private fields.
     private readonly IUserInput _input;
-    private readonly IAudioEngine _audioEngine;
+    private readonly ILogiSoundEngine _soundEngine;
     private readonly ISceneAssetProvider _assetProvider;
     private readonly SpriteItem _leftPartSprite;
     private readonly SpriteItem _middlePartSprite;
@@ -151,43 +170,45 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
     private float _buttonLength = 1f;
     private Vector2 _position = Vector2.Zero;
     private float _scale = 1f;
-    private RectangleF _buttonArea;
 
-    private bool _isTargeted = false;
     private bool _isEnabled = false;
     private bool _isDisabledOnCLick;
-    private DeltaValue<bool> _isHovered;
+    private DeltaValue<bool> _isHovered = new();
 
-    private RandomSequence<ISound> _clickSounds = new(Array.Empty<ISound>());
-    private RandomSequence<ISound> _onHoverSounds = new(Array.Empty<ISound>());
-    private RandomSequence<ISound> _onUnhoverSounds = new(Array.Empty<ISound>());
-
+    private RandomSequence<IPreSampledSound> _clickSounds = new(Array.Empty<IPreSampledSound>());
+    private RandomSequence<IPreSampledSound> _onHoverSounds = new(Array.Empty<IPreSampledSound>());
+    private RandomSequence<IPreSampledSound> _onUnhoverSounds = new(Array.Empty<IPreSampledSound>());
+    private LogiSoundCategory _soundCategory = LogiSoundCategory.UI;
     private float _volume = 1f;
 
     private Color _normalButtonColor = Color.White;
     private Color _highlightColor = new Color(173, 255, 110, 255);
     private double _highlightFadeFactor = 0d;
 
+    private readonly ClickDetector _clickDetector;
+
 
     // Constructors
-    public MainMenuBasicButton(ILogiSoundEngine soundEngine,
+    public UIBasicButton(ILogiSoundEngine soundEngine,
         IUserInput input,
         ISceneAssetProvider? assetProvider,
         ISpriteAnimation animation,
-        GHFontFamily font,
-        float buttonLength)
+        GHFontFamily font)
     {
         ArgumentNullException.ThrowIfNull(input, nameof(input));
         ArgumentNullException.ThrowIfNull(animation, nameof(animation));
         ArgumentNullException.ThrowIfNull(font, nameof(font));
-        _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(assetProvider));
+        ArgumentNullException.ThrowIfNull(soundEngine, nameof(soundEngine));
+        ArgumentNullException.ThrowIfNull(assetProvider, nameof(assetProvider));
+
+        _input = input;
+        _assetProvider = assetProvider;
+        _clickDetector = new(input);
 
         if (animation.FrameCount < 3)
         {
             throw new ArgumentException("basic main menu button animation must have at least 3 frames", nameof(animation));
         }
-
-        _input = input;
 
         _leftPartSprite = new(animation.CreateInstance());
         _middlePartSprite = new(animation.CreateInstance());
@@ -207,8 +228,6 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         };
         _buttonText.Origin = new(0.5f, 0.5f);
         _buttonText.FitMethod = TextFitMethod.Resize;
-
-        Length =  buttonLength;
         
         UpdateSize();
         UpdateButtonArea();
@@ -249,10 +268,10 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
         Vector2 Middle = _position;
 
         Vector2 Left = Middle - GHMath.GetWindowAdjustedVector(
-            new Vector2((_middlePartSprite.Size.X / 2f) - POSITION_MARGIN_OF_ERROR, 0f), aspectRatio);
+            new Vector2(_middlePartSprite.Size.X / 2f - POSITION_MARGIN_OF_ERROR, 0f), aspectRatio);
 
         Vector2 Right = Middle + GHMath.GetWindowAdjustedVector(
-            new Vector2((_middlePartSprite.Size.X / 2f) - POSITION_MARGIN_OF_ERROR, 0f), aspectRatio);
+            new Vector2(_middlePartSprite.Size.X / 2f - POSITION_MARGIN_OF_ERROR, 0f), aspectRatio);
 
         return(Left, Middle, Right);
     }
@@ -295,39 +314,27 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
 
         Vector2 Dimensions = TopRight - BottomLeft;
 
-
-        _buttonArea = new(BottomLeft.X, BottomLeft.Y, Dimensions.X, Dimensions.Y);
+        _clickDetector.ElementBounds = new(BottomLeft.X, BottomLeft.Y, Dimensions.X, Dimensions.Y);
     }
 
-    private void PlayRandomSound(RandomSequence<ISound> sounds)
+    private void PlayRandomSound(RandomSequence<IPreSampledSound> sounds)
     {
         if (sounds.Count == 0)
         {
             return;
         }
 
-        ISound TargetSound = sounds.Get()!;
-        ISoundInstance Instance = TargetSound.CreateInstance();
-
+        IPreSampledSound TargetSound = sounds.Get()!;
+        _soundEngine.CreateSoundInstance(TargetSound, SoundCategory);
     }
 
-    private void OnButtonTargetUpdate()
-    {
-        if (_isHovered.Current && !_isHovered.Previous && (_onHoverSounds.Count > 0))
-        {
-            PlayRandomSound(_onHoverSounds);
-        }
-    }
 
-    private void OnButtonNotTargetUpdate()
-    {
 
-    }
 
     private void ButtonGenericUpdate(IProgramTime time)
     {
         _highlightFadeFactor = Math.Clamp(
-            _highlightFadeFactor + (time.PassedTime.TotalSeconds * (_isTargeted ? 1d : -1d) / COLOR_FADE_DURATION.TotalSeconds),
+            _highlightFadeFactor + time.PassedTime.TotalSeconds * (_isTargeted ? 1d : -1d) / COLOR_FADE_DURATION.TotalSeconds,
             HIGHLIGH_FADE_FACTOR_MIN,
             HIGHLIGH_FADE_FACTOR_MAX);
 
@@ -349,14 +356,10 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
     {
         UpdateButtonArea();
 
-        _isTargeted = IsEnabled && ((_isTargeted && (_input.VirtualMousePositionPrevious == _input.VirtualMousePositionCurrent))
-            || IsPositionOverButton(_input.VirtualMousePositionCurrent));
-
-        _isHovered.SetValue(_isTargeted);
         ButtonGenericUpdate(time);
-        if (_isTargeted)
+        if (IsButtonTargeted)
         {
-            OnButtonTargetUpdate();
+            OnButtonTargetUpdate(time);
         }
         else
         {
@@ -366,6 +369,11 @@ public class MainMenuBasicButton : ITimeUpdatable, IRenderableItem
 
     public void Render(IRenderer renderer, IProgramTime time)
     {
+        if (!IsVisible)
+        {
+            return;
+        }
+
         UpdateRenderPositions(renderer.AspectRatio); 
         _leftPartSprite.Render(renderer, time);
         _middlePartSprite.Render(renderer, time);

@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.Sound;
+namespace ErrDLogiPTClient.Scene.UI;
 
-public enum SceneSoundState
+public enum UIElementClickType
 {
-    Stopped,
-    Playing
+    None,
+    Left,
+    Middle,
+    Right,
+    Enter
 }

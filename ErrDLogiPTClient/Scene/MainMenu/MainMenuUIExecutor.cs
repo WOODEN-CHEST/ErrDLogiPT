@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
+using ErrDLogiPTClient.Scene.UI;
 using GHEngine;
 using GHEngine.Frame;
 using GHEngine.IO;
@@ -9,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.MainMenu.UI;
+namespace ErrDLogiPTClient.Scene.MainMenu;
 
 public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 {
@@ -24,10 +25,10 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly ILayer _foregroundLayer;
 
     private readonly IFrameExecutor _frameExecutor;
-    private readonly MainUIElementFactory _uiElementFactory;
+    private readonly UIElementFactory _uiElementFactory;
     private readonly IUserInput _input;
 
-    private MainMenuBasicButton _button;
+    private UIBasicButton _button;
 
 
     // Constructors.
@@ -65,6 +66,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _button = _uiElementFactory.CreateButton(4f);
         _button.Position = new(0.5f, 0.5f);
         _button.Scale = 0.1f;
+
+
     }
 
     public override void OnStart()

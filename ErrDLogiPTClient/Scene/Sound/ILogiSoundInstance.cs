@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Tests.Audio;
 
 namespace ErrDLogiPTClient.Scene.Sound;
 
@@ -12,7 +11,7 @@ public interface ILogiSoundInstance
 {
     // Fields.
     LogiSoundCategory Category { get; set; }
-    SceneSoundState State { get; set; }
+    LogiSoundState State { get; set; }
     bool IsUpdateRequired { get; }
     TimeSpan Duration { get; }
     float Volume { get; set; }

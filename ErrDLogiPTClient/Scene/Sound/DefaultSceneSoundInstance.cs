@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Tests.Audio;
 
 namespace ErrDLogiPTClient.Scene.Sound;
 
@@ -17,7 +16,7 @@ public class DefaultSceneSoundInstance : ILogiSoundInstance
         get => _isUpdateRequired;
         set
         {
-            if (_isUpdateRequired = value)
+            if (_isUpdateRequired)
             {
                 return;
             }
@@ -147,7 +146,7 @@ public class DefaultSceneSoundInstance : ILogiSoundInstance
     }
     public IPreSampledSoundInstance WrappedSoundInstance { get; private init; }
 
-    public SceneSoundState State
+    public LogiSoundState State
     {
         get => _state;
         set
@@ -209,7 +208,7 @@ public class DefaultSceneSoundInstance : ILogiSoundInstance
     private float _pan = 0f;
     private TimeSpan? _requestedPosition = null;
     private TimeSpan _syncedPosition = TimeSpan.Zero;
-    private SceneSoundState _state = SceneSoundState.Playing;
+    private LogiSoundState _state = LogiSoundState.Playing;
     private LogiSoundCategory _category;
     private bool _isUpdateRequired = false;
 
@@ -227,7 +226,7 @@ public class DefaultSceneSoundInstance : ILogiSoundInstance
     {
         _requestedPosition = null;
         _syncedPosition = newPosition;
-        IsUpdateRequired = false;
+        _isUpdateRequired = false;
     }
 
     public void InvokeLoopEvent()

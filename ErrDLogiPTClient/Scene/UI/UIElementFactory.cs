@@ -10,9 +10,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.MainMenu.UI;
+namespace ErrDLogiPTClient.Scene.UI;
 
-public class MainUIElementFactory
+public class UIElementFactory
 {
     // Private static fields.
     private const string ASSET_NAME_BUTTON_BASIC = "main_button";
@@ -26,7 +26,7 @@ public class MainUIElementFactory
 
 
     // Constructors.
-    public MainUIElementFactory(ISceneAssetProvider assetProvider, IUserInput input, ILogiSoundEngine soundEngine)
+    public UIElementFactory(ISceneAssetProvider assetProvider, IUserInput input, ILogiSoundEngine soundEngine)
     {
         _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(assetProvider));
         _input = input ?? throw new ArgumentNullException(nameof(input));
@@ -41,14 +41,16 @@ public class MainUIElementFactory
         _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT);
     }
 
-    public MainMenuBasicButton CreateButton(float lengthSegments)
+    public UIBasicButton CreateButton(float lengthSegments)
     {
-        MainMenuBasicButton Button = new(_soundEngine,
+        UIBasicButton Button = new(_soundEngine,
             _input,
-            _assetProvider, 
+            _assetProvider,
             _assetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BUTTON_BASIC),
-            _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT),
-            lengthSegments);
+            _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT))
+        {
+            Length = lengthSegments
+        };
 
         return Button;
     }

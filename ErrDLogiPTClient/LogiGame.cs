@@ -159,6 +159,7 @@ namespace ErrDLogiPTClient
                 _services.Input.RefreshInput();
                 TryChangeFullScreenMode(_services.Input);
                 _services.SceneExecutor.Update(ProgramTime);
+                _services.SoundEngine.Update(ProgramTime);
             }
             catch (Exception e)
             {

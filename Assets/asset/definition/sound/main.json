@@ -1,0 +1,8 @@
+{
+    "sound": [
+        {
+            "name": "test",
+            "path": "main/test"
+        }
+    ]
+}
