@@ -10,7 +10,7 @@ namespace ErrDLogiPTClient.Scene.UI;
 public class ClickDetectorClickStartEventArgs : ClickDetectorEventArgs
 {
     // Fields.
-    public Vector2 ClickPosition { get; }
+    public Vector2 ClickStartLocation { get; }
     public UIElementClickType ClickType { get; }
 
 
@@ -19,7 +19,7 @@ public class ClickDetectorClickStartEventArgs : ClickDetectorEventArgs
         Vector2 clickPosition, 
         UIElementClickType clickType) : base(detector)
     {
-        ClickPosition = clickPosition;
+        ClickStartLocation = clickPosition;
         ClickType = clickType;
     }
 }

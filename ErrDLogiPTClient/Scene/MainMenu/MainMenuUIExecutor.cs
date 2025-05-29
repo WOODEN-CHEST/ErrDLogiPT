@@ -1,6 +1,8 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI;
 using GHEngine;
+using GHEngine.Assets.Def;
+using GHEngine.Audio.Source;
 using GHEngine.Frame;
 using GHEngine.IO;
 using Microsoft.Xna.Framework.Input;
@@ -29,6 +31,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly IUserInput _input;
 
     private UIBasicButton _button;
+    private ILogiSoundEngine _soundEngine;
+    private ISceneAssetProvider _assetProvider;
 
 
     // Constructors.
@@ -49,6 +53,9 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _frame.AddLayer(_foregroundLayer);
         _input = input;
 
+        _soundEngine = soundEngine;
+        _assetProvider = assetProvider;
+
         _uiElementFactory = new(assetProvider, input, soundEngine);
     }
 
@@ -66,8 +73,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _button = _uiElementFactory.CreateButton(4f);
         _button.Position = new(0.5f, 0.5f);
         _button.Scale = 0.1f;
-
-
+        
+        _button.ClickSounds = new IPreSampledSound[] { _assetProvider.GetAsset<IPreSampledSound>(AssetType.Sound, "test") };
     }
 
     public override void OnStart()

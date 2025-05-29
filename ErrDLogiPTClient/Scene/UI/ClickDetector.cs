@@ -99,6 +99,8 @@ public class ClickDetector : ITimeUpdatable
             ClickStartLocation = CurrentClickLocation;
         }
 
+        ResetClickData();
+
         ClickEnd?.Invoke(this, new(this, ClickStartLocation, CurrentClickLocation, type, ClickDuration));
     }
 
@@ -153,6 +155,13 @@ public class ClickDetector : ITimeUpdatable
         };
     }
 
+    private void ResetClickData()
+    {
+        _currentClickType = UIElementClickType.None;
+        _clickStartPosition = Vector2.Zero;
+        _clickDuration = TimeSpan.Zero;
+    }
+
     private UIElementClickType TestMethodOnFullClick(IProgramTime time)
     {
         if (_currentClickType == UIElementClickType.None)
@@ -170,9 +179,13 @@ public class ClickDetector : ITimeUpdatable
         _clickDuration += time.PassedTime;
 
         UIElementClickType ReleaseClickType = TestMethodOnRelease();
-        if (!IsButtonDown(_currentClickType) && _isTargeted)
+        if (!IsButtonDown(_currentClickType))
         {
-            return _currentClickType;
+            if (_isTargeted)
+            {
+                return _currentClickType;
+            }
+            ResetClickData();
         }
         return UIElementClickType.None;
     }
@@ -214,7 +227,6 @@ public class ClickDetector : ITimeUpdatable
     {
         if (!_isHovered.Current && _isHovered.Previous)
         {
-            _currentClickType = UIElementClickType.None;
             HoverEnd?.Invoke(this, new(this));
         }
     }
@@ -246,11 +258,11 @@ public class ClickDetector : ITimeUpdatable
 
         if (_isTargeted)
         {
-            OnButtonNotTargetUpdate();
+            OnButtonTargetUpdate(time);
         }
         else
         {
-            OnButtonTargetUpdate(time);
+            OnButtonNotTargetUpdate();
         }
     }
 }
