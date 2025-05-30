@@ -76,6 +76,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _button = _uiElementFactory.CreateButton(4f);
         _button.Position = new(0.5f, 0.5f);
         _button.Scale = 0.1f;
+        _button.Text = "Hello World!";
         
         _button.ClickSounds = new IPreSampledSound[] { _assetProvider.GetAsset<IPreSampledSound>(AssetType.Sound, "test") };
         _button.Volume = 0.25f;

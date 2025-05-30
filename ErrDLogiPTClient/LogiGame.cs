@@ -7,10 +7,14 @@ using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Assets.Loader;
 using GHEngine.Audio;
+using GHEngine.Frame;
+using GHEngine.Frame.Animation;
+using GHEngine.Frame.Item;
 using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
@@ -93,6 +97,10 @@ namespace ErrDLogiPTClient
             AssetLoader.SetTypeLoader(AssetType.Font, new FontLoader(AssetStreamOpener, _graphics.GraphicsDevice));
 
             IFrameExecutor FrameExecutor = new DefaultFrameExecutor(_graphics.GraphicsDevice, Display);
+
+            // Issues regarding blend state exist, see https://github.com/MonoGame/MonoGame/issues/6978
+            FrameExecutor.Renderer.RenderBlendState = BlendState.NonPremultiplied;
+            FrameExecutor.Renderer.ScreenColor = Color.Black;
             ISceneExecutor SceneManager = new DefaultSceneExecutor(Logger);
 
             IModManager ModManager = new DefaultModManager(Logger);

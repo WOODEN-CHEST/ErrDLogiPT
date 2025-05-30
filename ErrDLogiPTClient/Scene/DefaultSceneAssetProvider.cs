@@ -72,6 +72,11 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
                 $"name \"{name}\" for scene {_scene.GetType().FullName}");
         }
 
+        if (Asset is GHFontFamily FontAsset)
+        {
+            _fonts.Add(FontAsset);
+        }
+
         return Asset;
     }
 

@@ -17,8 +17,14 @@ namespace ErrDLogiPTClient.Scene.UI;
 public class UIBasicButton : ITimeUpdatable, IRenderableItem
 {
     // Fields.
-    public bool IsEnabled { get; set; } = true;
+    public bool IsEnabled
+    {
+        get => _clickDetector.IsEnabled;
+        set => _clickDetector.IsEnabled = value;
+    }
+
     public bool IsDisabledOnClick { get; set; } = false;
+
     public bool IsVisible { get; set; } = true;
 
     public Vector2 Position
@@ -27,6 +33,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         set
         {
             _position = value;
+            _previousRenderAspectRatio = null;
             UpdateButtonArea();
         }
     }
@@ -51,18 +58,84 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         }
     }
 
-    public Color ClickColor { get; set; } = new Color(79, 229, 240, 255);
-
-    public string Text
+    public Color ClickColor
     {
-        get => _buttonText.Text;
+        get => _clickColor;
         set
         {
-            _buttonText.Components.First().Text = value;
+            _clickColor = value;
+            UpdateRenderedColors();
         }
     }
 
-    public bool IsTextShadowed { get; set; }
+    public TimeSpan HoverFadeDuration
+    {
+        get => _hoverFadeDuration;
+        set
+        {
+            if (value.Ticks < 0)
+            {
+                throw new ArgumentException("Hover fade duration must be > 0");
+            }
+            _hoverFadeDuration = value;
+        }
+    }
+
+    public TimeSpan ClickFadeDuration
+    {
+        get => _clickFadeDuration;
+        set
+        {
+            if (value.Ticks < 0)
+            {
+                throw new ArgumentException("Click fade duration must be > 0");
+            }
+            _clickFadeDuration = value;
+        }
+    }
+
+    public string Text
+    {
+        get => _text.Text;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value, nameof(value));
+            _text.First().Text = value;
+            _textShadow.First().Text = value;
+        }
+    }
+
+    public Vector2 TextPadding
+    {
+        get => _textPadding;
+        set
+        {
+            _textPadding = value;
+            UpdateButtonArea();
+        }
+    }
+
+    public bool IsTextShadowEnabled { get; set; } = true;
+
+    public float TextShadowBrightness
+    {
+        get => _textShadowBrightness;
+        set
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                throw new ArgumentException($"Invalid shadow brightness: {value} (expected [0;1])");
+            }
+            _textShadowBrightness = Math.Clamp(value, SHADOWN_BRIGHTNESS_MIN, SHADOWN_BRIGHTNESS_MAX);
+            UpdateTextShadowColor();
+        }
+    }
+
+    public Vector2 ShadowOffset
+    {
+        get => _shadowOffset;
+        set => _shadowOffset = value;
+    }
 
     public float Length
     {
@@ -97,7 +170,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
             _scale = value;
             
-            UpdateSize();
+            UpdateRenderSize();
             UpdateButtonArea();
         }
     }
@@ -122,14 +195,14 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     public IEnumerable<IPreSampledSound> HoverSounds
     {
-        get => _onHoverSounds.ToArray()!;
-        set => _onHoverSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
+        get => _hoverStartSounds.ToArray()!;
+        set => _hoverStartSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
     }
 
     public IEnumerable<IPreSampledSound> UnhoverSounds
     {
-        get => _onUnhoverSounds.ToArray()!;
-        set => _onUnhoverSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
+        get => _hoverEndSounds.ToArray()!;
+        set => _hoverEndSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
     }
 
     public LogiSoundCategory SoundCategory
@@ -144,11 +217,26 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         set => _clickDetector.ClickMethod = value;
     }
 
-    public Action<UIBasicButton>? ClickAction { get; set; }
-    public Action<UIBasicButton>? HoverAction { get; set; }
-    public Action<UIBasicButton>? UnhoverAction { get; set; }
+    public IEnumerable<UIElementClickType> DetectedClickTypes
+    {
+        get => _detectedClickTypes;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value, nameof(value));
+            _detectedClickTypes.Clear();
 
-    public RectangleF ButtonArea => _clickDetector.ElementBounds;
+            foreach (UIElementClickType ClickType in value)
+            {
+                _detectedClickTypes.Add(ClickType);
+            }
+        }
+    }
+
+    public Action<UIBasicButton>? ClickAction { get; set; }
+    public Action<UIBasicButton>? HoverHoverStartAction { get; set; }
+    public Action<UIBasicButton>? HoverEndAction { get; set; }
+
+    public RectangleF ButtonBounds => _clickDetector.ElementBounds;
 
     public event EventHandler<BasicButtonClickStartEventArgs>? ClickStart;
     public event EventHandler<BasicButtonClickEndEventArgs>? ClickEnd;
@@ -164,10 +252,10 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     private const int FRAME_INDEX_RIGHT_PART = 2;
     private const int FRAME_COUNT = 3;
     private const float POSITION_MARGIN_OF_ERROR = 0.0025f;
-    private static readonly TimeSpan COLOR_FADE_DURATION_HIGHLIGHT = TimeSpan.FromSeconds(0.1d);
-    private static readonly TimeSpan COLOR_FADE_DURATION_CLICK = TimeSpan.FromSeconds(0.4d);
     private const double COLOR_FADE_FACTOR_MAX = 1d;
     private const double COLOR_FADE_FACTOR_MIN = 0d;
+    private const float SHADOWN_BRIGHTNESS_MIN = 0f;
+    private const float SHADOWN_BRIGHTNESS_MAX = 1f;
 
 
     // Private fields.
@@ -177,20 +265,25 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     private readonly SpriteItem _leftPartSprite;
     private readonly SpriteItem _middlePartSprite;
     private readonly SpriteItem _rightPartSprite;
-    private readonly TextBox _buttonText;
+    private readonly HashSet<UIElementClickType> _detectedClickTypes = new() { UIElementClickType.Left };
+
+    private readonly TextBox _text;
+    private readonly TextBox _textShadow;
+    private float _textShadowBrightness = 0.25f;
 
     private float _buttonLength = 1f;
     private Vector2 _position = Vector2.Zero;
     private float _scale = 1f;
+    private Vector2 _textPadding = new(0.125f);
+    private Vector2 _shadowOffset = new(0.125f);
 
-    private bool _isEnabled = false;
-    private bool _isDisabledOnCLick;
     private bool _isHovered = false;
-    private bool _wasClickStarted;
+    private bool _wasClickStarted = false;
+    private bool _isClickColorFullyActive = false;
 
     private RandomSequence<IPreSampledSound> _clickSounds = new(Array.Empty<IPreSampledSound>());
-    private RandomSequence<IPreSampledSound> _onHoverSounds = new(Array.Empty<IPreSampledSound>());
-    private RandomSequence<IPreSampledSound> _onUnhoverSounds = new(Array.Empty<IPreSampledSound>());
+    private RandomSequence<IPreSampledSound> _hoverStartSounds = new(Array.Empty<IPreSampledSound>());
+    private RandomSequence<IPreSampledSound> _hoverEndSounds = new(Array.Empty<IPreSampledSound>());
     private LogiSoundCategory _soundCategory = LogiSoundCategory.UI;
     private float _volume = 1f;
 
@@ -199,6 +292,13 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     private Color _clickColor = new Color(79, 299, 240, 255);
     private double _highlightFadeFactor = 0d;
     private double _clickFadeFactor = 0d;
+    private TimeSpan _hoverFadeDuration = TimeSpan.FromSeconds(0.1d);
+    private TimeSpan _clickFadeDuration = TimeSpan.FromSeconds(0.4d);
+
+    /* Ratios are cached so that calculations (specifically the text box updating) wouldn't happen every second.
+     * This may not be too bad for the sprites, but updating the text box is rather expensive. */
+    private float?_previousRenderAspectRatio = null;
+    private float _previousInputAspectRatio = 0f;
 
     private readonly ClickDetector _clickDetector;
 
@@ -239,23 +339,22 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         _middlePartSprite.Origin = new(0.5f, 0.5f);
         _rightPartSprite.Origin = new(0f, 0.5f);
 
-        _buttonText = new TextBox()
-        {
-            new(font, string.Empty),
-        };
-        _buttonText.Origin = new(0.5f, 0.5f);
-        _buttonText.FitMethod = TextFitMethod.Resize;
-        
-        UpdateSize();
+        _text = new TextBox() { new(font, string.Empty) };
+        _textShadow = new TextBox() { new(font, string.Empty) };
+        InitializeTextBox(_text);
+        InitializeTextBox(_textShadow);
+
+        UpdateRenderSize();
         UpdateButtonArea();
         UpdateRenderedColors();
+        UpdateTextShadowColor();
     }
 
 
     // Methods.
     public void Initialize()
     {
-        _assetProvider.RegisterRenderedItem(_buttonText);
+        _assetProvider.RegisterRenderedItem(_text);
         _assetProvider.RegisterRenderedItem(_leftPartSprite);
         _assetProvider.RegisterRenderedItem(_middlePartSprite);
         _assetProvider.RegisterRenderedItem(_rightPartSprite);
@@ -269,7 +368,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     public void Deinitialize()
     {
-        _assetProvider.UnregisterRenderedItem(_buttonText);
+        _assetProvider.UnregisterRenderedItem(_text);
         _assetProvider.UnregisterRenderedItem(_leftPartSprite);
         _assetProvider.UnregisterRenderedItem(_middlePartSprite);
         _assetProvider.UnregisterRenderedItem(_rightPartSprite);
@@ -288,6 +387,14 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
 
     // Private methods.
+    private void InitializeTextBox(TextBox textBox)
+    {
+        textBox.Origin = new(0.5f, 0.5f);
+        textBox.FitMethod = TextFitMethod.Resize;
+        textBox.Alignment = TextAlignOption.Center;
+        textBox.IsSplittingAllowed = false;
+    }
+
     private (Vector2 Left, Vector2 Middle, Vector2 Right) GetSpritePositions(float aspectRatio)
     {
         /* Margin of error is added to fix visible seams due to floating point inaccuracies.
@@ -305,6 +412,11 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     private void UpdateRenderPositions(float windowAspectRatio)
     {
+        if (_previousRenderAspectRatio.HasValue && (_previousRenderAspectRatio == windowAspectRatio))
+        {
+            return;
+        }
+
         var Positions = GetSpritePositions(windowAspectRatio);
 
         _leftPartSprite.Position = Positions.Left;
@@ -312,9 +424,14 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         _rightPartSprite.Position = Positions.Right;
 
         _middlePartSprite.Position = _position;
+
+        _text.Position = Positions.Middle;
+        _textShadow.Position = Positions.Middle + GHMath.GetWindowAdjustedVector(_shadowOffset, windowAspectRatio);
+
+        _previousRenderAspectRatio = windowAspectRatio;
     }
 
-    private void UpdateSize()
+    private void UpdateRenderSize()
     {
         Vector2 MiddleFrameSize = _middlePartSprite.FrameSize;
         _middlePartSprite.Size = new Vector2(1f * _buttonLength, MiddleFrameSize.Y / MiddleFrameSize.X) * _scale;
@@ -342,23 +459,54 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         Vector2 Dimensions = TopRight - BottomLeft;
 
         _clickDetector.ElementBounds = new(BottomLeft.X, BottomLeft.Y, Dimensions.X, Dimensions.Y);
+
+        /* There is a bug here where if the window becomes super wide, the text render the wrong size (too large).
+         * Couldn't fix it. */
+        Vector2 RelativeTextPadding = Dimensions * TextPadding;
+        Vector2 MaxDrawSize = new Vector2(Dimensions.X - RelativeTextPadding.X, float.PositiveInfinity)
+            * new Vector2(Math.Max(1f, InputRatio), 1f);
+        _text.MaxSize = MaxDrawSize;
+        _textShadow.MaxSize = MaxDrawSize;
+
+        _previousInputAspectRatio = InputRatio;
+    }
+
+    private void UpdateTextShadowColor()
+    {
+        _textShadow.Brightness = _textShadowBrightness;
     }
 
     private void OnClickStartEvent(object? sender, ClickDetectorClickStartEventArgs args)
     {
+        if (!_detectedClickTypes.Contains(args.ClickType))
+        {
+            return;
+        }
+
         BasicButtonClickStartEventArgs EventArgs = new(this, args.ClickType, args.ClickStartLocation);
         ClickStart?.Invoke(this, EventArgs);
-        EventArgs.ExecuteActions();
+
+        if (EventArgs.IsCancelled)
+        {
+            EventArgs.ExecuteActions();
+            return;
+        }
+
         _wasClickStarted = true;
+        _isClickColorFullyActive = true;
+        EventArgs.ExecuteActions();
     }
 
     private void OnClickEndEvent(object? sender, ClickDetectorClickEndEventArgs args)
     {
-        if ((ClickMethod == ButtonClickMethod.ActivateOnFullClick) && !_wasClickStarted)
+        bool IsClickValid = _wasClickStarted && args.WasClickedInBounds;
+        _wasClickStarted = false;
+        _isClickColorFullyActive = false;
+
+        if (((ClickMethod == ButtonClickMethod.ActivateOnFullClick) && !IsClickValid) || !_detectedClickTypes.Contains(args.ClickType))
         {
             return;
         }
-        _wasClickStarted = false;
 
         IPreSampledSound? ClickSound = GetRandomSound(_clickSounds);
 
@@ -385,6 +533,10 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         }
 
         _clickFadeFactor = 1d;
+        if (IsDisabledOnClick)
+        {
+            IsEnabled = false;
+        }
         ClickAction?.Invoke(this);
         EventArgs.ExecuteActions();
     }
@@ -393,7 +545,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     {
         BasicButtonHoverStartEventArgs EventArgs = new(this)
         {
-            Sound = GetRandomSound(_onHoverSounds)
+            Sound = GetRandomSound(_hoverStartSounds)
         };
         HoverStart?.Invoke(this, EventArgs);
         
@@ -411,7 +563,8 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         }
 
         _isHovered = true;
-        HoverAction?.Invoke(this);
+        _isClickColorFullyActive = _wasClickStarted;
+        HoverHoverStartAction?.Invoke(this);
         EventArgs.ExecuteActions();
     }
 
@@ -419,16 +572,14 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     {
         BasicButtonHoverEndEventArgs EventArgs = new(this)
         {
-            Sound = GetRandomSound(_onHoverSounds)
+            Sound = GetRandomSound(_hoverStartSounds)
         };
         HoverEnd?.Invoke(this, EventArgs);
         
-
         if (EventArgs.IsCancelled)
         {
             EventArgs.ExecuteActions();
             return;
-            
         }
 
         if (EventArgs.Sound != null)
@@ -436,8 +587,9 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             PlayUISound(UISoundOrigin.HoverEnd, EventArgs.Sound);
         }
 
+        _isClickColorFullyActive = false;
         _isHovered = false;
-        UnhoverAction?.Invoke(this);
+        HoverEndAction?.Invoke(this);
         EventArgs.ExecuteActions();
     }
 
@@ -477,16 +629,35 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     private void ButtonGenericUpdate(IProgramTime time)
     {
+        /* Snapping to max or min fade factors if the timespan is short is so that there is no division by zero. */
         double PassedTimeSeconds = time.PassedTime.TotalSeconds;
+  
+        if (_hoverFadeDuration.Ticks <= time.PassedTime.Ticks)
+        {
+            _highlightFadeFactor = _isHovered ? 1d : 0d;
+        }
+        else
+        {
+            _highlightFadeFactor = Math.Clamp(
+                _highlightFadeFactor + (PassedTimeSeconds * (_isHovered ? 1d : -1d) / HoverFadeDuration.TotalSeconds),
+                COLOR_FADE_FACTOR_MIN,
+                COLOR_FADE_FACTOR_MAX);
+        }
 
-        _highlightFadeFactor = Math.Clamp(
-            _highlightFadeFactor + PassedTimeSeconds * (_isHovered ? 1d : -1d) / COLOR_FADE_DURATION_HIGHLIGHT.TotalSeconds,
-            COLOR_FADE_FACTOR_MIN,
-            COLOR_FADE_FACTOR_MAX);
-
-        _clickFadeFactor = Math.Clamp(_clickFadeFactor - PassedTimeSeconds / COLOR_FADE_DURATION_CLICK.TotalSeconds,
-            COLOR_FADE_FACTOR_MIN,
-            COLOR_FADE_FACTOR_MAX);
+        if (_isClickColorFullyActive)
+        {
+            _clickFadeFactor = COLOR_FADE_FACTOR_MAX;
+        }
+        else if (_clickFadeDuration.Ticks <= time.PassedTime.Ticks)
+        {
+            _clickFadeFactor = COLOR_FADE_FACTOR_MIN;
+        }
+        else
+        {
+            _clickFadeFactor = Math.Clamp(_clickFadeFactor - (PassedTimeSeconds / ClickFadeDuration.TotalSeconds),
+                COLOR_FADE_FACTOR_MIN,
+                COLOR_FADE_FACTOR_MAX);
+        }
 
         UpdateRenderedColors();
     }
@@ -506,7 +677,12 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     public void Update(IProgramTime time)
     {
         _clickDetector.Update(time);
-        UpdateButtonArea();
+
+        if (_previousInputAspectRatio != _input.InputAreaRatio)
+        {
+            UpdateButtonArea();
+        }
+        
         ButtonGenericUpdate(time);
     }
 
@@ -517,9 +693,15 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             return;
         }
 
-        UpdateRenderPositions(renderer.AspectRatio); 
+        UpdateRenderPositions(renderer.AspectRatio);
         _leftPartSprite.Render(renderer, time);
-        _middlePartSprite.Render(renderer, time);
         _rightPartSprite.Render(renderer, time);
+        _middlePartSprite.Render(renderer, time);
+
+        //if (IsTextShadowEnabled)
+        //{
+        //    _textShadow.Render(renderer, time);
+        //}
+        _text.Render(renderer, time);
     }
 }

@@ -86,12 +86,12 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
     // Inherited methods.
     public override void OnLoad()
     {
-        _frameExecutor.SetFrame(_frame);
         base.OnLoad();
     }
 
     public override void Update(IProgramTime time)
     {
         base.Update(time);
+        _frameExecutor.SetFrame(_frame);
     }
 }

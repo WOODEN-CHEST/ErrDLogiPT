@@ -101,7 +101,7 @@ public class ClickDetector : ITimeUpdatable
 
         ResetClickData();
 
-        ClickEnd?.Invoke(this, new(this, ClickStartLocation, CurrentClickLocation, type, ClickDuration));
+        ClickEnd?.Invoke(this, new(this, ClickStartLocation, CurrentClickLocation, type, ClickDuration, _isTargeted));
     }
 
     private UIElementClickType TestSimpleClick(Func<MouseButton[], bool> mousePredicate, Func<Keys[], bool> keyPredicate)
@@ -181,11 +181,7 @@ public class ClickDetector : ITimeUpdatable
         UIElementClickType ReleaseClickType = TestMethodOnRelease();
         if (!IsButtonDown(_currentClickType))
         {
-            if (_isTargeted)
-            {
-                return _currentClickType;
-            }
-            ResetClickData();
+            return _currentClickType;
         }
         return UIElementClickType.None;
     }

@@ -14,6 +14,7 @@ public class ClickDetectorClickEndEventArgs : ClickDetectorEventArgs
     public Vector2 ClickEndLocation { get; }
     public UIElementClickType ClickType { get; }
     public TimeSpan ClickDuration { get; }
+    public bool WasClickedInBounds { get; }
 
 
     // Constructors.
@@ -21,11 +22,13 @@ public class ClickDetectorClickEndEventArgs : ClickDetectorEventArgs
         Vector2 startLocation,
         Vector2 endLocation,
         UIElementClickType clickType,
-        TimeSpan clickDuration) : base(detector)
+        TimeSpan clickDuration,
+        bool wasClickedInBounds) : base(detector)
     {
         ClickStartLocation = startLocation;
         ClickEndLocation = endLocation;
         ClickType = clickType;
         ClickDuration = clickDuration;
+        WasClickedInBounds = wasClickedInBounds;
     }
 }
