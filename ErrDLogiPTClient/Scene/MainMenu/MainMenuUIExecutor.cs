@@ -26,40 +26,18 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly ILayer _backgroundLayer;
     private readonly ILayer _foregroundLayer;
 
-    private readonly IFrameExecutor _frameExecutor;
-    private readonly UIElementFactory _uiElementFactory;
-    private readonly IUserInput _input;
-
-    private UIBasicButton _button;
-    private ILogiSoundEngine _soundEngine;
-    private ISceneAssetProvider _assetProvider;
-
-    private double _speed = 1d;
-    private const double SPEED_CHANGE = 0.1d;
+    private IBasicButton _button;
 
 
     // Constructors.
-    public MainMenuUIExecutor(MainMenuScene scene, 
-        IFrameExecutor frameExecutor,
-        ISceneAssetProvider assetProvider, 
-        IUserInput input,
-        ILogiSoundEngine soundEngine)
-        : base(scene)
+    public MainMenuUIExecutor(MainMenuScene scene, GenericServices sceneServices) : base(scene, sceneServices)
     {
-        _frameExecutor = frameExecutor ?? throw new ArgumentNullException(nameof(frameExecutor));
-
         _frame = new GHGameFrame();
 
         _backgroundLayer = new GHLayer(LAYER_NAME_BACKGROUND);
         _foregroundLayer = new GHLayer(LAYER_NAME_FOREGROUND);
         _frame.AddLayer(_backgroundLayer);
         _frame.AddLayer(_foregroundLayer);
-        _input = input;
-
-        _soundEngine = soundEngine;
-        _assetProvider = assetProvider;
-
-        _uiElementFactory = new(assetProvider, input, soundEngine);
     }
 
 
@@ -72,32 +50,30 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     {
         base.OnLoad();
 
-        _uiElementFactory.LoadAssets();
-        _button = _uiElementFactory.CreateButton(4f);
+        IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
+        Factory.LoadAssets();
+
+        _button = Factory.CreateButton();
+        _button.Length = 4f;
         _button.Position = new(0.5f, 0.5f);
         _button.Scale = 0.1f;
         _button.Text = "Hello World!";
         
-        _button.ClickSounds = new IPreSampledSound[] { _assetProvider.GetAsset<IPreSampledSound>(AssetType.Sound, "test") };
+        _button.ClickSounds = new IPreSampledSound[] 
+        {
+            SceneServices.GetRequired<ISceneAssetProvider>().GetAsset<IPreSampledSound>(AssetType.Sound, "test") 
+        };
         _button.Volume = 0.25f;
 
         _button.Scroll += (sender, args) =>
         {
             if (args.ScrollAmount > 0)
             {
-                _speed += SPEED_CHANGE;
+                _button.Scale += 0.1f;
             }
             else
             {
-                _speed -= SPEED_CHANGE;
-            }
-        };
-
-        _button.PlaySound += (sender, args) => 
-        {
-            if ((args.Origin == UISoundOrigin.Click) && (args.Sound != null))
-            {
-                args.Sound.Speed = _speed;
+                _button.Scale -= 0.1f;
             }
         };
     }
@@ -106,21 +82,16 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     {
         base.OnStart();
 
-        _frameExecutor.SetFrame(_frame);
+        SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
 
         _button.Initialize();
-        _button.Scale = 0.2f;
+        _button.Scale = 0.1f;
         _foregroundLayer.AddItem(_button);
     }
 
     public override void Update(IProgramTime time)
     {
         base.Update(time);
-
-        if (_input.WereKeysJustPressed(Keys.Tab))
-        {
-            _button.IsButtonTargeted = true;
-        }
             
         _button.Update(time);
     }

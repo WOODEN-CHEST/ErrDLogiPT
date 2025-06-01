@@ -14,7 +14,7 @@ public class BasicButtonHoverStartEventArgs : BasicButtonEventArgs
 
 
     // Constructors.
-    public BasicButtonHoverStartEventArgs(UIBasicButton button) : base(button)
+    public BasicButtonHoverStartEventArgs(IBasicButton button) : base(button)
     {
     }
 }

@@ -17,29 +17,27 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
     // Fields.
     public bool IsDisplayed
     {
-        get => _isDisplayed;
+        get => _shouldDisplay;
         set
         {
-            if (_isDisplayed == value)
+            if (_shouldDisplay == value)
             {
                 return;
             }
 
-            _isDisplayed = value;
+            _shouldDisplay = value;
 
-            if (_loadingText == null)
+            bool IsLoaded;
+            lock (_lockObject)
+            {
+                IsLoaded = _isLoaded;
+            }
+            if (!IsLoaded)
             {
                 return;
             }
 
-            if (value)
-            {
-                _targetLayer.AddItem(_loadingText);
-            }
-            else
-            {
-                _targetLayer.RemoveItem(_loadingText);
-            }
+            UpdateVisibility();
         }
     }
 
@@ -51,34 +49,55 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
     private const string LOADING_TEXT_VALUE = "Loading";
     private const char PERIOD = '.';
     private static readonly TimeSpan TIME_PER_TEXT_UPDATE = TimeSpan.FromSeconds(1d);
-    
+
 
     // Private fields.
-    private readonly ISceneAssetProvider _assetProvider;
+    private readonly object _lockObject = new();
     private readonly ILayer _targetLayer;
     private TextBox _loadingText;
     private int _periodCount = 0;
     private TextComponent _mainComponent;
-    private bool _isDisplayed = false;
     private TimeSpan _timeSinceTextUpdate = TimeSpan.Zero;
 
+    private bool _shouldDisplay = false;
+    private bool _isTextVisible = false;
+    private bool _isLoaded = false;
+    
 
     // Constructors,
-    public IntroLoadingDisplayer(IntroScene scene, ISceneAssetProvider assetProvider, ILayer targetLayer) : base(scene)
+    public IntroLoadingDisplayer(IntroScene scene, GenericServices sceneServices, ILayer targetLayer) : base(scene, sceneServices)
     {
         _targetLayer = targetLayer ?? throw new ArgumentNullException(nameof(targetLayer));
-        _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(assetProvider));
     }
 
 
-    // Inherited methods.
-    public override void Update(IProgramTime time)
+    // Private methods.
+    private void OnLoadFinish()
     {
-        base.Update(time);
-
-        if (!IsDisplayed)
+        lock (_lockObject)
         {
-            return;
+            _isLoaded = true;
+        }
+    }
+
+    private void UpdateVisibility()
+    {
+        _isTextVisible = _shouldDisplay;
+        if (_shouldDisplay)
+        {
+            _targetLayer.AddItem(_loadingText);
+        }
+        else
+        {
+            _targetLayer.RemoveItem(_loadingText);
+        }
+    }
+
+    private void UpdateText(IProgramTime time)
+    {
+        if (!_isTextVisible)
+        {
+            UpdateVisibility();
         }
 
         _timeSinceTextUpdate += time.PassedTime;
@@ -93,26 +112,58 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
         _mainComponent.Text = LOADING_TEXT_VALUE + string.Join(string.Empty, Enumerable.Repeat(PERIOD, _periodCount));
     }
 
+
+    // Inherited methods.
+    public override void Update(IProgramTime time)
+    {
+        base.Update(time);
+
+        if (!IsDisplayed)
+        {
+            return;
+        }
+
+        bool IsLoaded;
+        lock (_lockObject)
+        {
+            IsLoaded = _isLoaded;
+        }
+
+        if (!IsLoaded)
+        {
+            return;
+        }
+        UpdateText(time);
+    }
+
     public override void OnLoad()
     {
         base.OnLoad();
 
-        GHFontFamily Font = _assetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_FONT_MAIN);
+        ISceneAssetProvider AssetProvider = SceneServices.GetRequired<ISceneAssetProvider>();
 
-        _loadingText = new()
+        Task.Run(() =>
         {
-            Position = new(0.5f)
-        };
-        
-        _mainComponent = new(Font, LOADING_TEXT_VALUE)
-        {
-            FontSize = FONT_SIZE,
-            Mask = Color.White
-        };
+            GHFontFamily Font = AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_FONT_MAIN);
 
-        _loadingText.Add(_mainComponent);
-        _periodCount = 0;
-        _loadingText.Origin = new(0.5f);
-        _assetProvider.RegisterRenderedItem(_loadingText);
+            _loadingText = new()
+            {
+                Position = new(0.5f)
+            };
+
+            _mainComponent = new(Font, LOADING_TEXT_VALUE)
+            {
+                FontSize = FONT_SIZE,
+                Mask = Color.White
+            };
+
+            _loadingText.Add(_mainComponent);
+            _periodCount = 0;
+            _loadingText.Origin = new(0.5f);
+            AssetProvider.RegisterRenderedItem(_loadingText);
+            TextBoxAssetLoader.LoadTextures(_loadingText);
+
+            OnLoadFinish();
+        });
     }
 }

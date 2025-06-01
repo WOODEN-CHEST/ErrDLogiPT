@@ -19,7 +19,7 @@ public class BasicButtonClickEndEventArgs : BasicButtonEventArgs
 
 
     // Constructors.
-    public BasicButtonClickEndEventArgs(UIBasicButton button,
+    public BasicButtonClickEndEventArgs(IBasicButton button,
         UIElementClickType clickType,
         Vector2 startLocation,
         Vector2 endLocation,

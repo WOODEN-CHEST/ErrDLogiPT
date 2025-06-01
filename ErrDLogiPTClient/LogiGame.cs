@@ -7,15 +7,11 @@ using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Assets.Loader;
 using GHEngine.Audio;
-using GHEngine.Frame;
-using GHEngine.Frame.Animation;
-using GHEngine.Frame.Item;
 using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -25,9 +21,12 @@ namespace ErrDLogiPTClient
 {
     public class LogiGame : Game
     {
+        // Fields.
+        public GenericServices? LogiGameServices { get; private set; }
+
+
         // Private fields.
         private readonly GraphicsDeviceManager _graphics;
-        private GameServices? _services;
         private string _latestLogPath;
 
 
@@ -38,33 +37,39 @@ namespace ErrDLogiPTClient
         }
 
 
-        // Methods.
-        public void StopGame()
+        // Private methods.
+        private void CleanupOnExit()
         {
-            _services?.Dispose();
-            Exit();
+            if (LogiGameServices == null)
+            {
+                return;
+            }
+            
+            LogiGameServices.Get<IAssetProvider>()?.ReleaseAllAssets();
+            LogiGameServices.Get<ILogiSoundEngine>()?.Dispose();
+            LogiGameServices.Get<IDisplay>()?.Dispose();
+            LogiGameServices.Get<IModManager>()?.DeinitializeMods(LogiGameServices);
+            LogiGameServices.Get<ILogger>()?.Dispose();
         }
 
-
-        // Private methods.
         private void OnCrash(Exception? e)
         {
+            ILogger? Logger = LogiGameServices?.Get<ILogger>();
             if (e != null)
             {
-                _services?.Logger?.Critical($"Game has crashed! {e}");
+                Logger?.Critical($"Game has crashed! {e}");
             }
+            CleanupOnExit();
 
             try
             {
-                _services?.Logger?.Dispose();
+                Logger?.Dispose();
                 if (_latestLogPath != null)
                 {
                     Process.Start("notepad", _latestLogPath);
                 }
             }
             catch (Exception) { }
-
-            _services?.Dispose();
             Exit();
         }
 
@@ -87,7 +92,6 @@ namespace ErrDLogiPTClient
             ILogiSoundEngine SoundEngine = new DefaultLogiSoundEngine(new GHAudioEngine(10));
             SoundEngine.Start();
             
-
             IAssetDefinitionCollection AssetDefinitions = new GHAssetDefinitionCollection();
             GHAssetStreamOpener AssetStreamOpener = new();
             GHGenericAssetLoader AssetLoader = new();
@@ -101,40 +105,32 @@ namespace ErrDLogiPTClient
             // Issues regarding blend state exist, see https://github.com/MonoGame/MonoGame/issues/6978
             FrameExecutor.Renderer.RenderBlendState = BlendState.NonPremultiplied;
             FrameExecutor.Renderer.ScreenColor = Color.Black;
-            ISceneExecutor SceneManager = new DefaultSceneExecutor(Logger);
+            ISceneExecutor SceneExecutor = new DefaultSceneExecutor(Logger);
 
-            IModManager ModManager = new DefaultModManager(Logger);
-            ILogiAssetLoader AssetManager = new DefaultLogiAssetLoader(ModManager, Structure, Logger, AssetDefinitions, AssetStreamOpener);
+            LogiGameServices = new();
+            LogiGameServices.Set<ILogger>(Logger);
+            LogiGameServices.Set<IGamePathStructure>(Structure);
+            LogiGameServices.Set<IDisplay>(Display);
+            LogiGameServices.Set<IUserInput>(Input);
+            LogiGameServices.Set<ILogiSoundEngine>(SoundEngine);
+            LogiGameServices.Set<IAssetDefinitionCollection>(AssetDefinitions);
+            LogiGameServices.Set<IAssetStreamOpener>(AssetStreamOpener);
+            LogiGameServices.Set<IAssetLoader>(AssetLoader);
+            LogiGameServices.Set<IAssetProvider>(AssetProvider);
+            LogiGameServices.Set<IFrameExecutor>(FrameExecutor);
+            LogiGameServices.Set<ISceneExecutor>(SceneExecutor);
+            LogiGameServices.Set<IModifiableProgramTime>(new GenericProgramTime());
+            LogiGameServices.Set<ISceneFactoryProvider>(new DefaultSceneFactoryProvider());
+            LogiGameServices.Set<IAppStateController>(new DefaultAppStateController(this, LogiGameServices));
 
-            _services = new GameServices()
-            {
-                FrameExecutor = FrameExecutor,
-                Logger = Logger,
-                Input = Input,
-                Display = Display,
-                SoundEngine = SoundEngine,
-                AssetProvider = AssetProvider,
-                Structure = Structure,
-                Time = new GenericProgramTime(),
-                SceneExecutor = SceneManager,
-                ModManager = ModManager,
-                AssetManager = AssetManager,
-            };
+            IModManager ModManager = new DefaultModManager(LogiGameServices);
+            ILogiAssetLoader AssetManager = new DefaultLogiAssetLoader(LogiGameServices);
+            LogiGameServices.Set<IModManager>(ModManager);
+            LogiGameServices.Set<ILogiAssetLoader>(AssetManager);
 
-            IGameScene StartingScene = new IntroScene(_services);
-            _services.SceneExecutor.ScheduleNextSceneSet(StartingScene);
-            _services.SceneExecutor.ScheduleJumpToNextScene(true);
-        }
-
-        private void TryChangeFullScreenMode(IUserInput input)
-        {
-            if (input.WereKeysJustPressed(Keys.F11)
-                || (input.WereKeysJustPressed(Keys.Enter) && input.AreKeysDown(Keys.LeftAlt)))
-            {
-                IDisplay Display = _services!.Display;
-                Display.FullScreenSize = Display.ScreenSize;
-                Display.IsFullScreen = !Display.IsFullScreen;
-            }
+            IGameScene StartingScene = new IntroScene(LogiGameServices);
+            SceneExecutor.ScheduleNextSceneSet(StartingScene);
+            SceneExecutor.ScheduleJumpToNextScene(true);
         }
 
 
@@ -159,15 +155,19 @@ namespace ErrDLogiPTClient
 
             try
             {
-                IModifiableProgramTime ProgramTime = _services!.Time;
+                IModifiableProgramTime? ProgramTime = LogiGameServices!.Get<IModifiableProgramTime>();
+                if (ProgramTime == null)
+                {
+                    throw new InvalidOperationException("Missing time service for LogiGame update method, can't continue.");
+                }
                 TimeSpan ElapsedTime = gameTime.ElapsedGameTime;
                 ProgramTime.TotalTime += ElapsedTime;
                 ProgramTime.PassedTime = ElapsedTime;
 
-                _services.Input.RefreshInput();
-                TryChangeFullScreenMode(_services.Input);
-                _services.SceneExecutor.Update(ProgramTime);
-                _services.SoundEngine.Update(ProgramTime);
+                LogiGameServices.Get<IUserInput>()?.RefreshInput();
+                LogiGameServices.Get<ISceneExecutor>()?.Update(ProgramTime);
+                LogiGameServices.Get<ILogiSoundEngine>()?.Update(ProgramTime);
+                LogiGameServices.Get<IAppStateController>()?.Update(ProgramTime);
             }
             catch (Exception e)
             {
@@ -181,12 +181,23 @@ namespace ErrDLogiPTClient
 
             try
             {
-                _services!.FrameExecutor.Render(_services.Time);
+                IModifiableProgramTime? ProgramTime = LogiGameServices!.Get<IModifiableProgramTime>();
+                if (ProgramTime == null)
+                {
+                    throw new InvalidOperationException("Missing time service for LogiGame render method, can't continue.");
+                }
+                LogiGameServices!.Get<IFrameExecutor>()?.Render(ProgramTime);
             }
             catch (Exception e)
             {
                 OnCrash(e);
             }
+        }
+
+        protected override void OnExiting(object sender, ExitingEventArgs args)
+        {
+            base.OnExiting(sender, args);
+            CleanupOnExit();
         }
     }
 }

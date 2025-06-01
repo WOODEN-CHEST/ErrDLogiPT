@@ -16,19 +16,18 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
     // Private fields.
     private readonly object _lockObject = new();
     private readonly IGameScene _scene;
-    private readonly IAssetProvider _assetProvider;
-    private readonly IDisplay _display;
+    private GenericServices _globalServices;
 
     private bool _isInitialized = false;
     private readonly HashSet<GHFontFamily> _fonts = new();
     private readonly HashSet<TextBox> _registeredTextBoxes = new();
 
+
     // Constructors.
-    public DefaultSceneAssetProvider(IGameScene scene, IAssetProvider assetProvider, IDisplay display)
+    public DefaultSceneAssetProvider(IGameScene scene, GenericServices sceneServices)
     {
         _scene = scene ?? throw new ArgumentNullException(nameof(scene));
-        _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(assetProvider));
-        _display = display ?? throw new ArgumentNullException(nameof(_display));
+        _globalServices = sceneServices ?? throw new ArgumentNullException(nameof(sceneServices));
     }
 
 
@@ -36,6 +35,11 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
     private void OnWindowSizeChangeEvent(object? sender, ScreenSizeChangeEventArgs args)
     {
         UpdateAssets();
+    }
+
+    private IAssetProvider GetAssetProvider()
+    {
+        return _globalServices.GetRequired<IAssetProvider>();
     }
 
 
@@ -47,7 +51,12 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
             return;
         }
 
-        _display.ScreenSizeChange += OnWindowSizeChangeEvent;
+        IDisplay? Display = _globalServices.Get<IDisplay>();
+        if (Display != null)
+        {
+            Display.ScreenSizeChange += OnWindowSizeChangeEvent;
+        }
+        
         _isInitialized = true;
     }
 
@@ -58,13 +67,17 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
             return;
         }
 
-        _display.ScreenSizeChange -= OnWindowSizeChangeEvent;
+        IDisplay? Display = _globalServices.Get<IDisplay>();
+        if (Display != null)
+        {
+            Display.ScreenSizeChange -= OnWindowSizeChangeEvent;
+        }
         _isInitialized = false;
     }
 
     public T GetAsset<T>(AssetType type, string name) where T : class
     {
-        T? Asset = _assetProvider.GetAsset<T>(_scene, type, name);
+        T? Asset = GetAssetProvider().GetAsset<T>(_scene, type, name);
 
         if (Asset == null)
         {
@@ -82,17 +95,17 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
 
     public void ReleaseAsset(AssetType type, string name)
     {
-        _assetProvider.ReleaseAsset(_scene, type, name);
+        GetAssetProvider().ReleaseAsset(_scene, type, name);
     }
 
     public void ReleaseAsset(object asset)
     {
-        _assetProvider.ReleaseAsset(_scene, asset);
+        GetAssetProvider().ReleaseAsset(_scene, asset);
     }
 
     public void ReleaseAllAssets()
     {
-        _assetProvider.ReleaseUserAssets(_scene);
+        GetAssetProvider().ReleaseUserAssets(_scene);
     }
 
     public void RegisterRenderedItem(TextBox item)

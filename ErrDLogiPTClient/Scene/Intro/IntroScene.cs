@@ -2,6 +2,7 @@
 using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.MainMenu;
 using GHEngine;
+using GHEngine.Assets.Loader;
 using GHEngine.Frame;
 using System;
 using System.Collections.Generic;
@@ -15,41 +16,41 @@ public class IntroScene : SceneBase
 {
     // Private fields.
     private readonly IGameScene _nextSceneMainMenu;
-    private readonly IntroRenderExecutor _frameExecutor;
+    private readonly IntroRenderExecutor _renderExecutor;
     private readonly IntroSkipper _introSkipper;
 
 
     // Constructors.
-    public IntroScene(GameServices services) : base(services)
+    public IntroScene(GenericServices services) : base(services)
     {
-        _frameExecutor = new(this, AssetProvider, Services.Input, services.FrameExecutor);
-        _frameExecutor.AnimationDone += OnAnimationFinishEvent;
+        _renderExecutor = new(this, SceneServices);
+        _renderExecutor.AnimationDone += OnAnimationFinishEvent;
 
-        AddComponent(_frameExecutor);
-        AddComponent(new GamePropertiesInitializer(this, Services.Display, Services.Input));
+        AddComponent(_renderExecutor);
+        AddComponent(new GamePropertiesInitializer(this, SceneServices));
 
-        _introSkipper = new(this, services.Input);
+        _introSkipper = new(this, SceneServices);
         AddComponent(_introSkipper);
 
-        _nextSceneMainMenu = new MainMenuScene(Services);
+        _nextSceneMainMenu = new MainMenuScene(GlobalServices);
     }
 
 
     // Private methods.
     private void OnNextSceneLoadEvent(object? sender, SceneLoadFinishEventArgs args)
     {
-        if ((_nextSceneMainMenu == args.Scene) && _frameExecutor.IsAnimationDone)
+        if ((_nextSceneMainMenu == args.Scene) && _renderExecutor.IsAnimationDone)
         {
-            Services.SceneExecutor.ScheduleJumpToNextScene(true);
+            SceneServices.GetRequired<ISceneExecutor>().ScheduleJumpToNextScene(true);
         }
-        _frameExecutor.IsLoadingShown = false;
+        _renderExecutor.IsLoadingShown = false;
     }
 
     private void OnAnimationFinishEvent(object? sender, EventArgs args)
     {
         if (_nextSceneMainMenu.LoadStatus == SceneLoadStatus.FinishedLoading)
         {
-            Services.SceneExecutor.ScheduleJumpToNextScene(true);
+            SceneServices.GetRequired<ISceneExecutor>().ScheduleJumpToNextScene(true);
         }
     }
 
@@ -59,17 +60,22 @@ public class IntroScene : SceneBase
     {
         base.HandleLoadPreComponent();
 
-        Services.ModManager.LoadMods(Services.Structure.ModRoot);
-        Services.ModManager.InitializeMods(Services);
-        Services.AssetManager.SetAssetRootPaths(Array.Empty<string>());
-        Services.AssetManager.LoadAssetDefinitions();
+        IModManager ModManager = SceneServices.GetRequired<IModManager>();
+        ILogiAssetLoader AssetLoader = SceneServices.GetRequired<ILogiAssetLoader>();
+        IGamePathStructure Structure = SceneServices.GetRequired<IGamePathStructure>();
+
+        ModManager.LoadMods(Structure.ModRoot);
+        AssetLoader.SetAssetRootPaths(Array.Empty<string>());
+        AssetLoader.LoadAssetDefinitions();
+        ModManager.InitializeMods(SceneServices);
     }
 
     public override void OnStart()
     {
         base.OnStart();
 
-        Services.SceneExecutor.SceneLoadFinish += OnNextSceneLoadEvent;
-        Services.SceneExecutor.ScheduleNextSceneSet(_nextSceneMainMenu);
+        ISceneExecutor SceneExecutor = SceneServices.GetRequired<ISceneExecutor>();
+        SceneExecutor.SceneLoadFinish += OnNextSceneLoadEvent;
+        SceneExecutor.ScheduleNextSceneSet(_nextSceneMainMenu);
     }
 }

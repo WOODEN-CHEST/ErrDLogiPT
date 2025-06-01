@@ -13,38 +13,26 @@ namespace ErrDLogiPTClient;
 public class DefaultLogiAssetLoader : ILogiAssetLoader
 {
     // Private fields.
-    private readonly IModManager _modManager;
-    private readonly IGamePathStructure _structure;
-    private readonly ILogger? _logger;
-    private readonly IAssetDefinitionCollection _assets;
-    private readonly GHAssetStreamOpener _streamOpener;
+    private readonly GenericServices _globalServices;
 
 
     // Constructors.
-    public DefaultLogiAssetLoader(IModManager modManager,
-        IGamePathStructure structure,
-        ILogger? logger,
-        IAssetDefinitionCollection assets,
-        GHAssetStreamOpener streamOpener)
+    public DefaultLogiAssetLoader(GenericServices globalServices)
     {
-        _modManager = modManager ?? throw new ArgumentNullException(nameof(modManager));
-        _structure = structure ?? throw new ArgumentNullException(nameof(structure));
-        _assets = assets ?? throw new ArgumentNullException(nameof(assets));
-        _streamOpener = streamOpener ?? throw new ArgumentNullException(nameof(streamOpener));
-        _logger = logger;
+        _globalServices = globalServices ?? throw new ArgumentNullException(nameof(globalServices));
     }
 
 
     // Inherited methods.
     public void LoadAssetDefinitions()
     {
-        IAssetDefinitionCollection AssetDefinitions = _assets;
+        IAssetDefinitionCollection AssetDefinitions = _globalServices.GetRequired<IAssetDefinitionCollection>();
         AssetDefinitions.Clear();
 
-        IAllAssetDefinitionConverter DefinitionReader = new JSONAllAssetDefinitionConverter(_logger);
-        DefinitionReader.Read(AssetDefinitions, _structure.AssetDefRoot);
+        IAllAssetDefinitionConverter DefinitionReader  = new JSONAllAssetDefinitionConverter(_globalServices.Get<ILogger>());
+        DefinitionReader.Read(AssetDefinitions, _globalServices.GetRequired<IGamePathStructure>().AssetDefRoot);
 
-        foreach (ModPackage Package in _modManager.Mods)
+        foreach (ModPackage Package in _globalServices.GetRequired<IModManager>().Mods)
         {
             foreach (AssetDefinition Definition in Package.AssetDefinitions)
             {
@@ -60,7 +48,7 @@ public class DefaultLogiAssetLoader : ILogiAssetLoader
 
         AssetPaths.AddRange(resourcePackDirNames);
 
-        foreach (ModPackage Package in _modManager.Mods)
+        foreach (ModPackage Package in _globalServices.GetRequired<IModManager>().Mods)
         {
             if (Package.Structure.AssetRoot != null)
             {
@@ -68,8 +56,13 @@ public class DefaultLogiAssetLoader : ILogiAssetLoader
             }
         }
 
-        AssetPaths.Add(_structure.AssetValueRoot);
+        AssetPaths.Add(_globalServices.GetRequired<IGamePathStructure>().AssetValueRoot);
 
-        _streamOpener.SetAssetPaths(AssetPaths.ToArray());
+        IAssetStreamOpener StreamOpener = _globalServices.GetRequired<IAssetStreamOpener>();
+        if (StreamOpener is GHAssetStreamOpener AdvancedStreamOpener)
+        {
+            AdvancedStreamOpener.SetAssetPaths(AssetPaths.ToArray());
+        }
+        
     }
 }

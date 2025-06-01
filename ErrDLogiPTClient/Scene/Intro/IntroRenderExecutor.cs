@@ -23,43 +23,35 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
     public event EventHandler<EventArgs>? AnimationDone;
 
 
-
     // Private static fields.
     private const string LOGO_LAYER_NAME = "main";
 
 
     // Private fields.
-    private readonly IFrameExecutor _frameExecutor;
-
     private readonly IntroLogoDisplayer _logoDisplayer;
     private readonly IntroLoadingDisplayer _loadingDisplayer;
     private readonly IGameFrame _frame;
 
 
     // Constructors.
-    public IntroRenderExecutor(IntroScene scene,
-        ISceneAssetProvider assetProvider,
-        IUserInput userInput,
-        IFrameExecutor frameExecutor)
-        : base(scene)
+    public IntroRenderExecutor(IntroScene scene, GenericServices services)
+        : base(scene, services)
     {
-        _frameExecutor = frameExecutor ?? throw new ArgumentNullException(nameof(frameExecutor));
-
         _frame = new GHGameFrame();
 
         ILayer TargetLayer = new GHLayer(LOGO_LAYER_NAME);
         _frame.AddLayer(TargetLayer);
 
-        _logoDisplayer = new(TypedScene, TargetLayer, assetProvider);
+        _logoDisplayer = new(TypedScene, SceneServices, TargetLayer);
         _logoDisplayer.LogoShowFinish += OnLogoShowFinishEvent;
-        SubComponents.Add(_logoDisplayer);
+        AddComponent(_logoDisplayer);
 
-        _loadingDisplayer = new(TypedScene, assetProvider, TargetLayer);
-        SubComponents.Add(_loadingDisplayer);
+        _loadingDisplayer = new(TypedScene, SceneServices, TargetLayer);
+        AddComponent(_loadingDisplayer);
 
-        IntroSkipper Skipper = new(TypedScene, userInput);
+        IntroSkipper Skipper = new(TypedScene, SceneServices);
         Skipper.SkippedIntro += OnIntroSkipEvent;
-        SubComponents.Add(Skipper);
+        AddComponent(Skipper);
     }
 
 
@@ -89,9 +81,15 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
         base.OnLoad();
     }
 
+    public override void OnStart()
+    {
+        base.OnStart();
+
+        SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
+    }
+
     public override void Update(IProgramTime time)
     {
         base.Update(time);
-        _frameExecutor.SetFrame(_frame);
     }
 }

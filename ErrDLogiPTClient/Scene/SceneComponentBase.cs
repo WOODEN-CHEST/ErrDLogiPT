@@ -12,13 +12,13 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 {
     // Fields.
     public IGameScene Scene => TypedScene;
+    public IEnumerable<ISceneComponent> Components => _subComponents;
+    public int ComponentCount => _subComponents.Count;
+    public GenericServices SceneServices { get; private init; }
 
 
     // Protected fields.
     protected T TypedScene { get; private init; }
-    protected List<ISceneComponent> SubComponents { get; } = new();
-    public IEnumerable<ISceneComponent> Components => _subComponents;
-    public int ComponentCount => _subComponents.Count;
 
 
     // Private fields.
@@ -26,9 +26,10 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 
 
     // Constructors.
-    public SceneComponentBase(T scene)
+    public SceneComponentBase(T scene, GenericServices services)
     {
         TypedScene = scene ?? throw new ArgumentNullException(nameof(scene));
+        SceneServices = services ?? throw new ArgumentNullException(nameof(services));
     }
 
     public event EventHandler<SubComponentAddEventArgs>? ComponentAdd;
@@ -38,7 +39,7 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
     // Inherited methods.
     public virtual void OnEnd()
     {
-        foreach (ISceneComponent Component in SubComponents)
+        foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnEnd();
         }
@@ -46,7 +47,7 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 
     public virtual void OnLoad()
     {
-        foreach (ISceneComponent Component in SubComponents)
+        foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnLoad();
         }
@@ -54,7 +55,7 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 
     public virtual void OnStart()
     {
-        foreach (ISceneComponent Component in SubComponents)
+        foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnStart();
         }
@@ -62,7 +63,7 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 
     public virtual void OnUnload()
     {
-        foreach (ISceneComponent Component in SubComponents)
+        foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnUnload();
         }
@@ -70,7 +71,7 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 
     public virtual void Update(IProgramTime time)
     {
-        foreach (ISceneComponent Component in SubComponents)
+        foreach (ISceneComponent Component in _subComponents)
         {
             Component.Update(time);
         }

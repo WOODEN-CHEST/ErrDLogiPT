@@ -14,13 +14,17 @@ using System.Linq;
 
 namespace ErrDLogiPTClient.Scene.UI;
 
-public class UIBasicButton : ITimeUpdatable, IRenderableItem
+public class DefaultBasicButton : IBasicButton
 {
     // Fields.
     public bool IsEnabled
     {
-        get => _clickDetector.IsEnabled;
-        set => _clickDetector.IsEnabled = value;
+        get => _isEnabled;
+        set
+        {
+            _isEnabled = value;
+            _clickDetector.IsEnabled = value;
+        }
     }
 
     public bool IsDisabledOnClick { get; set; } = false;
@@ -151,6 +155,8 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
                 throw new ArgumentException("Button length cannot be < 0");
             }
             _buttonLength = value;
+            UpdateRenderSize();
+            UpdateButtonArea();
         }
     }
 
@@ -172,6 +178,10 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             
             UpdateRenderSize();
             UpdateButtonArea();
+            if (_previousRenderAspectRatio != null)
+            {
+                UpdateRenderPositions(_previousRenderAspectRatio.Value);
+            }
         }
     }
 
@@ -193,13 +203,13 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         set => _clickSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
     }
 
-    public IEnumerable<IPreSampledSound> HoverSounds
+    public IEnumerable<IPreSampledSound> HoverStartSounds
     {
         get => _hoverStartSounds.ToArray()!;
         set => _hoverStartSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
     }
 
-    public IEnumerable<IPreSampledSound> UnhoverSounds
+    public IEnumerable<IPreSampledSound> HoverEndSounds
     {
         get => _hoverEndSounds.ToArray()!;
         set => _hoverEndSounds.SetItems(value?.ToArray() ?? Array.Empty<IPreSampledSound>());
@@ -232,9 +242,9 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         }
     }
 
-    public Action<UIBasicButton>? ClickAction { get; set; }
-    public Action<UIBasicButton>? HoverHoverStartAction { get; set; }
-    public Action<UIBasicButton>? HoverEndAction { get; set; }
+    public Action<DefaultBasicButton>? MainClickAction { get; set; }
+    public Action<DefaultBasicButton>? MainHoverStartAction { get; set; }
+    public Action<DefaultBasicButton>? MainHoverEndAction { get; set; }
 
     public RectangleF ButtonBounds => _clickDetector.ElementBounds;
 
@@ -256,6 +266,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     private const double COLOR_FADE_FACTOR_MIN = 0d;
     private const float SHADOWN_BRIGHTNESS_MIN = 0f;
     private const float SHADOWN_BRIGHTNESS_MAX = 1f;
+    private const float TEXT_COLOR_MULTIPLIER = 1.5f;
 
 
     // Private fields.
@@ -275,7 +286,8 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     private Vector2 _position = Vector2.Zero;
     private float _scale = 1f;
     private Vector2 _textPadding = new(0.125f);
-    private Vector2 _shadowOffset = new(0.125f);
+    private Vector2 _shadowOffset = new(0.01f);
+    private bool _isEnabled = true;
 
     private bool _isHovered = false;
     private bool _wasClickStarted = false;
@@ -304,7 +316,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
 
     // Constructors
-    public UIBasicButton(ILogiSoundEngine soundEngine,
+    public DefaultBasicButton(ILogiSoundEngine soundEngine,
         IUserInput input,
         ISceneAssetProvider? assetProvider,
         ISpriteAnimation animation,
@@ -318,7 +330,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
         _input = input;
         _assetProvider = assetProvider;
-        _clickDetector = new(input);
+        _clickDetector = new(input) { IsEnabled = true };
         _soundEngine = soundEngine;
 
         if (animation.FrameCount < FRAME_COUNT)
@@ -412,11 +424,6 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     private void UpdateRenderPositions(float windowAspectRatio)
     {
-        if (_previousRenderAspectRatio.HasValue && (_previousRenderAspectRatio == windowAspectRatio))
-        {
-            return;
-        }
-
         var Positions = GetSpritePositions(windowAspectRatio);
 
         _leftPartSprite.Position = Positions.Left;
@@ -434,7 +441,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     private void UpdateRenderSize()
     {
         Vector2 MiddleFrameSize = _middlePartSprite.FrameSize;
-        _middlePartSprite.Size = new Vector2(1f * _buttonLength, MiddleFrameSize.Y / MiddleFrameSize.X) * _scale;
+        _middlePartSprite.Size = new Vector2(_buttonLength, MiddleFrameSize.Y / MiddleFrameSize.X) * _scale;
 
         _leftPartSprite.Size = new(_leftPartSprite.FrameSize.X / _leftPartSprite.FrameSize.Y
             * _middlePartSprite.Size.Y, _middlePartSprite.Size.Y);
@@ -460,7 +467,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
         _clickDetector.ElementBounds = new(BottomLeft.X, BottomLeft.Y, Dimensions.X, Dimensions.Y);
 
-        /* There is a bug here where if the window becomes super wide, the text render the wrong size (too large).
+        /* There is a bug here where if the window becomes super wide, the text renders the wrong size (too large).
          * Couldn't fix it. */
         Vector2 RelativeTextPadding = Dimensions * TextPadding;
         Vector2 MaxDrawSize = new Vector2(Dimensions.X - RelativeTextPadding.X, float.PositiveInfinity)
@@ -499,11 +506,11 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
     private void OnClickEndEvent(object? sender, ClickDetectorClickEndEventArgs args)
     {
-        bool IsClickValid = _wasClickStarted && args.WasClickedInBounds;
+        bool IsFullClickValid = _wasClickStarted && args.WasClickedInBounds;
         _wasClickStarted = false;
         _isClickColorFullyActive = false;
 
-        if (((ClickMethod == ButtonClickMethod.ActivateOnFullClick) && !IsClickValid) || !_detectedClickTypes.Contains(args.ClickType))
+        if (((ClickMethod == ButtonClickMethod.ActivateOnFullClick) && !IsFullClickValid) || !_detectedClickTypes.Contains(args.ClickType))
         {
             return;
         }
@@ -537,7 +544,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
         {
             IsEnabled = false;
         }
-        ClickAction?.Invoke(this);
+        MainClickAction?.Invoke(this);
         EventArgs.ExecuteActions();
     }
 
@@ -564,7 +571,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
         _isHovered = true;
         _isClickColorFullyActive = _wasClickStarted;
-        HoverHoverStartAction?.Invoke(this);
+        MainHoverStartAction?.Invoke(this);
         EventArgs.ExecuteActions();
     }
 
@@ -589,7 +596,7 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
 
         _isClickColorFullyActive = false;
         _isHovered = false;
-        HoverEndAction?.Invoke(this);
+        MainHoverEndAction?.Invoke(this);
         EventArgs.ExecuteActions();
     }
 
@@ -665,11 +672,17 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
     private void UpdateRenderedColors()
     {
         FloatColor ColorStage1 = FloatColor.InterpolateRGB(_normalButtonColor, _highlightColor, (float)_highlightFadeFactor);
-        Color FinalSpriteColor = FloatColor.InterpolateRGB(ColorStage1, _clickColor, (float)_clickFadeFactor); ;
+        FloatColor ColorStage2 = FloatColor.InterpolateRGB(ColorStage1, _clickColor, (float)_clickFadeFactor);
+        Color FinalSpriteColor = ColorStage2;
+        Color FinalTextColor = ColorStage2 * TEXT_COLOR_MULTIPLIER;
+
 
         _leftPartSprite.Mask = FinalSpriteColor;
         _middlePartSprite.Mask = FinalSpriteColor;
         _rightPartSprite.Mask = FinalSpriteColor;
+
+        _text.Mask = FinalTextColor;
+        _textShadow.Mask = FinalSpriteColor;
     }
 
 
@@ -693,15 +706,19 @@ public class UIBasicButton : ITimeUpdatable, IRenderableItem
             return;
         }
 
-        UpdateRenderPositions(renderer.AspectRatio);
+        if ((_previousRenderAspectRatio == null) || (_previousRenderAspectRatio != renderer.AspectRatio))
+        {
+            UpdateRenderPositions(renderer.AspectRatio);
+        }
+        
         _leftPartSprite.Render(renderer, time);
         _rightPartSprite.Render(renderer, time);
         _middlePartSprite.Render(renderer, time);
 
-        //if (IsTextShadowEnabled)
-        //{
-        //    _textShadow.Render(renderer, time);
-        //}
+        if (IsTextShadowEnabled)
+        {
+            _textShadow.Render(renderer, time);
+        }
         _text.Render(renderer, time);
     }
 }

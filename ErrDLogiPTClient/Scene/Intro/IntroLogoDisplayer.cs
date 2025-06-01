@@ -29,7 +29,6 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
 
 
     // Private fields.
-    private readonly ISceneAssetProvider _assetProvider;
     private readonly ILayer _logoLayer;
 
     private SpriteItem _logo;
@@ -40,10 +39,9 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
 
 
     // Constructors.
-    public IntroLogoDisplayer(IntroScene scene, ILayer logoLayer, ISceneAssetProvider assetProvider) : base(scene)
+    public IntroLogoDisplayer(IntroScene scene, GenericServices sceneServices, ILayer logoLayer) : base(scene, sceneServices)
     {
         _logoLayer = logoLayer ?? throw new ArgumentNullException(nameof(logoLayer));
-        _assetProvider = assetProvider ?? throw new ArgumentNullException(nameof(_assetProvider));
     }
 
 
@@ -92,7 +90,8 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
     {
         base.OnLoad();
 
-        ISpriteAnimation Animation = _assetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO)!;
+        ISceneAssetProvider AssetProvider = SceneServices.GetRequired<ISceneAssetProvider>();
+        ISpriteAnimation Animation = AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO)!;
 
         _logo = new(Animation.CreateInstance());
 
@@ -106,7 +105,7 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
         _logo.Opacity = 0f;
 
         _logoLayer.AddItem(_logo);
-        _assetProvider.RegisterRenderedItem(_logo);
+        AssetProvider.RegisterRenderedItem(_logo);
     }
 
     public override void OnStart()

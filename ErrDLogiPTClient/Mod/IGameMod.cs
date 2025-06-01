@@ -14,6 +14,6 @@ public interface IGameMod
 
 
     // Methods.
-    void OnStart(GameServices services);
-    void OnEnd(GameServices services);
+    void OnStart(GenericServices services);
+    void OnEnd(GenericServices services);
 }

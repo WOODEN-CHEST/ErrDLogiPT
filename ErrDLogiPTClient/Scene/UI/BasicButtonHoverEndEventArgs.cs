@@ -14,7 +14,7 @@ public class BasicButtonHoverEndEventArgs : BasicButtonEventArgs
 
 
     // Constructors.
-    public BasicButtonHoverEndEventArgs(UIBasicButton button) : base(button)
+    public BasicButtonHoverEndEventArgs(IBasicButton button) : base(button)
     {
     }
 }

@@ -16,6 +16,6 @@ public interface IModManager
 
     // Methods.
     void LoadMods(string modRootDirPath);
-    void InitializeMods(GameServices services);
-    void DeinitializeMods(GameServices services);
+    void InitializeMods(GenericServices services);
+    void DeinitializeMods(GenericServices services);
 }

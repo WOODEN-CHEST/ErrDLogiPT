@@ -1,4 +1,7 @@
-﻿namespace ErrDLogiPTClient.Scene.MainMenu;
+﻿using System;
+using System.Threading.Tasks;
+
+namespace ErrDLogiPTClient.Scene.MainMenu;
 
 public class MainMenuScene : SceneBase
 {
@@ -7,9 +10,9 @@ public class MainMenuScene : SceneBase
 
 
     // Constructors.
-    public MainMenuScene(GameServices services) : base(services)
+    public MainMenuScene(GenericServices services) : base(services)
     {
-        _uiExecutor = new(this, Services.FrameExecutor, AssetProvider, Services.Input, Services.SoundEngine);
+        _uiExecutor = new(this, SceneServices);
         AddComponent(_uiExecutor);
     }
 

@@ -16,7 +16,7 @@ public class BasicButtonClickStartEventArgs : BasicButtonEventArgs
 
 
     // Constructors.
-    public BasicButtonClickStartEventArgs(UIBasicButton button,
+    public BasicButtonClickStartEventArgs(IBasicButton button,
         UIElementClickType clickType,
         Vector2 startLocation) : base(button)
     {

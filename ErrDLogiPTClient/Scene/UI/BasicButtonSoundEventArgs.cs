@@ -17,7 +17,7 @@ public class BasicButtonSoundEventArgs : BasicButtonEventArgs
 
 
     // Constructors.
-    public BasicButtonSoundEventArgs(UIBasicButton button, UISoundOrigin origin, ILogiSoundInstance sound) : base(button)
+    public BasicButtonSoundEventArgs(IBasicButton button, UISoundOrigin origin, ILogiSoundInstance sound) : base(button)
     {
         Origin = origin;
         Sound = sound ?? throw new ArgumentNullException(nameof(sound));

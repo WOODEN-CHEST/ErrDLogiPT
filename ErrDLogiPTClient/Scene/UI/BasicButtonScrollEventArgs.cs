@@ -13,7 +13,7 @@ public class BasicButtonScrollEventArgs : BasicButtonEventArgs
 
 
     // Constructors.
-    public BasicButtonScrollEventArgs(UIBasicButton button, int scrollAmount) : base(button)
+    public BasicButtonScrollEventArgs(IBasicButton button, int scrollAmount) : base(button)
     {
         ScrollAmount = scrollAmount;
     }

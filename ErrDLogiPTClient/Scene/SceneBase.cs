@@ -1,13 +1,13 @@
-﻿using ErrDLogiPTClient.Scene.Event;
+﻿using ErrDLogiPTClient.Mod;
+using ErrDLogiPTClient.Scene.Event;
+using ErrDLogiPTClient.Scene.Sound;
+using ErrDLogiPTClient.Scene.UI;
 using GHEngine;
-using GHEngine.Assets;
+using GHEngine.IO;
+using GHEngine.Logging;
+using GHEngine.Screen;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace ErrDLogiPTClient.Scene;
 
 public abstract class SceneBase : IGameScene
@@ -35,10 +35,13 @@ public abstract class SceneBase : IGameScene
     public event EventHandler<SceneComponentAddEventArgs>? SceneComponentAdd;
     public event EventHandler<SceneComponentRemoveEventArgs>? SceneComponentRemove;
 
-    public GameServices Services { get; private init; }
-    public ISceneAssetProvider AssetProvider { get; private init; }
+    public GenericServices SceneServices { get; private init; }
     public IEnumerable<ISceneComponent> Components => _components;
     public int ComponentCount => _components.Count;
+
+
+    // Protected fields.
+    protected GenericServices GlobalServices { get; private init; }
 
 
     // Private fields.
@@ -48,10 +51,11 @@ public abstract class SceneBase : IGameScene
 
 
     // Constructors.
-    public SceneBase(GameServices services)
+    public SceneBase(GenericServices globalServices)
     {
-        Services = services ?? throw new ArgumentNullException(nameof(services));
-        AssetProvider = new DefaultSceneAssetProvider(this, services.AssetProvider, services.Display);
+        GlobalServices = globalServices;
+        SceneServices = new();
+        InitializeSceneServices();
     }
 
 
@@ -60,6 +64,25 @@ public abstract class SceneBase : IGameScene
     protected virtual void HandleLoadPostComponent() { }
     protected virtual void HandleUnloadPreComponent() { }
     protected virtual void HandleUnloadPostComponent() { }
+
+
+    // Private methods.
+    private void InitializeSceneServices()
+    {
+        SceneServices.Set<ILogger>(GlobalServices.Get<ILogger>());
+        SceneServices.Set<IGamePathStructure>(GlobalServices.Get<IGamePathStructure>());
+        SceneServices.Set<IDisplay>(GlobalServices.Get<IDisplay>());
+        SceneServices.Set<IUserInput>(GlobalServices.Get<IUserInput>());
+        SceneServices.Set<ILogiSoundEngine>(GlobalServices.Get<ILogiSoundEngine>());
+        SceneServices.Set<ISceneAssetProvider>(new DefaultSceneAssetProvider(this, GlobalServices));
+        SceneServices.Set<IFrameExecutor>(GlobalServices.Get<IFrameExecutor>());
+        SceneServices.Set<ISceneExecutor>(GlobalServices.Get<ISceneExecutor>());
+        SceneServices.Set<IModManager>(GlobalServices.Get<IModManager>());
+        SceneServices.Set<ILogiAssetLoader>(GlobalServices.Get<ILogiAssetLoader>());
+        SceneServices.Set<IModifiableProgramTime>(GlobalServices.Get<IModifiableProgramTime>());
+        SceneServices.Set<IUIElementFactory>(GlobalServices.GetRequired<ISceneFactoryProvider>().GetUIElementFactory(this));
+        SceneServices.Set<IAppStateController>(GlobalServices.Get<IAppStateController>());
+    }
 
 
     // Inherited methods.
@@ -72,7 +95,8 @@ public abstract class SceneBase : IGameScene
  
         LoadStatus = SceneLoadStatus.Loading;
 
-        AssetProvider.Initialize();
+        ISceneAssetProvider? AssetProvider = SceneServices.Get<ISceneAssetProvider>();
+        AssetProvider?.Initialize();
 
         HandleLoadPreComponent();
         foreach (ISceneComponent Component in _components)
@@ -81,7 +105,7 @@ public abstract class SceneBase : IGameScene
         }
         HandleLoadPostComponent();
 
-        AssetProvider.UpdateAssets();
+        AssetProvider?.UpdateAssets();
 
         LoadStatus = SceneLoadStatus.FinishedLoading;
         SceneLoadFinish?.Invoke(this, new(this));
@@ -111,8 +135,10 @@ public abstract class SceneBase : IGameScene
             Component.OnUnload();
         }
         HandleUnloadPostComponent();
-        AssetProvider.ReleaseAllAssets();
-        AssetProvider.Deinitialize();
+
+        ISceneAssetProvider? AssetProvider = SceneServices.Get<ISceneAssetProvider>();
+        AssetProvider?.ReleaseAllAssets();
+        AssetProvider?.Deinitialize();
     }
 
     public virtual void Update(IProgramTime time)

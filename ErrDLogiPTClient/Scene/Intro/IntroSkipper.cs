@@ -18,15 +18,10 @@ public class IntroSkipper : SceneComponentBase<IntroScene>
     // Private fields.
     private readonly Keys[] _introSkipKeys = new Keys[] { Keys.Enter, Keys.Escape, Keys.Back };
     private bool _wasIntroSkipped = false;
-    private readonly IUserInput _input;
 
 
     // Constructors.
-    public IntroSkipper(IntroScene scene, IUserInput input) : base(scene)
-    {
-        _input = input ?? throw new ArgumentNullException(nameof(input));
-    }
-
+    public IntroSkipper(IntroScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
 
     // Private methods.
     private void SkipIntro()
@@ -42,9 +37,11 @@ public class IntroSkipper : SceneComponentBase<IntroScene>
             return;
         }
 
+        IUserInput Input = SceneServices.GetRequired<IUserInput>();
+
         foreach (Keys Key in _introSkipKeys)
         {
-            if (_input.WereKeysJustPressed(Key))
+            if (Input.WereKeysJustPressed(Key))
             {
                 SkipIntro();
             }

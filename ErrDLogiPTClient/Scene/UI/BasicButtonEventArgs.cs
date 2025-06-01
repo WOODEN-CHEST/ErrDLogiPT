@@ -9,11 +9,11 @@ namespace ErrDLogiPTClient.Scene.UI;
 public abstract class BasicButtonEventArgs : CancellableEventBase
 {
     // Fields.
-    public UIBasicButton Button { get; private init; }
+    public IBasicButton Button { get; private init; }
 
 
     // Constructors.
-    public BasicButtonEventArgs(UIBasicButton button)
+    public BasicButtonEventArgs(IBasicButton button)
     {
         Button = button ?? throw new ArgumentNullException(nameof(button));
     }

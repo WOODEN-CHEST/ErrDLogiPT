@@ -15,32 +15,34 @@ public class DefaultModManager : IModManager
 
 
     // Private fields.
-    private readonly ILogger _logger;
-    private ModPackage[] _mods;
+    private readonly GenericServices _services;
+    private ModPackage[] _mods = Array.Empty<ModPackage>();
 
 
     // Constructors
-    public DefaultModManager(ILogger? logger)
+    public DefaultModManager(GenericServices services)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _services = services ?? throw new ArgumentNullException(nameof(services));
     }
 
 
     // Inherited methods.
     public void LoadMods(string modRootDirPath)
     {
-        IModLoader Loader = new DefaultModLoader(_logger);
+        IModLoader Loader = new DefaultModLoader(_services.Get<ILogger>());
         _mods = Loader.LoadMods(modRootDirPath);
     }
 
-    public void InitializeMods(GameServices services)
+    public void InitializeMods(GenericServices services)
     {
+        ILogger? BaseLogger = _services.Get<ILogger>();
+
         foreach (ModPackage Mod in _mods)
         {
             ModLogger? Logger = null;
             try
             {
-                Logger = new(services.Logger, Mod.Name);
+                Logger = new(BaseLogger, Mod.Name);
                 Logger.Initialize();
 
                 Mod.EntryPointObject.Logger = Logger;
@@ -49,12 +51,12 @@ public class DefaultModManager : IModManager
             catch (Exception e)
             {
                 Logger?.Dispose();
-                services.Logger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameLoad call: {e}");
+                BaseLogger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameLoad call: {e}");
             }
         }
     }
 
-    public void DeinitializeMods(GameServices services)
+    public void DeinitializeMods(GenericServices services)
     {
         foreach (ModPackage Mod in _mods)
         {
@@ -64,7 +66,7 @@ public class DefaultModManager : IModManager
             }
             catch (Exception e)
             {
-                services.Logger?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameClose call: {e}");
+                _services.Get<ILogger>()?.Error($"Unhandled exception in mod \"{Mod.Name}\" in OnGameClose call: {e}");
             }
         }
     }
