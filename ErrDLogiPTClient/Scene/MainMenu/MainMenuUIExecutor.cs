@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
@@ -26,7 +27,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly ILayer _backgroundLayer;
     private readonly ILayer _foregroundLayer;
 
-    private IBasicButton _button;
+    private IBasicDropdownList<int> _element;
 
 
     // Constructors.
@@ -53,29 +54,21 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
         Factory.LoadAssets();
 
-        _button = Factory.CreateButton();
-        _button.Length = 4f;
-        _button.Position = new(0.5f, 0.5f);
-        _button.Scale = 0.1f;
-        _button.Text = "Hello World!";
-        
-        _button.ClickSounds = new IPreSampledSound[] 
-        {
-            SceneServices.GetRequired<ISceneAssetProvider>().GetAsset<IPreSampledSound>(AssetType.Sound, "test") 
-        };
-        _button.Volume = 0.25f;
+        _element = Factory.CreateDropdownList<int>();
+        _element.Position = new(0.5f, 0.2f);
+        _element.Length = 4f;
+        _element.Scale = 0.2f;
 
-        _button.Scroll += (sender, args) =>
+        DropdownListElement<int>[] Elements = new DropdownListElement<int>[]
         {
-            if (args.ScrollAmount > 0)
-            {
-                _button.Scale += 0.1f;
-            }
-            else
-            {
-                _button.Scale -= 0.1f;
-            }
+            new(1.ToString(), 1),
+            new(2.ToString(), 2),
+            new(3.ToString(), 3),
+            new(4.ToString(), 4),
+            new(5.ToString(), 5),
+            new(6.ToString(), 6),
         };
+        _element.SetElements(Elements);
     }
 
     public override void OnStart()
@@ -84,15 +77,14 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
         SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
 
-        _button.Initialize();
-        _button.Scale = 0.1f;
-        _foregroundLayer.AddItem(_button);
+        _element.Initialize();
+        _foregroundLayer.AddItem(_element);
     }
 
     public override void Update(IProgramTime time)
     {
         base.Update(time);
-            
-        _button.Update(time);
+
+        _element.Update(time);
     }
 }

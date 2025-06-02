@@ -39,6 +39,7 @@ public interface IBasicButton : IUIElement
     Action<DefaultBasicButton>? MainHoverStartAction { get; set; }
     Action<DefaultBasicButton>? MainHoverEndAction { get; set; }
     RectangleF ButtonBounds { get; }
+    IEnumerable<UIElementClickType> DetectedClickTypes { get; set; }
 
     event EventHandler<BasicButtonClickStartEventArgs>? ClickStart;
     event EventHandler<BasicButtonClickEndEventArgs>? ClickEnd;

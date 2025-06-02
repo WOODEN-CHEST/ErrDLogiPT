@@ -11,6 +11,6 @@ public interface IUIElementFactory
     void LoadAssets();
     IBasicButton CreateButton();
     IBasicCheckmark CreateCheckmark();
-    IBasicDropdownList CreateDropdownList();
+    IBasicDropdownList<T> CreateDropdownList<T>();
     IBasicSlider CreateSlider();
 }

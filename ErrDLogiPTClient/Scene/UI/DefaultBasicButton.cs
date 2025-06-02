@@ -38,7 +38,7 @@ public class DefaultBasicButton : IBasicButton
         {
             _position = value;
             _previousRenderAspectRatio = null;
-            UpdateButtonArea();
+            UpdateButtonInputArea();
         }
     }
 
@@ -79,7 +79,7 @@ public class DefaultBasicButton : IBasicButton
         {
             if (value.Ticks < 0)
             {
-                throw new ArgumentException("Hover fade duration must be > 0");
+                throw new ArgumentException("Hover fade duration must be >= 0");
             }
             _hoverFadeDuration = value;
         }
@@ -92,7 +92,7 @@ public class DefaultBasicButton : IBasicButton
         {
             if (value.Ticks < 0)
             {
-                throw new ArgumentException("Click fade duration must be > 0");
+                throw new ArgumentException("Click fade duration must be >= 0");
             }
             _clickFadeDuration = value;
         }
@@ -115,7 +115,7 @@ public class DefaultBasicButton : IBasicButton
         set
         {
             _textPadding = value;
-            UpdateButtonArea();
+            UpdateButtonInputArea();
         }
     }
 
@@ -155,8 +155,13 @@ public class DefaultBasicButton : IBasicButton
                 throw new ArgumentException("Button length cannot be < 0");
             }
             _buttonLength = value;
+
             UpdateRenderSize();
-            UpdateButtonArea();
+            UpdateButtonInputArea();
+            if (_previousRenderAspectRatio != null)
+            {
+                UpdateRenderPositions(_previousRenderAspectRatio.Value);
+            }
         }
     }
 
@@ -177,7 +182,7 @@ public class DefaultBasicButton : IBasicButton
             _scale = value;
             
             UpdateRenderSize();
-            UpdateButtonArea();
+            UpdateButtonInputArea();
             if (_previousRenderAspectRatio != null)
             {
                 UpdateRenderPositions(_previousRenderAspectRatio.Value);
@@ -300,12 +305,12 @@ public class DefaultBasicButton : IBasicButton
     private float _volume = 1f;
 
     private Color _normalButtonColor = Color.White;
-    private Color _highlightColor = new Color(173, 255, 110, 255);
-    private Color _clickColor = new Color(79, 299, 240, 255);
+    private Color _highlightColor = Color.White;
+    private Color _clickColor = Color.White;
     private double _highlightFadeFactor = 0d;
     private double _clickFadeFactor = 0d;
-    private TimeSpan _hoverFadeDuration = TimeSpan.FromSeconds(0.1d);
-    private TimeSpan _clickFadeDuration = TimeSpan.FromSeconds(0.4d);
+    private TimeSpan _hoverFadeDuration = TimeSpan.Zero;
+    private TimeSpan _clickFadeDuration = TimeSpan.Zero;
 
     /* Ratios are cached so that calculations (specifically the text box updating) wouldn't happen every second.
      * This may not be too bad for the sprites, but updating the text box is rather expensive. */
@@ -357,7 +362,7 @@ public class DefaultBasicButton : IBasicButton
         InitializeTextBox(_textShadow);
 
         UpdateRenderSize();
-        UpdateButtonArea();
+        UpdateButtonInputArea();
         UpdateRenderedColors();
         UpdateTextShadowColor();
     }
@@ -441,7 +446,7 @@ public class DefaultBasicButton : IBasicButton
     private void UpdateRenderSize()
     {
         Vector2 MiddleFrameSize = _middlePartSprite.FrameSize;
-        _middlePartSprite.Size = new Vector2(_buttonLength, MiddleFrameSize.Y / MiddleFrameSize.X) * _scale;
+        _middlePartSprite.Size = new Vector2((MiddleFrameSize.X / MiddleFrameSize.Y) * Length, 1f) * _scale;
 
         _leftPartSprite.Size = new(_leftPartSprite.FrameSize.X / _leftPartSprite.FrameSize.Y
             * _middlePartSprite.Size.Y, _middlePartSprite.Size.Y);
@@ -450,7 +455,7 @@ public class DefaultBasicButton : IBasicButton
             * _middlePartSprite.Size.Y, _middlePartSprite.Size.Y);
     }
 
-    private void UpdateButtonArea()
+    private void UpdateButtonInputArea()
     {
         float InputRatio = _input.InputAreaRatio;
         var Positions = GetSpritePositions(InputRatio);
@@ -470,7 +475,7 @@ public class DefaultBasicButton : IBasicButton
         /* There is a bug here where if the window becomes super wide, the text renders the wrong size (too large).
          * Couldn't fix it. */
         Vector2 RelativeTextPadding = Dimensions * TextPadding;
-        Vector2 MaxDrawSize = new Vector2(Dimensions.X - RelativeTextPadding.X, float.PositiveInfinity)
+        Vector2 MaxDrawSize = new Vector2(Dimensions.X - RelativeTextPadding.X, Dimensions.Y - RelativeTextPadding.Y)
             * new Vector2(Math.Max(1f, InputRatio), 1f);
         _text.MaxSize = MaxDrawSize;
         _textShadow.MaxSize = MaxDrawSize;
@@ -641,7 +646,7 @@ public class DefaultBasicButton : IBasicButton
   
         if (_hoverFadeDuration.Ticks <= time.PassedTime.Ticks)
         {
-            _highlightFadeFactor = _isHovered ? 1d : 0d;
+            _highlightFadeFactor = _isHovered ? COLOR_FADE_FACTOR_MAX : COLOR_FADE_FACTOR_MIN;
         }
         else
         {
@@ -661,7 +666,8 @@ public class DefaultBasicButton : IBasicButton
         }
         else
         {
-            _clickFadeFactor = Math.Clamp(_clickFadeFactor - (PassedTimeSeconds / ClickFadeDuration.TotalSeconds),
+            _clickFadeFactor = Math.Clamp(
+                _clickFadeFactor - (PassedTimeSeconds / ClickFadeDuration.TotalSeconds),
                 COLOR_FADE_FACTOR_MIN,
                 COLOR_FADE_FACTOR_MAX);
         }
@@ -675,7 +681,6 @@ public class DefaultBasicButton : IBasicButton
         FloatColor ColorStage2 = FloatColor.InterpolateRGB(ColorStage1, _clickColor, (float)_clickFadeFactor);
         Color FinalSpriteColor = ColorStage2;
         Color FinalTextColor = ColorStage2 * TEXT_COLOR_MULTIPLIER;
-
 
         _leftPartSprite.Mask = FinalSpriteColor;
         _middlePartSprite.Mask = FinalSpriteColor;
@@ -693,7 +698,7 @@ public class DefaultBasicButton : IBasicButton
 
         if (_previousInputAspectRatio != _input.InputAreaRatio)
         {
-            UpdateButtonArea();
+            UpdateButtonInputArea();
         }
         
         ButtonGenericUpdate(time);
@@ -706,7 +711,7 @@ public class DefaultBasicButton : IBasicButton
             return;
         }
 
-        if ((_previousRenderAspectRatio == null) || (_previousRenderAspectRatio != renderer.AspectRatio))
+        if ((_previousRenderAspectRatio == null) || (_previousRenderAspectRatio.Value != renderer.AspectRatio))
         {
             UpdateRenderPositions(renderer.AspectRatio);
         }
