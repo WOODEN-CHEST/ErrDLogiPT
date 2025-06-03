@@ -57,8 +57,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
         _element = Factory.CreateDropdownList<int>();
         _element.Position = new(0.5f, 0.2f);
-        _element.Length = 8f;
-        _element.Scale = 0.15f;
+        _element.Length = 16f;
+        _element.Scale = 0.05f;
 
         DropdownListElement<int>[] Elements = new DropdownListElement<int>[]
         {

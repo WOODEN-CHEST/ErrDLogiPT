@@ -3,6 +3,8 @@ using ErrDLogiPTClient.Scene.UI.Button;
 using GHEngine;
 using GHEngine.Audio.Source;
 using GHEngine.Frame;
+using GHEngine.Frame.Animation;
+using GHEngine.Frame.Item;
 using GHEngine.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -250,6 +252,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             UpdateAllEntryProperties();
             UpdateElementPositions();
             UpdateEntryButtonStates();
+            UpdateArrowIndicatorProperties();
         }
     }
     public float Scale
@@ -271,6 +274,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             UpdateAllEntryProperties();
             UpdateElementPositions();
             UpdateEntryButtonStates();
+            UpdateArrowIndicatorProperties();
+
         }
     }
     public ButtonClickMethod ClickMethod
@@ -316,6 +321,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     private const float COLOR_FADE_FACTOR_MIN = 0f;
     private const float COLOR_FADE_FACTOR_MAX = 1f;
     private const string DISPLAY_TEXT_NO_ELEMENTS = "...";
+    private const float POSITION_MIDDLE = 0.5f;
 
 
     // Private fields.
@@ -365,25 +371,88 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private bool _isEnabled = true;
 
+    private readonly SpriteItem _nearIndicator;
+    private readonly SpriteItem _farIndicator;
+
 
     // Constructors.
     public DefaultBasicDropdownList(IUserInput input,
-        Func<IBasicButton> buttonCreator)
+        Func<IBasicButton> buttonCreator,
+        ISpriteAnimation arrowIndicatorAnimation)
     {
         ArgumentNullException.ThrowIfNull(input, nameof(input));
         ArgumentNullException.ThrowIfNull(buttonCreator, nameof(buttonCreator));
+        ArgumentNullException.ThrowIfNull(arrowIndicatorAnimation, nameof(arrowIndicatorAnimation));
 
         _input = input;
         _buttonCreator = buttonCreator;
 
         _displayButton = _buttonCreator.Invoke();
         InitDisplayButton();
+
+        _nearIndicator = new(arrowIndicatorAnimation.CreateInstance());
+        _farIndicator = new(arrowIndicatorAnimation.CreateInstance());
+        InitArrowIndicator(_nearIndicator);
+        InitArrowIndicator(_farIndicator);
+        UpdateArrowIndicatorProperties();
+        UpdateArrowIndicatorPositions();
+        UpdateArrowIndicatorVisibility();
+        
         UpdateElementPositions();
         UpdateDisplayButtonProperties();
     }
 
 
     // Private methods.
+    private int GetMovementYStep()
+    {
+        return _position.Y >= POSITION_MIDDLE ? -1 : 1;
+    }
+    
+    private void InitArrowIndicator(SpriteItem item)
+    {
+        item.IsVisible = false;
+        item.Origin = new Vector2(0.5f);
+    }
+
+    private void UpdateArrowIndicatorProperties()
+    {
+        const float INDICATOR_SCALE = 0.75f;
+        foreach (SpriteItem Indicator in new SpriteItem[] { _farIndicator, _nearIndicator })
+        {
+            Indicator.Size = new Vector2(Indicator.FrameSize.X / Indicator.FrameSize.Y * _scale, _scale) * INDICATOR_SCALE;
+        }
+
+        if (_position.X > POSITION_MIDDLE)
+        {
+            _nearIndicator.Rotation = 0f;
+            _farIndicator.Rotation = MathF.PI;
+        }
+        else
+        {
+            _nearIndicator.Rotation = MathF.PI;
+            _farIndicator.Rotation = 0f;
+        }
+    }
+
+    private void UpdateArrowIndicatorVisibility()
+    {
+        _nearIndicator.IsVisible = _scrollIndex > 0;
+        _farIndicator.IsVisible = _scrollIndex < ElementCount - _clampedMaxPopupElementCount;
+    }
+
+    private void UpdateArrowIndicatorPositions()
+    {
+        int YStep = GetMovementYStep();
+        RectangleF ButtonBounds = _displayButton.ButtonBounds;
+
+        _nearIndicator.Position = _displayButton.Position
+            + new Vector2(0f, ButtonBounds.Height * (-YStep));
+
+        _farIndicator.Position = _displayButton.Position 
+            + new Vector2(0f, (ButtonBounds.Height * (YStep) * (_popupElementCount + 1)));
+    }
+
     private void InitDisplayButton()
     {
         _displayButton.IsEnabled = false;
@@ -521,6 +590,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         {
             TryRaiseAnimationEvents(OldPopupElementCount);
             UpdateEntryButtonStates();
+            UpdateArrowIndicatorPositions();
         }
     }
 
@@ -582,11 +652,9 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private void UpdateElementPositions()
     {
-        const float SCREEN_MIDDLE_POSITION = 0.5f;
-
         Vector2 ButtonPosition = _position;
         _displayButton.Position = ButtonPosition;
-        float YStep = _position.Y <= SCREEN_MIDDLE_POSITION ? 1f : -1f;
+        int YStep = GetMovementYStep();
 
         List<DropdownEntry> VisibleEntries = GetEntriesInSelectionRange();
         bool IsOOBButtonReached = false;
@@ -622,7 +690,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         {
             DropdownEntry Entry = _entries[i];
             Entry.Button.IsTargeted = false;
-            if (i >= MinIndex && i < MaxIndexExclusive)
+            if ((i >= MinIndex) && (i < MaxIndexExclusive))
             {
                 Entry.Button.IsVisible = true;
                 Entry.Button.IsEnabled = IsEnabled && Entry.Element.IsSelectable;
@@ -633,12 +701,13 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
                 Entry.Button.IsEnabled = false;
             }
         }
+        UpdateArrowIndicatorVisibility();
     }
 
     private bool IsButtonInBounds(IBasicButton button)
     {
-        const float SCREEN_POSITION_MAX = 1f;
-        const float SCREEN_POSITION_MIN = 0f;
+        float SCREEN_POSITION_MAX = 1f - button.ButtonBounds.Y;
+        float SCREEN_POSITION_MIN = 0f + button.ButtonBounds.Y;
 
         RectangleF Bounds = button.ButtonBounds;
         Vector2 CornerMin = new(Bounds.X, Bounds.Y);
@@ -940,6 +1009,9 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         }
 
         _displayButton.Render(renderer, time);
+
+        _nearIndicator.Render(renderer, time);
+        _farIndicator.Render(renderer, time);
     }
 
     public bool IsPositionOverList(Vector2 position)

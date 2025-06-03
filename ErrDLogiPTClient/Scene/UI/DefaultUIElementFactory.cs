@@ -21,7 +21,7 @@ public class DefaultUIElementFactory : IUIElementFactory
     private const string ASSET_NAME_BASIC_BUTTON = "main_button";
     private const string ASSET_NAME_BUTTON_FONT = "main";
     private const string ASSET_NAME_BASIC_SLIDER = "main_slider";
-    private const string ASSET_NAME_BASIC_DORPDOWN_LIST = "main_dropdown_list";
+    private const string ASSET_NAME_BASIC_DROPDOWN_LIST = "main_dropdown_list";
     private const string ASSET_NAME_BASIC_CHECKMARK = "main_checkmark";
 
     private static readonly Color NORMAL_COLOR = Color.White;
@@ -55,7 +55,7 @@ public class DefaultUIElementFactory : IUIElementFactory
 
         AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_BUTTON);
         AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_SLIDER);
-        AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_DORPDOWN_LIST);
+        AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_DROPDOWN_LIST);
         AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_CHECKMARK);
         AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT);
     }
@@ -85,8 +85,11 @@ public class DefaultUIElementFactory : IUIElementFactory
 
     public IBasicDropdownList<T> CreateDropdownList<T>()
     {
+        ISceneAssetProvider AssetProvider = _sceneServices.GetRequired<ISceneAssetProvider>();
+
         return new DefaultBasicDropdownList<T>(_sceneServices.GetRequired<IUserInput>(),
-            () => CreateButton())
+            () => CreateButton(),
+            AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_DROPDOWN_LIST))
         {
             DefaultElementColor = LIST_ELEMENT_COLOR,
             DefaultElementHoverColor = HIGHLIGHT_COLOR,
