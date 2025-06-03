@@ -1,5 +1,6 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI;
+using ErrDLogiPTClient.Scene.UI.Dropdown;
 using GHEngine;
 using GHEngine.Assets.Def;
 using GHEngine.Audio.Source;
@@ -56,8 +57,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
         _element = Factory.CreateDropdownList<int>();
         _element.Position = new(0.5f, 0.2f);
-        _element.Length = 4f;
-        _element.Scale = 0.2f;
+        _element.Length = 8f;
+        _element.Scale = 0.05f;
 
         DropdownListElement<int>[] Elements = new DropdownListElement<int>[]
         {
@@ -67,8 +68,14 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
             new(4.ToString(), 4),
             new(5.ToString(), 5),
             new(6.ToString(), 6),
+            new(7.ToString(), 7),
+            new(8.ToString(), 8),
+            new(9.ToString(), 9),
+            new(10.ToString(), 10),
         };
         _element.SetElements(Elements);
+        _element.MaxSelectedElementCount = 2;
+        _element.MinSelectedElementCount = 1;
     }
 
     public override void OnStart()

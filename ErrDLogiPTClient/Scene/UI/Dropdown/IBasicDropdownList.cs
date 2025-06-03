@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.UI;
+namespace ErrDLogiPTClient.Scene.UI.Dropdown;
 
 public interface IBasicDropdownList<T> : IUIElement
 {
@@ -15,8 +15,11 @@ public interface IBasicDropdownList<T> : IUIElement
     Vector2 Position { get; set; }
     int MaxDisplayedElementCount { get; set; }
     int ScrollIndex { get; set; }
+    int MinSelectedElementCount { get; set; }
     int MaxSelectedElementCount { get; set; }
     int ElementCount { get; }
+    int SelectedElementCount { get; }
+    IEnumerable<DropdownListElement<T>> SelectedElements { get; }
     IEnumerable<DropdownListElement<T>> Elements { get; }
     Color ValueDisplayColor { get; set; }
     Color ValueDisplayHoverColor { get; set; }

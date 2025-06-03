@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.UI;
+namespace ErrDLogiPTClient.Scene.UI.Button;
 
 public interface IBasicButton : IUIElement
 {
@@ -28,16 +28,16 @@ public interface IBasicButton : IUIElement
     Vector2 ShadowOffset { get; set; }
     float Length { get; set; }
     float Scale { get; set; }
-    bool IsButtonTargeted { get; set; }
+    bool IsTargeted { get; set; }
     float Volume { get; set; }
     IEnumerable<IPreSampledSound> ClickSounds { get; set; }
     IEnumerable<IPreSampledSound> HoverStartSounds { get; set; }
     IEnumerable<IPreSampledSound> HoverEndSounds { get; set; }
     LogiSoundCategory SoundCategory { get; set; }
     ButtonClickMethod ClickMethod { get; set; }
-    Action<DefaultBasicButton>? MainClickAction { get; set; }
-    Action<DefaultBasicButton>? MainHoverStartAction { get; set; }
-    Action<DefaultBasicButton>? MainHoverEndAction { get; set; }
+    Action<BasicButtonMainClickArgs>? MainClickAction { get; set; }
+    Action<BasicButtonMainHoverStartArgs>? MainHoverStartAction { get; set; }
+    Action<BasicButtonMainHoverEndArgs>? MainHoverEndAction { get; set; }
     RectangleF ButtonBounds { get; }
     IEnumerable<UIElementClickType> DetectedClickTypes { get; set; }
 

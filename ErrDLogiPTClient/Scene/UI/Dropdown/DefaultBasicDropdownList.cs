@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
+using ErrDLogiPTClient.Scene.UI.Button;
 using GHEngine;
 using GHEngine.Audio.Source;
 using GHEngine.Frame;
@@ -11,24 +12,64 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.UI;
+namespace ErrDLogiPTClient.Scene.UI.Dropdown;
 
 public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 {
     // Fields.
-    public bool IsEnabled { get; set; } = true;
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set
+        {
+            if (value == _isEnabled)
+            {
+                return;
+            }
+            _isEnabled = value;
+            UpdateEntryButtonStates();
+        }
+    }
+
     public bool IsVisible { get; set; } = true;
+
     public Vector2 Position
     {
         get => _position;
         set
         {
             _position = value;
-            UpdateVisibleButtonProperties();
+            UpdateElementPositions();
+            UpdateEntryButtonStates();
         }
     }
-    public int MaxDisplayedElementCount { get; set; } = 5;
-    public int MaxSelectedElementCount { get; set; } = 1;
+    public int MaxDisplayedElementCount
+    {
+        get => _maxDisplayedElementCount;
+        set => _maxDisplayedElementCount = Math.Max(value, 0);
+    }
+
+    public int MaxSelectedElementCount
+    {
+        get => _maxSelectedElementCount;
+        set
+        {
+            _maxSelectedElementCount = Math.Max(value, 0);
+            _minSelectedElementCount = Math.Min(value, _minSelectedElementCount);
+            EnsureSelectedElementCount(MaxSelectedElementCount);
+        }
+    }
+
+    public int MinSelectedElementCount
+    {
+        get => _minSelectedElementCount;
+        set
+        {
+            _minSelectedElementCount = Math.Max(value, 0);
+            _maxSelectedElementCount = Math.Max(value, _maxSelectedElementCount);
+            EnsureSelectedElementCount(MaxSelectedElementCount);
+        }
+    }
 
     public int ElementCount => _entries.Count;
 
@@ -37,31 +78,19 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     public Color ValueDisplayColor
     {
         get => _displayNormalColor;
-        set
-        {
-            _displayNormalColor = value;
-            UpdateDisplayButtonProperties();
-        }
+        set => _displayNormalColor = value;
     }
 
     public Color ValueDisplayHoverColor
     {
         get => _displayHoverColor;
-        set
-        {
-            _displayHoverColor = value;
-            UpdateDisplayButtonProperties();
-        }
+        set => _displayHoverColor = value;
     }
 
     public Color ValueDisplayChangeColor
     {
         get => _displayChangeColor;
-        set
-        {
-            _displayChangeColor = value;
-            UpdateDisplayButtonProperties();
-        }
+        set => _displayChangeColor = value;
     }
 
     public TimeSpan HoverColorDuration
@@ -138,7 +167,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         }
     }
 
-    public TimeSpan ElementPopupDelay { get; set; } = TimeSpan.FromSeconds(0.05d);
+    public TimeSpan ElementPopupDelay { get; set; } = TimeSpan.FromSeconds(0.025d);
 
     public bool IsTextShadowEnabled
     {
@@ -151,7 +180,15 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         }
     }
 
-    public float Volume { get; set; }
+    public float Volume
+    {
+        get => _volume;
+        set
+        {
+            _volume = value;
+            UpdateAllEntryProperties();
+        }
+    }
 
     public IEnumerable<IPreSampledSound> ClickSounds
     {
@@ -186,7 +223,11 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     public LogiSoundCategory SoundCategory
     {
         get => _soundCategory;
-        set => _soundCategory = value ?? throw new ArgumentNullException(nameof(value));
+        set
+        {
+            _soundCategory = value ?? throw new ArgumentNullException(nameof(value));
+            UpdateAllEntryProperties();
+        }
     }
 
     public float Length
@@ -206,7 +247,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             _length = value;
             UpdateDisplayButtonProperties();
             UpdateAllEntryProperties();
-            UpdateVisibleButtonProperties();
+            UpdateElementPositions();
+            UpdateEntryButtonStates();
         }
     }
     public float Scale
@@ -226,7 +268,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             _scale = value;
             UpdateDisplayButtonProperties();
             UpdateAllEntryProperties();
-            UpdateVisibleButtonProperties();
+            UpdateElementPositions();
+            UpdateEntryButtonStates();
         }
     }
     public ButtonClickMethod ClickMethod
@@ -248,12 +291,15 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             {
                 return;
             }
-            _scrollIndex = Math.Clamp(value, 0, Math.Max(0, ElementCount - 1 - MaxDisplayedElementCount));
-            UpdateVisibleButtonProperties();
+            _scrollIndex = Math.Clamp(value, 0, Math.Max(0, _entries.Count - _clampedMaxPopupElementCount));
+            UpdateElementPositions();
+            UpdateEntryButtonStates();
         }
     }
 
     public bool IsTargeted { get; set; } = false;
+    public int SelectedElementCount => _selectedElements.Count;
+    public IEnumerable<DropdownListElement<T>> SelectedElements => _selectedElements;
 
     public event EventHandler<EventArgs>? Expand;
     public event EventHandler<EventArgs>? Contract;
@@ -264,6 +310,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     // Private static fields.
     private const float COLOR_FADE_FACTOR_MIN = 0f;
     private const float COLOR_FADE_FACTOR_MAX = 1f;
+    private const string DISPLAY_TEXT_NO_ELEMENTS = "...";
 
 
     // Private fields.
@@ -291,6 +338,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     private TimeSpan _elementPopupTimer = TimeSpan.Zero;
     private int _popupElementCount = 0;
     private int _scrollIndex = 0;
+    private int _clampedMaxPopupElementCount = 0;
 
     private bool _isTextShadowEnabled = true;
 
@@ -298,12 +346,19 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     private IPreSampledSound[] _hoverStartSounds = Array.Empty<IPreSampledSound>();
     private IPreSampledSound[] _hoverEndSounds = Array.Empty<IPreSampledSound>();
     private LogiSoundCategory _soundCategory = LogiSoundCategory.UI;
+    private float _volume = 1f;
 
-    private HashSet<DropdownListElement<T>> _selectedElements = new();
+    private List<DropdownListElement<T>> _selectedElements = new();
 
     private Vector2 _position = Vector2.Zero;
 
     private ButtonClickMethod _clickMethod = ButtonClickMethod.ActivateOnFullClick;
+
+    private int _minSelectedElementCount = 1;
+    private int _maxSelectedElementCount = 1;
+    private int _maxDisplayedElementCount = int.MaxValue;
+
+    private bool _isEnabled = true;
 
 
     // Constructors.
@@ -318,6 +373,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
         _displayButton = _buttonCreator.Invoke();
         InitDisplayButton();
+        UpdateElementPositions();
+        UpdateDisplayButtonProperties();
     }
 
 
@@ -330,7 +387,14 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     private void InitializeEntry(DropdownEntry entry)
     {
         entry.Button.Initialize();
+        entry.Button.DetectedClickTypes = new UIElementClickType[] 
+        { 
+            UIElementClickType.Left,
+            UIElementClickType.Middle,
+            UIElementClickType.Right,
+        };
         UpdateSingleEntryProperties(entry);
+        entry.Button.MainClickAction = (args) => OnElementClickEvent(entry, args);
     }
 
     private void DeinitializeEntry(DropdownEntry entry)
@@ -340,9 +404,19 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private void UpdateDisplayButtonProperties()
     {
-        _displayButton.IsTextShadowEnabled = _isTextShadowEnabled;
+        _displayButton.IsTextShadowEnabled = IsTextShadowEnabled;
         _displayButton.Length = Length;
         _displayButton.Scale = Scale;
+
+        if (_selectedElements.Count == 0)
+        {
+            _displayButton.Text = DISPLAY_TEXT_NO_ELEMENTS;
+        }
+        else
+        {
+            _displayButton.Text = $"{_selectedElements[0].DisplayName}" +
+                $"{(_selectedElements.Count > 1 ? '+' : string.Empty)}";
+        }
     }
 
     private void UpdateAllEntryProperties()
@@ -361,8 +435,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         {
             Button.IsEnabled = true;
             Button.ButtonColor = IsElementSelected(entry.Element)
-                ? (entry.Element.NormalColorOverride ?? DefaultElementColor)
-                : (entry.Element.SelectedColorOverride ?? DefaultElementSelectedColor);
+                ? entry.Element.SelectedColorOverride ?? DefaultElementSelectedColor
+                : entry.Element.NormalColorOverride ?? DefaultElementColor;
         }
         else
         {
@@ -382,6 +456,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         Button.HoverEndSounds = HoverEndSounds;
         Button.ClickMethod = ClickMethod;
         Button.Text = entry.Element.DisplayName;
+        Button.Volume = Volume;
     }
 
     private void GenericUpdate(IProgramTime time)
@@ -395,7 +470,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         else
         {
             _hoverColorFactor = Math.Clamp(
-                _hoverColorFactor + ((IsTargeted ? 1f : -1f) * (PassedTimeSeconds / (float)HoverColorDuration.TotalSeconds)),
+                _hoverColorFactor + (IsTargeted ? 1f : -1f) * (PassedTimeSeconds / (float)HoverColorDuration.TotalSeconds),
                 COLOR_FADE_FACTOR_MIN, 
                 COLOR_FADE_FACTOR_MAX);
         }
@@ -407,7 +482,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         else
         {
             _valueChangeColorFactor = Math.Clamp(
-                _valueChangeColorFactor - (PassedTimeSeconds / (float)HoverColorDuration.TotalSeconds),
+                _valueChangeColorFactor - PassedTimeSeconds / (float)HoverColorDuration.TotalSeconds,
                 COLOR_FADE_FACTOR_MIN,
                 COLOR_FADE_FACTOR_MAX);
         }
@@ -419,15 +494,14 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private void AnimateElementPopup(IProgramTime time)
     {
-        if (!IsTargeted && (_popupElementCount <= 0))
+        if (!IsTargeted && _popupElementCount <= 0)
         {
             ScrollIndex = 0;
             _elementPopupTimer = TimeSpan.Zero;
             return;
         }
 
-
-        if (IsTargeted && (_popupElementCount >= Math.Min(MaxDisplayedElementCount, ElementCount)))
+        if (IsTargeted && _popupElementCount >= _clampedMaxPopupElementCount)
         {
             _elementPopupTimer = TimeSpan.Zero;
             return;
@@ -435,10 +509,10 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
         _elementPopupTimer += time.PassedTime;
         bool WereElementsUpdated = false;
-        int TargetMaxCount = IsTargeted ? Math.Min(MaxDisplayedElementCount, ElementCount) : 0;
+        int TargetMaxCount = IsTargeted ? _clampedMaxPopupElementCount : 0;
         int Step = IsTargeted ? 1 : -1;
 
-        while ((_elementPopupTimer >= ElementPopupDelay) && (_popupElementCount != TargetMaxCount))
+        while (_elementPopupTimer >= ElementPopupDelay && _popupElementCount != TargetMaxCount)
         {
             _popupElementCount += Step;
             _elementPopupTimer -= ElementPopupDelay;
@@ -447,41 +521,61 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
         if (WereElementsUpdated)
         {
-            UpdateVisibleButtonProperties();
+            UpdateEntryButtonStates();
         }
     }
 
-    private void UpdateVisibleButtonProperties()
+    private void UpdateElementPositions()
     {
         const float SCREEN_MIDDLE_POSITION = 0.5f;
 
         Vector2 ButtonPosition = _position;
         _displayButton.Position = ButtonPosition;
         float YStep = _position.Y <= SCREEN_MIDDLE_POSITION ? 1f : -1f;
-        
+
         List<DropdownEntry> VisibleEntries = GetEntriesInSelectionRange();
         bool IsOOBButtonReached = false;
 
         for (int i = 0; i < VisibleEntries.Count; i++)
         {
             DropdownEntry TargetEntry = VisibleEntries[i];
-            if (!IsOOBButtonReached)
-            {
-                ButtonPosition += new Vector2(0f, YStep * TargetEntry.Button.ButtonBounds.Height);
-                TargetEntry.Button.Position = ButtonPosition;
-                IsOOBButtonReached = IsOOBButtonReached || !IsButtonInBounds(TargetEntry.Button);
-            }
+            ButtonPosition += new Vector2(0f, YStep * TargetEntry.Button.ButtonBounds.Height);
+            TargetEntry.Button.Position = ButtonPosition;
 
-            if (IsOOBButtonReached)
+            bool WasOOBReachedPreviously = IsOOBButtonReached;
+            IsOOBButtonReached = IsOOBButtonReached
+                    || i >= MaxDisplayedElementCount
+                    || !IsButtonInBounds(TargetEntry.Button);
+
+            if (!WasOOBReachedPreviously && IsOOBButtonReached)
             {
-                TargetEntry.Button.IsVisible = false;
-                TargetEntry.Button.IsEnabled = false;
-                continue;
+                _clampedMaxPopupElementCount = i;
+            }
+        }
+
+        if (!IsOOBButtonReached)
+        {
+            _clampedMaxPopupElementCount = Math.Min(MaxDisplayedElementCount, _entries.Count);
+        }
+    }
+
+    private void UpdateEntryButtonStates()
+    {
+        int MinIndex = _scrollIndex;
+        int MaxIndexExclusive = _scrollIndex + _popupElementCount;
+        for (int i = 0; i < _entries.Count; i++)
+        {
+            DropdownEntry Entry = _entries[i];
+            Entry.Button.IsTargeted = false;
+            if (i >= MinIndex && i < MaxIndexExclusive)
+            {
+                Entry.Button.IsVisible = true;
+                Entry.Button.IsEnabled = IsEnabled && Entry.Element.IsSelectable;
             }
             else
             {
-                TargetEntry.Button.IsVisible = true;
-                TargetEntry.Button.IsEnabled = TargetEntry.Element.IsSelectable;
+                Entry.Button.IsVisible = false;
+                Entry.Button.IsEnabled = false;
             }
         }
     }
@@ -495,10 +589,10 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         Vector2 CornerMin = new(Bounds.X, Bounds.Y);
         Vector2 CornerMax = CornerMin + new Vector2(Bounds.Width, Bounds.Height);
 
-        return (CornerMin.X >= SCREEN_POSITION_MIN)
-            && (CornerMin.Y >= SCREEN_POSITION_MIN)
-            && (CornerMax.X <= SCREEN_POSITION_MAX)
-            && (CornerMax.Y <= SCREEN_POSITION_MAX);
+        return CornerMin.X >= SCREEN_POSITION_MIN
+            && CornerMin.Y >= SCREEN_POSITION_MIN
+            && CornerMax.X <= SCREEN_POSITION_MAX
+            && CornerMax.Y <= SCREEN_POSITION_MAX;
     }
 
     private void UpdateDisplayButtonColor(IProgramTime time)
@@ -512,12 +606,12 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private void UpdateScrollPosition()
     {
-        if (!IsTargeted || (_input.MouseScrollChangeAmount == 0))
+        if (!IsTargeted || _input.MouseScrollChangeAmount == 0)
         {
             return;
         }
 
-        ScrollIndex = _input.MouseScrollChangeAmount > 0 ? (ScrollIndex - 1) : (ScrollIndex + 1);
+        ScrollIndex = _input.MouseScrollChangeAmount > 0 ? ScrollIndex - 1 : ScrollIndex + 1;
     }
 
     private List<DropdownEntry> GetEntriesInSelectionRange()
@@ -531,6 +625,71 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         return VisibleEntries;
     }
 
+    private void OnElementClickEvent(DropdownEntry entry, BasicButtonMainClickArgs args)
+    {
+        if (!entry.Element.IsSelectable)
+        {
+            return;
+        }
+
+        if (args.ClickType == UIElementClickType.Middle)
+        {
+            OnClickDeselectAllElements();
+        }
+        else if (args.ClickType == UIElementClickType.Left)
+        {
+            OnClickSelectElement(entry);
+        }
+        else if (args.ClickType == UIElementClickType.Right)
+        {
+            OnClickDeselectElement(entry);
+        }
+
+        UpdateDisplayButtonProperties();
+    }
+
+    private void OnClickDeselectAllElements()
+    {
+        EnsureSelectedElementCount(MinSelectedElementCount);
+    }
+
+    private void OnClickSelectElement(DropdownEntry entry)
+    {
+        if (MaxSelectedElementCount > 1)
+        {
+            SetIsElementSelected(entry.Element, !IsElementSelected(entry.Element));
+        }
+        else
+        {
+            SetIsElementSelected(entry.Element, true);
+        }
+    }
+
+    private void OnClickDeselectElement(DropdownEntry entry)
+    {
+        SetIsElementSelected(entry.Element, false);
+    }
+
+    private void EnsureSelectedElementCount(int countLimit)
+    {
+        int ClampedCountLimit = Math.Max(0, countLimit);
+        while (_selectedElements.Count > ClampedCountLimit)
+        {
+            DropdownListElement<T> Element = _selectedElements[0];
+            SetIsElementSelected(Element, false);
+        }
+    }
+
+    private void EnsureSelectedElementExtraCapacity(int requiredCapacity)
+    {
+        EnsureSelectedElementCount(MaxSelectedElementCount - requiredCapacity);
+    }
+
+    private DropdownEntry? GetEntryByElement(DropdownListElement<T> element)
+    {
+        return _entries.Where(entry => entry.Element == element).FirstOrDefault();
+    }
+
 
     // Inherited methods.
     public void Initialize()
@@ -541,23 +700,28 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     public void Deinitialize()
     {
         _displayButton.Deinitialize();
+        ClearElements();
     }
 
     public void SetIsElementSelected(DropdownListElement<T> element, bool isSelected)
     {
         ArgumentNullException.ThrowIfNull(element, nameof(element));
-        if (!ContainsElement(element))
+        DropdownEntry? Entry = GetEntryByElement(element);
+        if (Entry == null)
         {
             return;
         }
 
         if (isSelected)
         {
+            EnsureSelectedElementExtraCapacity(1);
             _selectedElements.Add(element);
+            UpdateSingleEntryProperties(Entry);
         }
-        else
+        else if (SelectedElementCount > MinSelectedElementCount)
         {
             _selectedElements.Remove(element);
+            UpdateSingleEntryProperties(Entry);
         }
     }
 
@@ -573,7 +737,9 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         DropdownEntry Entry = new(_buttonCreator.Invoke(), element);
         _entries.Insert(index, Entry);
         InitializeEntry(Entry);
-        UpdateVisibleButtonProperties();
+
+        UpdateElementPositions();
+        UpdateEntryButtonStates();
     }
 
     public void RemoveElement(DropdownListElement<T> element)
@@ -593,16 +759,27 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     {
         DropdownEntry Entry = _entries[index];
         _entries.RemoveAt(index);
+        _selectedElements.Remove(Entry.Element);
         DeinitializeEntry(Entry);
+
+        UpdateElementPositions();
+        UpdateEntryButtonStates();
+        UpdateDisplayButtonProperties();
     }
 
     public void SetElements(IEnumerable<DropdownListElement<T>>? elements)
     {
         ClearElements();
+
         foreach (DropdownListElement<T> Element in elements ?? Enumerable.Empty<DropdownListElement<T>>())
         {
-            AddElement(Element);
+            DropdownEntry Entry = new(_buttonCreator.Invoke(), Element);
+            InitializeEntry(Entry);
+            _entries.Add(Entry);
         }
+
+        UpdateElementPositions();
+        UpdateEntryButtonStates();
     }
 
     public void AddElement(DropdownListElement<T>? element)
@@ -618,6 +795,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         }
 
         _entries.Clear();
+        _selectedElements.Clear();
     }
 
     public bool ContainsElement(DropdownListElement<T> element)
@@ -637,7 +815,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     public void Update(IProgramTime time)
     {
-        IsTargeted = IsEnabled && ((IsTargeted && (_input.VirtualMousePositionCurrent == _input.VirtualMousePositionPrevious))
+        IsTargeted = IsEnabled && (IsTargeted && _input.VirtualMousePositionCurrent == _input.VirtualMousePositionPrevious
             || IsPositionOverList(_input.VirtualMousePositionCurrent));
 
         GenericUpdate(time);

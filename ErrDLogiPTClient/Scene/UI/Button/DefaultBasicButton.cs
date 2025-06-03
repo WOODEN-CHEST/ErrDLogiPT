@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ErrDLogiPTClient.Scene.UI;
+namespace ErrDLogiPTClient.Scene.UI.Button;
 
 public class DefaultBasicButton : IBasicButton
 {
@@ -190,7 +190,7 @@ public class DefaultBasicButton : IBasicButton
         }
     }
 
-    public bool IsButtonTargeted
+    public bool IsTargeted
     {
         get => _clickDetector.IsTargeted;
         set => _clickDetector.IsTargeted = value;
@@ -247,9 +247,9 @@ public class DefaultBasicButton : IBasicButton
         }
     }
 
-    public Action<DefaultBasicButton>? MainClickAction { get; set; }
-    public Action<DefaultBasicButton>? MainHoverStartAction { get; set; }
-    public Action<DefaultBasicButton>? MainHoverEndAction { get; set; }
+    public Action<BasicButtonMainClickArgs>? MainClickAction { get; set; }
+    public Action<BasicButtonMainHoverStartArgs>? MainHoverStartAction { get; set; }
+    public Action<BasicButtonMainHoverEndArgs>? MainHoverEndAction { get; set; }
 
     public RectangleF ButtonBounds => _clickDetector.ElementBounds;
 
@@ -291,7 +291,7 @@ public class DefaultBasicButton : IBasicButton
     private Vector2 _position = Vector2.Zero;
     private float _scale = 1f;
     private Vector2 _textPadding = new(0.125f);
-    private Vector2 _shadowOffset = new(0.01f);
+    private Vector2 _shadowOffset = new(0.08f);
     private bool _isEnabled = true;
 
     private bool _isHovered = false;
@@ -368,41 +368,6 @@ public class DefaultBasicButton : IBasicButton
     }
 
 
-    // Methods.
-    public void Initialize()
-    {
-        _assetProvider.RegisterRenderedItem(_text);
-        _assetProvider.RegisterRenderedItem(_leftPartSprite);
-        _assetProvider.RegisterRenderedItem(_middlePartSprite);
-        _assetProvider.RegisterRenderedItem(_rightPartSprite);
-
-        _clickDetector.ClickStart += OnClickStartEvent;
-        _clickDetector.ClickEnd += OnClickEndEvent;
-        _clickDetector.HoverStart += OnHoverStartEvent;
-        _clickDetector.HoverEnd += OnHoverEndEvent;
-        _clickDetector.Scroll += OnScrollEvent;
-    }
-
-    public void Deinitialize()
-    {
-        _assetProvider.UnregisterRenderedItem(_text);
-        _assetProvider.UnregisterRenderedItem(_leftPartSprite);
-        _assetProvider.UnregisterRenderedItem(_middlePartSprite);
-        _assetProvider.UnregisterRenderedItem(_rightPartSprite);
-
-        _clickDetector.ClickStart -= OnClickStartEvent;
-        _clickDetector.ClickEnd -= OnClickEndEvent;
-        _clickDetector.HoverStart -= OnHoverStartEvent;
-        _clickDetector.HoverEnd -= OnHoverEndEvent;
-        _clickDetector.Scroll -= OnScrollEvent;
-    }
-
-    public bool IsPositionOverButton(Vector2 position)
-    {
-        return _clickDetector.IsPositionOverClickArea(position);
-    }
-
-
     // Private methods.
     private void InitializeTextBox(TextBox textBox)
     {
@@ -438,7 +403,7 @@ public class DefaultBasicButton : IBasicButton
         _middlePartSprite.Position = _position;
 
         _text.Position = Positions.Middle;
-        _textShadow.Position = Positions.Middle + GHMath.GetWindowAdjustedVector(_shadowOffset, windowAspectRatio);
+        _textShadow.Position = Positions.Middle + GHMath.GetWindowAdjustedVector(_shadowOffset, windowAspectRatio) * _scale;
 
         _previousRenderAspectRatio = windowAspectRatio;
     }
@@ -446,7 +411,7 @@ public class DefaultBasicButton : IBasicButton
     private void UpdateRenderSize()
     {
         Vector2 MiddleFrameSize = _middlePartSprite.FrameSize;
-        _middlePartSprite.Size = new Vector2((MiddleFrameSize.X / MiddleFrameSize.Y) * Length, 1f) * _scale;
+        _middlePartSprite.Size = new Vector2(MiddleFrameSize.X / MiddleFrameSize.Y * Length, 1f) * _scale;
 
         _leftPartSprite.Size = new(_leftPartSprite.FrameSize.X / _leftPartSprite.FrameSize.Y
             * _middlePartSprite.Size.Y, _middlePartSprite.Size.Y);
@@ -515,7 +480,7 @@ public class DefaultBasicButton : IBasicButton
         _wasClickStarted = false;
         _isClickColorFullyActive = false;
 
-        if (((ClickMethod == ButtonClickMethod.ActivateOnFullClick) && !IsFullClickValid) || !_detectedClickTypes.Contains(args.ClickType))
+        if (ClickMethod == ButtonClickMethod.ActivateOnFullClick && !IsFullClickValid || !_detectedClickTypes.Contains(args.ClickType))
         {
             return;
         }
@@ -549,7 +514,8 @@ public class DefaultBasicButton : IBasicButton
         {
             IsEnabled = false;
         }
-        MainClickAction?.Invoke(this);
+        MainClickAction?.Invoke(new(this, EventArgs.ClickType, EventArgs.ClickStartLocation,
+            EventArgs.ClickEndLocation, EventArgs.ClickDuration));
         EventArgs.ExecuteActions();
     }
 
@@ -576,7 +542,7 @@ public class DefaultBasicButton : IBasicButton
 
         _isHovered = true;
         _isClickColorFullyActive = _wasClickStarted;
-        MainHoverStartAction?.Invoke(this);
+        MainHoverStartAction?.Invoke(new(this));
         EventArgs.ExecuteActions();
     }
 
@@ -601,7 +567,7 @@ public class DefaultBasicButton : IBasicButton
 
         _isClickColorFullyActive = false;
         _isHovered = false;
-        MainHoverEndAction?.Invoke(this);
+        MainHoverEndAction?.Invoke(new(this));
         EventArgs.ExecuteActions();
     }
 
@@ -651,7 +617,7 @@ public class DefaultBasicButton : IBasicButton
         else
         {
             _highlightFadeFactor = Math.Clamp(
-                _highlightFadeFactor + (PassedTimeSeconds * (_isHovered ? 1d : -1d) / HoverFadeDuration.TotalSeconds),
+                _highlightFadeFactor + PassedTimeSeconds * (_isHovered ? 1d : -1d) / HoverFadeDuration.TotalSeconds,
                 COLOR_FADE_FACTOR_MIN,
                 COLOR_FADE_FACTOR_MAX);
         }
@@ -667,7 +633,7 @@ public class DefaultBasicButton : IBasicButton
         else
         {
             _clickFadeFactor = Math.Clamp(
-                _clickFadeFactor - (PassedTimeSeconds / ClickFadeDuration.TotalSeconds),
+                _clickFadeFactor - PassedTimeSeconds / ClickFadeDuration.TotalSeconds,
                 COLOR_FADE_FACTOR_MIN,
                 COLOR_FADE_FACTOR_MAX);
         }
@@ -692,6 +658,40 @@ public class DefaultBasicButton : IBasicButton
 
 
     // Inherited methods.
+    public void Initialize()
+    {
+        _assetProvider.RegisterRenderedItem(_text);
+        _assetProvider.RegisterRenderedItem(_leftPartSprite);
+        _assetProvider.RegisterRenderedItem(_middlePartSprite);
+        _assetProvider.RegisterRenderedItem(_rightPartSprite);
+
+        _clickDetector.ClickStart += OnClickStartEvent;
+        _clickDetector.ClickEnd += OnClickEndEvent;
+        _clickDetector.HoverStart += OnHoverStartEvent;
+        _clickDetector.HoverEnd += OnHoverEndEvent;
+        _clickDetector.Scroll += OnScrollEvent;
+    }
+
+    public void Deinitialize()
+    {
+        _assetProvider.UnregisterRenderedItem(_text);
+        _assetProvider.UnregisterRenderedItem(_leftPartSprite);
+        _assetProvider.UnregisterRenderedItem(_middlePartSprite);
+        _assetProvider.UnregisterRenderedItem(_rightPartSprite);
+
+        _clickDetector.ClickStart -= OnClickStartEvent;
+        _clickDetector.ClickEnd -= OnClickEndEvent;
+        _clickDetector.HoverStart -= OnHoverStartEvent;
+        _clickDetector.HoverEnd -= OnHoverEndEvent;
+        _clickDetector.Scroll -= OnScrollEvent;
+    }
+
+    public bool IsPositionOverButton(Vector2 position)
+    {
+        return _clickDetector.IsPositionOverClickArea(position);
+    }
+
+
     public void Update(IProgramTime time)
     {
         _clickDetector.Update(time);
@@ -711,7 +711,7 @@ public class DefaultBasicButton : IBasicButton
             return;
         }
 
-        if ((_previousRenderAspectRatio == null) || (_previousRenderAspectRatio.Value != renderer.AspectRatio))
+        if (_previousRenderAspectRatio == null || _previousRenderAspectRatio.Value != renderer.AspectRatio)
         {
             UpdateRenderPositions(renderer.AspectRatio);
         }

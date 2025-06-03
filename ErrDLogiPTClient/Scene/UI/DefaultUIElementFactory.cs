@@ -1,4 +1,6 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
+using ErrDLogiPTClient.Scene.UI.Button;
+using ErrDLogiPTClient.Scene.UI.Dropdown;
 using GHEngine.Assets.Def;
 using GHEngine.Frame.Animation;
 using GHEngine.GameFont;

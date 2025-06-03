@@ -5,6 +5,10 @@ namespace ErrDLogiPTClient.Scene.MainMenu;
 
 public class MainMenuScene : SceneBase
 {
+    // Fields.
+    
+
+
     // Private fields.
     private readonly MainMenuUIExecutor _uiExecutor;
 
