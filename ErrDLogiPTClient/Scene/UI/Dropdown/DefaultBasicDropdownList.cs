@@ -779,12 +779,12 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private void OnClickSelectElement(DropdownEntry entry)
     {
-        SetIsElementSelected(entry.Element, true);
+        SetIsElementSelectedInternal(entry.Element, true, true);
     }
 
     private void OnClickDeselectElement(DropdownEntry entry)
     {
-        SetIsElementSelected(entry.Element, false);
+        SetIsElementSelectedInternal(entry.Element, false, true);
     }
 
     private void EnsureSelectedElementCount(int countLimit)
@@ -793,13 +793,9 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         while (_selectedElements.Count > ClampedCountLimit)
         {
             DropdownListElement<T> Element = _selectedElements[0];
-            SetIsElementSelectedInternal(Element, false, true);
+            _selectedElements.RemoveAt(0);
+            UpdateSingleEntryProperties(GetEntryByElement(Element)!);
         }
-    }
-
-    private void EnsureSelectedElementExtraCapacity(int requiredCapacity)
-    {
-        EnsureSelectedElementCount(MaxSelectedElementCount - requiredCapacity);
     }
 
     private DropdownEntry? GetEntryByElement(DropdownListElement<T> element)
@@ -807,7 +803,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         return _entries.Where(entry => entry.Element == element).FirstOrDefault();
     }
 
-    private void SetIsElementSelectedInternal(DropdownListElement<T> element, bool isSelected, bool bypassLimit)
+    private void SetIsElementSelectedInternal(DropdownListElement<T> element, bool isSelected, bool raiseEvent)
     {
         DropdownEntry? Entry = GetEntryByElement(element);
         if (Entry == null)
@@ -815,53 +811,54 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             return;
         }
 
-        HashSet<DropdownListElement<T>> NewSelectedElements = new(_selectedElements);
-        if (isSelected)
-        {
-            NewSelectedElements.Add(element);
-        }
-        else
-        {
-            NewSelectedElements.Remove(element);
-        }
-        BasicDropdownSelectionUpdateEventArgs<T> EventArgs = new(this, NewSelectedElements);
-        SelectionUpdate?.Invoke(this, EventArgs);
+        (var NewElementList, var ModifiedElements) = GetElementLists(element, isSelected);
         
-        if (EventArgs.IsCancelled)
+        BasicDropdownSelectionUpdateEventArgs<T>? EventArgs = null;
+        if (raiseEvent)
         {
-            EventArgs.ExecuteActions();
-            return;
+            EventArgs = new(this, NewElementList);
+            SelectionUpdate?.Invoke(this, EventArgs);
+
+            if (EventArgs.IsCancelled)
+            {
+                EventArgs.ExecuteActions();
+                return;
+            }
         }
 
-        ModifyElementSelectionState(Entry, isSelected, bypassLimit);
-        EventArgs.ExecuteActions();
+        _selectedElements.Clear();
+        _selectedElements.AddRange(NewElementList);
+        foreach (var Element in ModifiedElements)
+        {
+            UpdateSingleEntryProperties(GetEntryByElement(Element)!);
+        }
+        EventArgs?.ExecuteActions();
     }
 
-    private void ModifyElementSelectionState(DropdownEntry entry,
-        bool isSelected, 
-        bool bypassLimit)
+    private (List<DropdownListElement<T>> NewElementList, List<DropdownListElement<T>> ModifiedElements) GetElementLists(
+        DropdownListElement<T> elementModified, bool isSelected)
     {
-        bool WasSelectionChanged = false;
-        if (isSelected)
+        List<DropdownListElement<T>> NewElementList = new(_selectedElements);
+        List<DropdownListElement<T>> ModifiedElements = new();
+
+        if (isSelected && !NewElementList.Contains(elementModified))
         {
-            if (!bypassLimit)
+            int TargetElementCount = Math.Max(0, MaxSelectedElementCount - 1);
+            while (NewElementList.Count > TargetElementCount)
             {
-                EnsureSelectedElementExtraCapacity(1);
+                ModifiedElements.Add(NewElementList[0]);
+                NewElementList.RemoveAt(0);
             }
-            _selectedElements.Add(entry.Element);
-            WasSelectionChanged = true;
+            NewElementList.Add(elementModified);
+            ModifiedElements.Add(elementModified);
         }
-        else if (bypassLimit || (SelectedElementCount > MinSelectedElementCount))
+        else if (NewElementList.Count > MinSelectedElementCount)
         {
-            _selectedElements.Remove(entry.Element);
-            WasSelectionChanged = true;
+            NewElementList.Remove(elementModified);
+            ModifiedElements.Add(elementModified);
         }
 
-        if (WasSelectionChanged)
-        {
-            UpdateSingleEntryProperties(entry);
-            _valueChangeColorFactor = COLOR_FADE_FACTOR_MAX;
-        }
+        return (NewElementList, ModifiedElements);
     }
 
     private void OnElementCreateSoundEvent(object? sender, BasicButtonSoundEventArgs args)
@@ -891,7 +888,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     public void SetIsElementSelected(DropdownListElement<T> element, bool isSelected)
     {
         ArgumentNullException.ThrowIfNull(element, nameof(element));
-        SetIsElementSelectedInternal(element, isSelected, false);
+        SetIsElementSelectedInternal(element, isSelected, true);
     }
 
     public bool IsElementSelected(DropdownListElement<T> element)
@@ -934,6 +931,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         UpdateElementPositions();
         UpdateEntryButtonStates();
         UpdateDisplayButtonProperties();
+        UpdateArrowIndicatorPositions();
+        UpdateArrowIndicatorVisibility();
     }
 
     public void SetElements(IEnumerable<DropdownListElement<T>>? elements)
@@ -949,6 +948,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
         UpdateElementPositions();
         UpdateEntryButtonStates();
+        UpdateArrowIndicatorPositions();
+        UpdateArrowIndicatorVisibility();
     }
 
     public void AddElement(DropdownListElement<T>? element)

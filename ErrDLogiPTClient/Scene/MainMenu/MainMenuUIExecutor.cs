@@ -76,6 +76,10 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _element.SetElements(Elements);
         _element.MinSelectedElementCount = 1;
         _element.MaxSelectedElementCount = 1;
+        _element.SelectionUpdate += (sender, args) =>
+        {
+            
+        };
     }
 
     public override void OnStart()
