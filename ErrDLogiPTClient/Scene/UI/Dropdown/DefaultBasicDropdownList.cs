@@ -44,12 +44,21 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             _position = value;
             UpdateElementPositions();
             UpdateEntryButtonStates();
+            UpdateArrowIndicatorProperties();
+            UpdateArrowIndicatorPositions();
         }
     }
     public int MaxDisplayedElementCount
     {
         get => _maxDisplayedElementCount;
-        set => _maxDisplayedElementCount = Math.Max(value, 0);
+        set
+        {
+            _maxDisplayedElementCount = Math.Max(value, 0);
+            UpdateElementPositions();
+            UpdateEntryButtonStates();
+            UpdateArrowIndicatorPositions();
+            UpdateArrowIndicatorVisibility();
+        }
     }
 
     public int MaxSelectedElementCount
@@ -423,15 +432,15 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             Indicator.Size = new Vector2(Indicator.FrameSize.X / Indicator.FrameSize.Y * _scale, _scale) * INDICATOR_SCALE;
         }
 
-        if (_position.X > POSITION_MIDDLE)
-        {
-            _nearIndicator.Rotation = 0f;
-            _farIndicator.Rotation = MathF.PI;
-        }
-        else
+        if (GetMovementYStep() > 0)
         {
             _nearIndicator.Rotation = MathF.PI;
             _farIndicator.Rotation = 0f;
+        }
+        else
+        {
+            _nearIndicator.Rotation = 0f;
+            _farIndicator.Rotation = MathF.PI;
         }
     }
 
@@ -509,14 +518,12 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         IBasicButton Button = entry.Button;
         if (entry.Element.IsSelectable)
         {
-            Button.IsEnabled = true;
             Button.ButtonColor = IsElementSelected(entry.Element)
                 ? entry.Element.SelectedColorOverride ?? DefaultElementSelectedColor
                 : entry.Element.NormalColorOverride ?? DefaultElementColor;
         }
         else
         {
-            entry.Button.IsEnabled = false;
             entry.Button.ButtonColor = entry.Element.UnavailableColorOverride ?? DefaultElementUnavailableColor;
         }
 
@@ -706,8 +713,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private bool IsButtonInBounds(IBasicButton button)
     {
-        float SCREEN_POSITION_MAX = 1f - button.ButtonBounds.Y;
-        float SCREEN_POSITION_MIN = 0f + button.ButtonBounds.Y;
+        float SCREEN_POSITION_MAX = 1f - button.ButtonBounds.Height;
+        float SCREEN_POSITION_MIN = 0f + button.ButtonBounds.Height;
 
         RectangleF Bounds = button.ButtonBounds;
         Vector2 CornerMin = new(Bounds.X, Bounds.Y);
@@ -735,7 +742,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             return;
         }
 
-        ScrollIndex = _input.MouseScrollChangeAmount > 0 ? ScrollIndex - 1 : ScrollIndex + 1;
+        ScrollIndex = ((_input.MouseScrollChangeAmount * GetMovementYStep()) > 0 ) ? ScrollIndex - 1 : ScrollIndex + 1;
     }
 
     private List<DropdownEntry> GetEntriesInSelectionRange()

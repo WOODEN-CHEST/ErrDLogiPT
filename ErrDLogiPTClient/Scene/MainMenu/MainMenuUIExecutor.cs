@@ -6,6 +6,7 @@ using GHEngine.Assets.Def;
 using GHEngine.Audio.Source;
 using GHEngine.Frame;
 using GHEngine.IO;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly ILayer _foregroundLayer;
 
     private IBasicDropdownList<int> _element;
-
+    
 
     // Constructors.
     public MainMenuUIExecutor(MainMenuScene scene, GenericServices sceneServices) : base(scene, sceneServices)
@@ -76,6 +77,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _element.SetElements(Elements);
         _element.MinSelectedElementCount = 1;
         _element.MaxSelectedElementCount = 1;
+        _element.MaxDisplayedElementCount = 5;
         _element.SelectionUpdate += (sender, args) =>
         {
             
@@ -97,5 +99,15 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         base.Update(time);
 
         _element.Update(time);
+
+        IUserInput Input = SceneServices.GetRequired<IUserInput>();
+        if (Input.WereKeysJustPressed(Keys.Up))
+        {
+            _element.Position = new(_element.Position.X, 0.2f);
+        }
+        else if (Input.WereKeysJustPressed(Keys.Down))
+        {
+            _element.Position = new(_element.Position.X, 0.8f);
+        }
     }
 }
