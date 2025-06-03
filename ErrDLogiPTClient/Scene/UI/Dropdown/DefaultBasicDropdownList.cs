@@ -610,7 +610,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
         if (!IsOOBButtonReached)
         {
-            _clampedMaxPopupElementCount = Math.Min(MaxDisplayedElementCount, _entries.Count);
+            _clampedMaxPopupElementCount = Math.Min(MaxDisplayedElementCount, VisibleEntries.Count);
         }
     }
 
@@ -672,7 +672,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     private List<DropdownEntry> GetEntriesInSelectionRange()
     {
         List<DropdownEntry> VisibleEntries = new();
-        int MaxIndexExclusive = Math.Min(_entries.Count, _scrollIndex + MaxDisplayedElementCount);
+        long MaxIndexExclusive = Math.Min(_entries.Count, (long)_scrollIndex + (long)MaxDisplayedElementCount);
         for (int i = _scrollIndex; i < MaxIndexExclusive; i++)
         {
             VisibleEntries.Add(_entries[i]);
