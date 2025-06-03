@@ -94,6 +94,10 @@ public class DefaultUIElementFactory : IUIElementFactory
             DefaultElementSelectedColor = LIST_ELEMENT_SELECTED_COLOR,
             DefaultElementUnavailableColor = LIST_ELEMENT_UNAVAILABLE_COLOR,
 
+            ValueDisplayColor = NORMAL_COLOR,
+            ValueDisplayHoverColor = HIGHLIGHT_COLOR,
+            ValueDisplayChangeColor = CLICK_COLOR,
+
             HoverColorDuration = HIGLIGHT_FADE_DURATION,
             ValueChangeColorDuration = CLICK_FADE_DURATION,
         };

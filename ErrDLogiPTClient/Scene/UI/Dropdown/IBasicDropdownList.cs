@@ -43,10 +43,12 @@ public interface IBasicDropdownList<T> : IUIElement
     ButtonClickMethod ClickMethod { get; set; }
     bool IsTargeted { get; set; }
 
-    event EventHandler<EventArgs>? Expand;
-    event EventHandler<EventArgs>? Contract;
-    event EventHandler<EventArgs>? SelectionUpdate;
-    event EventHandler<EventArgs>? PlaySound;
+    event EventHandler<BasicDropdownExpandStartEventArgs<T>>? ExpandStart;
+    event EventHandler<BasicDropdownExpandFinishEventArgs<T>>? ExpandFinish;
+    event EventHandler<BasicDropdownContractStartEventArgs<T>>? ContractStart;
+    event EventHandler<BasicDropdownContractFinishEventArgs<T>>? ContractFinish;
+    event EventHandler<BasicDropdownSelectionUpdateEventArgs<T>>? SelectionUpdate;
+    event EventHandler<BasicDropdownPlaySoundEventArgs<T>>? PlaySound;
 
     // Methods.
     void SetIsElementSelected(DropdownListElement<T> element, bool isSelected);

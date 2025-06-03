@@ -66,16 +66,16 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
             new(2.ToString(), 2),
             new(3.ToString(), 3),
             new(4.ToString(), 4),
-            new(5.ToString(), 5),
+            new(5.ToString(), 5) { IsSelectable = false },
             new(6.ToString(), 6),
-            new(7.ToString(), 7),
+            new(7.ToString(), 7) { IsSelectable = false },
             new(8.ToString(), 8),
             new(9.ToString(), 9),
             new(10.ToString(), 10),
         };
         _element.SetElements(Elements);
-        _element.MaxSelectedElementCount = 2;
         _element.MinSelectedElementCount = 1;
+        _element.MaxSelectedElementCount = 1;
     }
 
     public override void OnStart()

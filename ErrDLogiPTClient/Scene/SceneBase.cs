@@ -105,8 +105,6 @@ public abstract class SceneBase : IGameScene
         }
         HandleLoadPostComponent();
 
-        AssetProvider?.UpdateAssets();
-
         LoadStatus = SceneLoadStatus.FinishedLoading;
         SceneLoadFinish?.Invoke(this, new(this));
     }
