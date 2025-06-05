@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
+using ErrDLogiPTClient.Scene.UI.Checkmark;
 using GHEngine;
 using GHEngine.Audio.Source;
 using GHEngine.Collections;
@@ -44,58 +45,44 @@ public class DefaultBasicButton : IBasicButton
 
     public Color ButtonColor
     {
-        get => _normalButtonColor;
+        get => _colorCalculator.NormalColor;
         set
         {
-            _normalButtonColor = value;
+            _colorCalculator.NormalColor = value;
             UpdateRenderedColors();
         }
     }
 
-    public Color HighlightColor
+    public Color HoverColor
     {
-        get => _highlightColor;
+        get => _colorCalculator.HoverColor;
         set
         {
-            _highlightColor = value;
+            _colorCalculator.HoverColor = value;
             UpdateRenderedColors();
         }
     }
 
     public Color ClickColor
     {
-        get => _clickColor;
+        get => _colorCalculator.ClickColor;
         set
         {
-            _clickColor = value;
+            _colorCalculator.ClickColor = value;
             UpdateRenderedColors();
         }
     }
 
     public TimeSpan HoverFadeDuration
     {
-        get => _hoverFadeDuration;
-        set
-        {
-            if (value.Ticks < 0)
-            {
-                throw new ArgumentException("Hover fade duration must be >= 0");
-            }
-            _hoverFadeDuration = value;
-        }
+        get => _colorCalculator.HoverFadeDuration;
+        set => _colorCalculator.HoverFadeDuration = value;
     }
 
     public TimeSpan ClickFadeDuration
     {
-        get => _clickFadeDuration;
-        set
-        {
-            if (value.Ticks < 0)
-            {
-                throw new ArgumentException("Click fade duration must be >= 0");
-            }
-            _clickFadeDuration = value;
-        }
+        get => _colorCalculator.ClickFadeDuration;
+        set => _colorCalculator.ClickFadeDuration = value;
     }
 
     public string Text
@@ -257,7 +244,7 @@ public class DefaultBasicButton : IBasicButton
     public event EventHandler<BasicButtonClickEndEventArgs>? ClickEnd;
     public event EventHandler<BasicButtonHoverStartEventArgs>? HoverStart;
     public event EventHandler<BasicButtonHoverEndEventArgs>? HoverEnd;
-    public event EventHandler<BasicButtonSoundEventArgs>? PlaySound;
+    public event EventHandler<BasicButtonPlaySoundEventArgs>? PlaySound;
     public event EventHandler<BasicButtonScrollEventArgs>? Scroll;
 
 
@@ -294,23 +281,13 @@ public class DefaultBasicButton : IBasicButton
     private Vector2 _shadowOffset = new(0.08f);
     private bool _isEnabled = true;
 
-    private bool _isHovered = false;
-    private bool _wasClickStarted = false;
-    private bool _isClickColorFullyActive = false;
-
     private RandomSequence<IPreSampledSound> _clickSounds = new(Array.Empty<IPreSampledSound>());
     private RandomSequence<IPreSampledSound> _hoverStartSounds = new(Array.Empty<IPreSampledSound>());
     private RandomSequence<IPreSampledSound> _hoverEndSounds = new(Array.Empty<IPreSampledSound>());
     private LogiSoundCategory _soundCategory = LogiSoundCategory.UI;
     private float _volume = 1f;
 
-    private Color _normalButtonColor = Color.White;
-    private Color _highlightColor = Color.White;
-    private Color _clickColor = Color.White;
-    private double _highlightFadeFactor = 0d;
-    private double _clickFadeFactor = 0d;
-    private TimeSpan _hoverFadeDuration = TimeSpan.Zero;
-    private TimeSpan _clickFadeDuration = TimeSpan.Zero;
+    private ElementColorCalculator _colorCalculator = new();
 
     /* Ratios are cached so that calculations (specifically the text box updating) wouldn't happen every second.
      * This may not be too bad for the sprites, but updating the text box is rather expensive. */
@@ -318,6 +295,8 @@ public class DefaultBasicButton : IBasicButton
     private float _previousInputAspectRatio = 0f;
 
     private readonly ClickDetector _clickDetector;
+
+    private bool _wasClickStarted = false;
 
 
     // Constructors
@@ -470,7 +449,7 @@ public class DefaultBasicButton : IBasicButton
         }
 
         _wasClickStarted = true;
-        _isClickColorFullyActive = true;
+        _colorCalculator.OnClickStart();
         EventArgs.ExecuteActions();
     }
 
@@ -478,7 +457,6 @@ public class DefaultBasicButton : IBasicButton
     {
         bool IsFullClickValid = _wasClickStarted && args.WasClickedInBounds;
         _wasClickStarted = false;
-        _isClickColorFullyActive = false;
 
         if (ClickMethod == ButtonClickMethod.ActivateOnFullClick && !IsFullClickValid || !_detectedClickTypes.Contains(args.ClickType))
         {
@@ -489,12 +467,9 @@ public class DefaultBasicButton : IBasicButton
 
         BasicButtonClickEndEventArgs EventArgs = new(this,
             args.ClickType,
-            args.ClickStartLocation, 
-            args.ClickEndLocation, 
-            args.ClickDuration)
-        {
-            Sound = ClickSound
-        };
+            args.ClickStartLocation,
+            args.ClickEndLocation,
+            args.ClickDuration);
 
         ClickEnd?.Invoke(this, EventArgs);
 
@@ -504,12 +479,8 @@ public class DefaultBasicButton : IBasicButton
             return;
         }
 
-        if (EventArgs.Sound != null)
-        {
-            PlayUISound(UISoundOrigin.Click, EventArgs.Sound);
-        }
-
-        _clickFadeFactor = 1d;
+        PlayClickSound();
+        _colorCalculator.OnClickEnd();
         if (IsDisabledOnClick)
         {
             IsEnabled = false;
@@ -521,12 +492,8 @@ public class DefaultBasicButton : IBasicButton
 
     private void OnHoverStartEvent(object? sender, ClickDetectorHoverStartEventArgs args)
     {
-        BasicButtonHoverStartEventArgs EventArgs = new(this)
-        {
-            Sound = GetRandomSound(_hoverStartSounds)
-        };
+        BasicButtonHoverStartEventArgs EventArgs = new(this);
         HoverStart?.Invoke(this, EventArgs);
-        
 
         if (EventArgs.IsCancelled)
         {
@@ -535,23 +502,15 @@ public class DefaultBasicButton : IBasicButton
             
         }
 
-        if (EventArgs.Sound != null)
-        {
-            PlayUISound(UISoundOrigin.HoverStart, EventArgs.Sound);
-        }
-
-        _isHovered = true;
-        _isClickColorFullyActive = _wasClickStarted;
+        PlayHoverSound(true);
+        _colorCalculator.OnHoverStart();
         MainHoverStartAction?.Invoke(new(this));
         EventArgs.ExecuteActions();
     }
 
     private void OnHoverEndEvent(object? sender, ClickDetectorHoverEndEventArgs args)
     {
-        BasicButtonHoverEndEventArgs EventArgs = new(this)
-        {
-            Sound = GetRandomSound(_hoverStartSounds)
-        };
+        BasicButtonHoverEndEventArgs EventArgs = new(this);
         HoverEnd?.Invoke(this, EventArgs);
         
         if (EventArgs.IsCancelled)
@@ -560,13 +519,8 @@ public class DefaultBasicButton : IBasicButton
             return;
         }
 
-        if (EventArgs.Sound != null)
-        {
-            PlayUISound(UISoundOrigin.HoverEnd, EventArgs.Sound);
-        }
-
-        _isClickColorFullyActive = false;
-        _isHovered = false;
+        PlayHoverSound(false);
+        _colorCalculator.OnHoverEnd();
         MainHoverEndAction?.Invoke(new(this));
         EventArgs.ExecuteActions();
     }
@@ -583,12 +537,61 @@ public class DefaultBasicButton : IBasicButton
         return sounds.Count == 0 ? null : sounds.Get();
     }
 
-    private void PlayUISound(UISoundOrigin origin, IPreSampledSound sound)
+    private void ButtonGenericUpdate(IProgramTime time)
     {
-        ILogiSoundInstance SoundInstance = _soundEngine.CreateSoundInstance(sound, SoundCategory);
-        SoundInstance.Volume = Volume;
+        _colorCalculator.Update(time);
+        UpdateRenderedColors();
+    }
 
-        BasicButtonSoundEventArgs EventArgs = new(this, UISoundOrigin.Click, SoundInstance);
+    private void UpdateRenderedColors()
+    {
+        FloatColor TargetColor = _colorCalculator.FinalColor;
+        Color FinalSpriteColor = TargetColor;
+        Color FinalTextColor = TargetColor * TEXT_COLOR_MULTIPLIER;
+
+        _leftPartSprite.Mask = FinalSpriteColor;
+        _middlePartSprite.Mask = FinalSpriteColor;
+        _rightPartSprite.Mask = FinalSpriteColor;
+
+        _text.Mask = FinalTextColor;
+        _textShadow.Mask = FinalSpriteColor;
+    }
+
+    private void PlayClickSound()
+    {
+        PlayGenericSound(_clickSounds, BasicButtonSoundOrigin.Click);
+    }
+
+    private void PlayHoverSound(bool isHovering)
+    {
+        RandomSequence<IPreSampledSound> SoundBank;
+        BasicButtonSoundOrigin Origin;
+
+        if (isHovering)
+        {
+            SoundBank = _hoverStartSounds;
+            Origin = BasicButtonSoundOrigin.HoverStart;
+        }
+        else
+        {
+            SoundBank = _hoverEndSounds;
+            Origin = BasicButtonSoundOrigin.HoverEnd;
+        }
+
+        PlayGenericSound(SoundBank, Origin);
+    }
+
+
+    private void PlayGenericSound(RandomSequence<IPreSampledSound> soundBank, BasicButtonSoundOrigin origin)
+    {
+        if (soundBank.Count == 0)
+        {
+            return;
+        }
+
+        ILogiSoundInstance Sound = _soundEngine.CreateSoundInstance(soundBank.Get()!, SoundCategory);
+        Sound.Volume = Volume;
+        BasicButtonPlaySoundEventArgs EventArgs = new(this, origin, Sound);
         PlaySound?.Invoke(this, EventArgs);
 
         if (EventArgs.IsCancelled)
@@ -601,59 +604,7 @@ public class DefaultBasicButton : IBasicButton
         {
             _soundEngine.AddSoundInstance(EventArgs.Sound);
         }
-
         EventArgs.ExecuteActions();
-    }
-
-    private void ButtonGenericUpdate(IProgramTime time)
-    {
-        /* Snapping to max or min fade factors if the timespan is short is so that there is no division by zero. */
-        double PassedTimeSeconds = time.PassedTime.TotalSeconds;
-  
-        if (_hoverFadeDuration.Ticks <= time.PassedTime.Ticks)
-        {
-            _highlightFadeFactor = _isHovered ? COLOR_FADE_FACTOR_MAX : COLOR_FADE_FACTOR_MIN;
-        }
-        else
-        {
-            _highlightFadeFactor = Math.Clamp(
-                _highlightFadeFactor + PassedTimeSeconds * (_isHovered ? 1d : -1d) / HoverFadeDuration.TotalSeconds,
-                COLOR_FADE_FACTOR_MIN,
-                COLOR_FADE_FACTOR_MAX);
-        }
-
-        if (_isClickColorFullyActive)
-        {
-            _clickFadeFactor = COLOR_FADE_FACTOR_MAX;
-        }
-        else if (_clickFadeDuration.Ticks <= time.PassedTime.Ticks)
-        {
-            _clickFadeFactor = COLOR_FADE_FACTOR_MIN;
-        }
-        else
-        {
-            _clickFadeFactor = Math.Clamp(
-                _clickFadeFactor - PassedTimeSeconds / ClickFadeDuration.TotalSeconds,
-                COLOR_FADE_FACTOR_MIN,
-                COLOR_FADE_FACTOR_MAX);
-        }
-
-        UpdateRenderedColors();
-    }
-
-    private void UpdateRenderedColors()
-    {
-        FloatColor ColorStage1 = FloatColor.InterpolateRGB(_normalButtonColor, _highlightColor, (float)_highlightFadeFactor);
-        FloatColor ColorStage2 = FloatColor.InterpolateRGB(ColorStage1, _clickColor, (float)_clickFadeFactor);
-        Color FinalSpriteColor = ColorStage2;
-        Color FinalTextColor = ColorStage2 * TEXT_COLOR_MULTIPLIER;
-
-        _leftPartSprite.Mask = FinalSpriteColor;
-        _middlePartSprite.Mask = FinalSpriteColor;
-        _rightPartSprite.Mask = FinalSpriteColor;
-
-        _text.Mask = FinalTextColor;
-        _textShadow.Mask = FinalSpriteColor;
     }
 
 

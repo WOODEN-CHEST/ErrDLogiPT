@@ -7,17 +7,18 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.UI.Button;
 
-public class BasicButtonSoundEventArgs : BasicButtonEventArgs
+public class BasicButtonPlaySoundEventArgs : BasicButtonEventArgs
 {
     // Fields.
-    public UISoundOrigin Origin { get; }
+    public BasicButtonSoundOrigin Origin { get; }
     public ILogiSoundInstance? Sound { get; set; }
 
 
 
 
     // Constructors.
-    public BasicButtonSoundEventArgs(IBasicButton button, UISoundOrigin origin, ILogiSoundInstance sound) : base(button)
+    public BasicButtonPlaySoundEventArgs(IBasicButton button, BasicButtonSoundOrigin origin, ILogiSoundInstance sound)
+        : base(button)
     {
         Origin = origin;
         Sound = sound ?? throw new ArgumentNullException(nameof(sound));

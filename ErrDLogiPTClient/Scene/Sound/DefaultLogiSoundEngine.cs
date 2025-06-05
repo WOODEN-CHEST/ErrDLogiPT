@@ -212,19 +212,7 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     {
         ArgumentNullException.ThrowIfNull(sound, nameof(sound));
         ArgumentNullException.ThrowIfNull(category, nameof(category));
-
         ILogiSoundInstance Instance = new DefaultSceneSoundInstance((IPreSampledSoundInstance)sound.CreateInstance(), category);
-        _sounds.Add(Instance.WrappedSoundInstance, Instance);
-
-        Instance.WrappedSoundInstance.SoundLooped += OnSoundLoopEvent;
-        Instance.WrappedSoundInstance.SoundFinished += OnSoundFinishEvent;
-        Instance.SoundDataUpdate += OnSoundDataUpdateEvent;
-
-        if (!_categoryVolumes.ContainsKey(category))
-        {
-            SetCategoryVolume(category, VOLUME_DEFAULT);
-        }
-
         return Instance;
     }
 
@@ -250,6 +238,24 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         }
 
         _categoriesToUpdate.Add(category);
+    }
+
+    public void AddSoundInstance(ILogiSoundInstance soundInstance)
+    {
+        if (!_sounds.ContainsKey(soundInstance.WrappedSoundInstance))
+        {
+            _soundsToAdd.Add(soundInstance);
+            _sounds[soundInstance.WrappedSoundInstance] = soundInstance;
+
+            soundInstance.WrappedSoundInstance.SoundLooped += OnSoundLoopEvent;
+            soundInstance.WrappedSoundInstance.SoundFinished += OnSoundFinishEvent;
+            soundInstance.SoundDataUpdate += OnSoundDataUpdateEvent;
+
+            if (!_categoryVolumes.ContainsKey(soundInstance.Category))
+            {
+                SetCategoryVolume(soundInstance.Category, VOLUME_DEFAULT);
+            }
+        }
     }
 
     public virtual void RemoveAllSounds()
@@ -337,11 +343,6 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
     public void ScheduleAction(Action action)
     {
         _scheduledActions.Enqueue(action ?? throw new ArgumentNullException(nameof(action)));
-    }
-
-    public void AddSoundInstance(ILogiSoundInstance soundInstance)
-    {
-        _soundsToAdd.Add(soundInstance);
     }
 
 

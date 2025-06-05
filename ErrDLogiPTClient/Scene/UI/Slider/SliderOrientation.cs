@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.UI;
+namespace ErrDLogiPTClient.Scene.UI.Slider;
 
-public interface IBasicCheckmark : IUIElement
+public enum SliderOrientation
 {
+    Horizontal,
+    Vertical
 }

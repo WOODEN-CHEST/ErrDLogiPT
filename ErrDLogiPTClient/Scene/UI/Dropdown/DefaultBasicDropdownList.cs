@@ -336,6 +336,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     // Private fields.
     private readonly IBasicButton _displayButton;
     private readonly IUserInput _input;
+    private readonly ISceneAssetProvider _assetProvider;
     private readonly Func<IBasicButton> _buttonCreator;
     private readonly List<DropdownEntry> _entries = new();
 
@@ -386,15 +387,18 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     // Constructors.
     public DefaultBasicDropdownList(IUserInput input,
+        ISceneAssetProvider assetProvider,
         Func<IBasicButton> buttonCreator,
         ISpriteAnimation arrowIndicatorAnimation)
     {
         ArgumentNullException.ThrowIfNull(input, nameof(input));
+        ArgumentNullException.ThrowIfNull(assetProvider, nameof(assetProvider));
         ArgumentNullException.ThrowIfNull(buttonCreator, nameof(buttonCreator));
         ArgumentNullException.ThrowIfNull(arrowIndicatorAnimation, nameof(arrowIndicatorAnimation));
 
         _input = input;
         _buttonCreator = buttonCreator;
+        _assetProvider = assetProvider;
 
         _displayButton = _buttonCreator.Invoke();
         InitDisplayButton();
@@ -527,7 +531,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
             entry.Button.ButtonColor = entry.Element.UnavailableColorOverride ?? DefaultElementUnavailableColor;
         }
 
-        Button.HighlightColor = entry.Element.HoverColorOverride ?? DefaultElementHoverColor;
+        Button.HoverColor = entry.Element.HoverColorOverride ?? DefaultElementHoverColor;
         Button.ClickColor = entry.Element.ClickColorOverride ?? DefaultElementClickColor;
         Button.ClickSounds = ClickSounds;
         Button.HoverStartSounds = HoverStartSounds;
@@ -868,9 +872,9 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         return (NewElementList, ModifiedElements);
     }
 
-    private void OnElementCreateSoundEvent(object? sender, BasicButtonSoundEventArgs args)
+    private void OnElementCreateSoundEvent(object? sender, BasicButtonPlaySoundEventArgs args)
     {
-        BasicDropdownPlaySoundEventArgs<T> EventArgs = new(this, args.Sound, args.Origin);
+        BasicDropdownPlaySoundEventArgs<T> EventArgs = new(this, args.Sound, ElementOriginToDropdownOrigin(args.Origin));
         if (EventArgs.IsCancelled)
         {
             args.IsCancelled = true;
@@ -879,17 +883,33 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         EventArgs.ExecuteActions();
     }
 
+    private BasicDropdownSoundOrigin ElementOriginToDropdownOrigin(BasicButtonSoundOrigin elementOrigin)
+    {
+        return elementOrigin switch
+        {
+            BasicButtonSoundOrigin.HoverStart => BasicDropdownSoundOrigin.ElementHoverStart,
+            BasicButtonSoundOrigin.HoverEnd => BasicDropdownSoundOrigin.ElementHoverEnd,
+            BasicButtonSoundOrigin.Click => BasicDropdownSoundOrigin.Click,
+            _ => throw new ArgumentException($"Invalid button sound origin: {elementOrigin} " +
+                $"({(int)elementOrigin})", nameof(elementOrigin))
+        };
+    }
+
 
     // Inherited methods.
     public void Initialize()
     {
         _displayButton.Initialize();
+        _assetProvider.RegisterRenderedItem(_farIndicator);
+        _assetProvider.RegisterRenderedItem(_nearIndicator);
     }
 
     public void Deinitialize()
     {
         _displayButton.Deinitialize();
         ClearElements();
+        _assetProvider.UnregisterRenderedItem(_farIndicator);
+        _assetProvider.UnregisterRenderedItem(_nearIndicator);
     }
 
     public void SetIsElementSelected(DropdownListElement<T> element, bool isSelected)

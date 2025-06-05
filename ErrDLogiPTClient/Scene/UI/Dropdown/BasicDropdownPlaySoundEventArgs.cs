@@ -12,13 +12,14 @@ public class BasicDropdownPlaySoundEventArgs<T> : BasicDropdownEventArgs<T>
 {
     // Fields.
     public ILogiSoundInstance?   Sound { get; set; }
-    public UISoundOrigin Origin { get; set; }
+    public BasicDropdownSoundOrigin Origin { get; set; }
 
 
     // Constructors.
     public BasicDropdownPlaySoundEventArgs(IBasicDropdownList<T> dropdown,
         ILogiSoundInstance? sound,
-        UISoundOrigin origin) : base(dropdown)
+        BasicDropdownSoundOrigin origin) 
+        : base(dropdown)
     {
         Sound = sound;
         Origin = origin;

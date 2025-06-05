@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient.Scene.UI;
+namespace ErrDLogiPTClient.Scene.UI.Checkmark;
 
-public enum UISoundOrigin
+public enum BasicCheckmarkSoundOrigin
 {
-    Unknown,
     HoverStart,
     HoverEnd,
-    Click
+    Check,
+    Uncheck
 }

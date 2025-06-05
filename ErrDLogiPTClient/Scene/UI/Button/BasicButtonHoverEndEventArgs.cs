@@ -9,10 +9,6 @@ namespace ErrDLogiPTClient.Scene.UI.Button;
 
 public class BasicButtonHoverEndEventArgs : BasicButtonEventArgs
 {
-    // Fields.
-    public IPreSampledSound? Sound { get; set; }
-
-
     // Constructors.
     public BasicButtonHoverEndEventArgs(IBasicButton button) : base(button)
     {

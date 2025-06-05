@@ -17,7 +17,7 @@ public interface IBasicButton : IUIElement
     bool IsDisabledOnClick { get; set; }
     Vector2 Position { get; set; }
     Color ButtonColor { get; set; }
-    Color HighlightColor { get; set; }
+    Color HoverColor { get; set; }
     Color ClickColor { get; set; }
     TimeSpan HoverFadeDuration { get; set; }
     TimeSpan ClickFadeDuration { get; set; }
@@ -45,7 +45,7 @@ public interface IBasicButton : IUIElement
     event EventHandler<BasicButtonClickEndEventArgs>? ClickEnd;
     event EventHandler<BasicButtonHoverStartEventArgs>? HoverStart;
     event EventHandler<BasicButtonHoverEndEventArgs>? HoverEnd;
-    event EventHandler<BasicButtonSoundEventArgs>? PlaySound;
+    event EventHandler<BasicButtonPlaySoundEventArgs>? PlaySound;
     event EventHandler<BasicButtonScrollEventArgs>? Scroll;
 
 

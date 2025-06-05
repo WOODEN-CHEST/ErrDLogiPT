@@ -1,5 +1,6 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI;
+using ErrDLogiPTClient.Scene.UI.Checkmark;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
 using GHEngine;
 using GHEngine.Assets.Def;
@@ -29,7 +30,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly ILayer _backgroundLayer;
     private readonly ILayer _foregroundLayer;
 
-    private IBasicDropdownList<int> _element;
+    private IBasicCheckmark _element;
     
 
     // Constructors.
@@ -56,32 +57,9 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
         Factory.LoadAssets();
 
-        _element = Factory.CreateDropdownList<int>();
-        _element.Position = new(0.5f, 0.2f);
-        _element.Length = 16f;
-        _element.Scale = 0.05f;
-
-        DropdownListElement<int>[] Elements = new DropdownListElement<int>[]
-        {
-            new(1.ToString(), 1),
-            new(2.ToString(), 2),
-            new(3.ToString(), 3),
-            new(4.ToString(), 4),
-            new(5.ToString(), 5) { IsSelectable = false },
-            new(6.ToString(), 6),
-            new(7.ToString(), 7) { IsSelectable = false },
-            new(8.ToString(), 8),
-            new(9.ToString(), 9),
-            new(10.ToString(), 10),
-        };
-        _element.SetElements(Elements);
-        _element.MinSelectedElementCount = 1;
-        _element.MaxSelectedElementCount = 1;
-        _element.MaxDisplayedElementCount = 5;
-        _element.SelectionUpdate += (sender, args) =>
-        {
-            
-        };
+        _element = Factory.CreateCheckmark();
+        _element.Position = new Vector2(0.5f, 0.5f);
+        _element.Scale = 0.2f;
     }
 
     public override void OnStart()

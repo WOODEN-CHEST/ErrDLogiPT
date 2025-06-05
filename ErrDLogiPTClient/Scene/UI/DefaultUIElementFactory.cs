@@ -1,6 +1,8 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI.Button;
+using ErrDLogiPTClient.Scene.UI.Checkmark;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
+using ErrDLogiPTClient.Scene.UI.Slider;
 using GHEngine.Assets.Def;
 using GHEngine.Frame.Animation;
 using GHEngine.GameFont;
@@ -25,13 +27,14 @@ public class DefaultUIElementFactory : IUIElementFactory
     private const string ASSET_NAME_BASIC_CHECKMARK = "main_checkmark";
 
     private static readonly Color NORMAL_COLOR = Color.White;
-    private static readonly Color HIGHLIGHT_COLOR = new Color(173, 255, 110, 255);
+    private static readonly Color HOVER_COLOR = new Color(173, 255, 110, 255);
     private static readonly Color CLICK_COLOR = new Color(79, 299, 240, 255);
     private static readonly Color LIST_ELEMENT_COLOR = new Color(180, 180, 180, 255);
     private static readonly Color LIST_ELEMENT_SELECTED_COLOR = new Color(0, 200, 0, 255);
     private static readonly Color LIST_ELEMENT_UNAVAILABLE_COLOR = new Color(100, 100, 100, 255);
+    private static readonly Color CHECKMARK_COLOR = new Color(0, 255, 0, 255);
 
-    private static readonly TimeSpan HIGLIGHT_FADE_DURATION = TimeSpan.FromSeconds(0.1d);
+    private static readonly TimeSpan HOVER_FADE_DURATION = TimeSpan.FromSeconds(0.1d);
     private static readonly TimeSpan CLICK_FADE_DURATION = TimeSpan.FromSeconds(0.4d);
 
 
@@ -71,16 +74,30 @@ public class DefaultUIElementFactory : IUIElementFactory
             AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT))
         {
             ButtonColor = NORMAL_COLOR,
-            HighlightColor = HIGHLIGHT_COLOR,
+            HoverColor = HOVER_COLOR,
             ClickColor = CLICK_COLOR,
             ClickFadeDuration = CLICK_FADE_DURATION,
-            HoverFadeDuration = HIGLIGHT_FADE_DURATION
+            HoverFadeDuration = HOVER_FADE_DURATION
         };
     }
 
     public IBasicCheckmark CreateCheckmark()
     {
-        throw new NotImplementedException();
+        ISceneAssetProvider AssetProvider = _sceneServices.GetRequired<ISceneAssetProvider>();
+
+        return new DefaultBasicCheckmark(_sceneServices.GetRequired<IUserInput>(),
+            _sceneServices.GetRequired<ILogiSoundEngine>(),
+            AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_CHECKMARK),
+            AssetProvider)
+        {
+            CheckmarkColor = CHECKMARK_COLOR,
+            HoverColor = HOVER_COLOR,
+            ClickColor = CLICK_COLOR,
+            NormalColor = NORMAL_COLOR,
+
+            HoverFadeDuration = HOVER_FADE_DURATION,
+            ClickFadeDuration = CLICK_FADE_DURATION
+        };
     }
 
     public IBasicDropdownList<T> CreateDropdownList<T>()
@@ -88,20 +105,21 @@ public class DefaultUIElementFactory : IUIElementFactory
         ISceneAssetProvider AssetProvider = _sceneServices.GetRequired<ISceneAssetProvider>();
 
         return new DefaultBasicDropdownList<T>(_sceneServices.GetRequired<IUserInput>(),
+            AssetProvider,
             () => CreateButton(),
             AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_DROPDOWN_LIST))
         {
             DefaultElementColor = LIST_ELEMENT_COLOR,
-            DefaultElementHoverColor = HIGHLIGHT_COLOR,
+            DefaultElementHoverColor = HOVER_COLOR,
             DefaultElementClickColor = CLICK_COLOR,
             DefaultElementSelectedColor = LIST_ELEMENT_SELECTED_COLOR,
             DefaultElementUnavailableColor = LIST_ELEMENT_UNAVAILABLE_COLOR,
 
             ValueDisplayColor = NORMAL_COLOR,
-            ValueDisplayHoverColor = HIGHLIGHT_COLOR,
+            ValueDisplayHoverColor = HOVER_COLOR,
             ValueDisplayChangeColor = CLICK_COLOR,
 
-            HoverColorDuration = HIGLIGHT_FADE_DURATION,
+            HoverColorDuration = HOVER_FADE_DURATION,
             ValueChangeColorDuration = CLICK_FADE_DURATION,
         };
     }
