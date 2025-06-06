@@ -287,7 +287,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
         }
     }
-    public ButtonClickMethod ClickMethod
+    public ElementClickMethod ClickMethod
     {
         get => _clickMethod;
         set
@@ -315,6 +315,19 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     public bool IsTargeted { get; set; } = false;
     public int SelectedElementCount => _selectedElements.Count;
     public IEnumerable<DropdownListElement<T>> SelectedElements => _selectedElements;
+
+    public float TextShadowBrightness
+    {
+        get => _textShadowBrightness;
+        set
+        {
+            _textShadowBrightness = value;
+            UpdateDisplayButtonProperties();
+            UpdateAllEntryProperties();
+        }
+    }
+
+    public RectangleF DisplayBounds => _displayButton.ButtonBounds;
 
     public event EventHandler<BasicDropdownExpandStartEventArgs<T>>? ExpandStart;
     public event EventHandler<BasicDropdownExpandFinishEventArgs<T>>? ExpandFinish;
@@ -362,6 +375,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     private int _clampedMaxPopupElementCount = 0;
 
     private bool _isTextShadowEnabled = true;
+    private float _textShadowBrightness = 1f;
 
     private IPreSampledSound[] _clickSounds = Array.Empty<IPreSampledSound>();
     private IPreSampledSound[] _hoverStartSounds = Array.Empty<IPreSampledSound>();
@@ -373,7 +387,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private Vector2 _position = Vector2.Zero;
 
-    private ButtonClickMethod _clickMethod = ButtonClickMethod.ActivateOnFullClick;
+    private ElementClickMethod _clickMethod = ElementClickMethod.ActivateOnFullClick;
 
     private int _minSelectedElementCount = 1;
     private int _maxSelectedElementCount = 1;
@@ -496,6 +510,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         _displayButton.IsTextShadowEnabled = IsTextShadowEnabled;
         _displayButton.Length = Length;
         _displayButton.Scale = Scale;
+        _displayButton.TextShadowBrightness = TextShadowBrightness;
 
         if (_selectedElements.Count == 0)
         {
@@ -544,6 +559,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         Button.ClickMethod = ClickMethod;
         Button.Text = entry.Element.DisplayName;
         Button.Volume = Volume;
+        Button.TextShadowBrightness = TextShadowBrightness;
     }
 
     private void GenericUpdate(IProgramTime time)

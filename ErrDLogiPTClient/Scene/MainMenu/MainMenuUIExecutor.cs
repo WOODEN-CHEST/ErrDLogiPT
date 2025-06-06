@@ -2,6 +2,7 @@
 using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Scene.UI.Checkmark;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
+using ErrDLogiPTClient.Scene.UI.Slider;
 using GHEngine;
 using GHEngine.Assets.Def;
 using GHEngine.Audio.Source;
@@ -30,7 +31,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly ILayer _backgroundLayer;
     private readonly ILayer _foregroundLayer;
 
-    private IBasicCheckmark _element;
+    private IBasicSlider _element;
     
 
     // Constructors.
@@ -57,9 +58,10 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
         Factory.LoadAssets();
 
-        _element = Factory.CreateCheckmark();
+        _element = Factory.CreateSlider();
         _element.Position = new Vector2(0.5f, 0.5f);
-        _element.Scale = 0.2f;
+        _element.Scale = 0.15f;
+        _element.Length = 32f;
     }
 
     public override void OnStart()

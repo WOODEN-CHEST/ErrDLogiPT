@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Sound;
+using GHEngine;
 using GHEngine.Audio.Source;
 using Microsoft.Xna.Framework;
 using System;
@@ -33,6 +34,7 @@ public interface IBasicDropdownList<T> : IUIElement
     Color DefaultElementUnavailableColor { get; set; }
     TimeSpan ElementPopupDelay { get; set; }
     bool IsTextShadowEnabled { get; set; }
+    float TextShadowBrightness { get; set; }
     float Volume {  get; set; }
     IEnumerable<IPreSampledSound> ClickSounds { get; set; }
     IEnumerable<IPreSampledSound> HoverStartSounds { get; set; }
@@ -40,8 +42,9 @@ public interface IBasicDropdownList<T> : IUIElement
     LogiSoundCategory SoundCategory { get; set; }
     float Length { get; set; }
     float Scale { get; set; }
-    ButtonClickMethod ClickMethod { get; set; }
+    ElementClickMethod ClickMethod { get; set; }
     bool IsTargeted { get; set; }
+    RectangleF DisplayBounds { get; }
 
     event EventHandler<BasicDropdownExpandStartEventArgs<T>>? ExpandStart;
     event EventHandler<BasicDropdownExpandFinishEventArgs<T>>? ExpandFinish;

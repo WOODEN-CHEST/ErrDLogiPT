@@ -37,7 +37,7 @@ public class ClickDetector : ITimeUpdatable
         }
     }
 
-    public ButtonClickMethod ClickMethod { get; set; } = ButtonClickMethod.ActivateOnFullClick;
+    public ElementClickMethod ClickMethod { get; set; } = ElementClickMethod.ActivateOnFullClick;
 
     public bool IsTargeted
     {
@@ -88,7 +88,7 @@ public class ClickDetector : ITimeUpdatable
         Vector2 ClickStartLocation;
         Vector2 CurrentClickLocation = _input.VirtualMousePositionCurrent;
 
-        if (ClickMethod == ButtonClickMethod.ActivateOnFullClick)
+        if (ClickMethod == ElementClickMethod.ActivateOnFullClick)
         {
             ClickDuration = _clickDuration;
             ClickStartLocation = _clickStartPosition;
@@ -190,9 +190,9 @@ public class ClickDetector : ITimeUpdatable
     {
         UIElementClickType ClickType = ClickMethod switch
         {
-            ButtonClickMethod.ActivateOnClick => TestMethodOnClick(),
-            ButtonClickMethod.ActivateOnRelease => TestMethodOnRelease(),
-            ButtonClickMethod.ActivateOnFullClick => TestMethodOnFullClick(time),
+            ElementClickMethod.ActivateOnClick => TestMethodOnClick(),
+            ElementClickMethod.ActivateOnRelease => TestMethodOnRelease(),
+            ElementClickMethod.ActivateOnFullClick => TestMethodOnFullClick(time),
             _ => throw new InvalidOperationException(
                 $"Invalid click method found for basic menu button: {ClickMethod} ({(int)ClickMethod})")
         };

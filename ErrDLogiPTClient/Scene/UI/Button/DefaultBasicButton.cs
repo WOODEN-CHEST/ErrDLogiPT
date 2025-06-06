@@ -213,7 +213,7 @@ public class DefaultBasicButton : IBasicButton
         set => _soundCategory = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public ButtonClickMethod ClickMethod
+    public ElementClickMethod ClickMethod
     {
         get => _clickDetector.ClickMethod;
         set => _clickDetector.ClickMethod = value;
@@ -272,7 +272,7 @@ public class DefaultBasicButton : IBasicButton
 
     private readonly TextBox _text;
     private readonly TextBox _textShadow;
-    private float _textShadowBrightness = 0.25f;
+    private float _textShadowBrightness = 1f;
 
     private float _buttonLength = 1f;
     private Vector2 _position = Vector2.Zero;
@@ -458,7 +458,7 @@ public class DefaultBasicButton : IBasicButton
         bool IsFullClickValid = _wasClickStarted && args.WasClickedInBounds;
         _wasClickStarted = false;
 
-        if (ClickMethod == ButtonClickMethod.ActivateOnFullClick && !IsFullClickValid || !_detectedClickTypes.Contains(args.ClickType))
+        if (ClickMethod == ElementClickMethod.ActivateOnFullClick && !IsFullClickValid || !_detectedClickTypes.Contains(args.ClickType))
         {
             return;
         }

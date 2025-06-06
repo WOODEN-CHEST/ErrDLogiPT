@@ -19,23 +19,25 @@ namespace ErrDLogiPTClient.Scene.UI;
 
 public class DefaultUIElementFactory : IUIElementFactory
 {
-    // Private static fields.
-    private const string ASSET_NAME_BASIC_BUTTON = "main_button";
-    private const string ASSET_NAME_BUTTON_FONT = "main";
-    private const string ASSET_NAME_BASIC_SLIDER = "main_slider";
-    private const string ASSET_NAME_BASIC_DROPDOWN_LIST = "main_dropdown_list";
-    private const string ASSET_NAME_BASIC_CHECKMARK = "main_checkmark";
+    // Static fields.
+    public const string ASSET_NAME_BASIC_BUTTON = "main_button";
+    public const string ASSET_NAME_MAIN_FONT = "main";
+    public const string ASSET_NAME_BASIC_SLIDER = "main_slider";
+    public const string ASSET_NAME_BASIC_DROPDOWN_LIST = "main_dropdown_list";
+    public const string ASSET_NAME_BASIC_CHECKMARK = "main_checkmark";
 
-    private static readonly Color NORMAL_COLOR = Color.White;
-    private static readonly Color HOVER_COLOR = new Color(173, 255, 110, 255);
-    private static readonly Color CLICK_COLOR = new Color(79, 299, 240, 255);
-    private static readonly Color LIST_ELEMENT_COLOR = new Color(180, 180, 180, 255);
-    private static readonly Color LIST_ELEMENT_SELECTED_COLOR = new Color(0, 200, 0, 255);
-    private static readonly Color LIST_ELEMENT_UNAVAILABLE_COLOR = new Color(100, 100, 100, 255);
-    private static readonly Color CHECKMARK_COLOR = new Color(0, 255, 0, 255);
+    public static readonly Color NORMAL_COLOR = Color.White;
+    public static readonly Color HOVER_COLOR = new Color(173, 255, 110, 255);
+    public static readonly Color CLICK_COLOR = new Color(79, 299, 240, 255);
+    public static readonly Color LIST_ELEMENT_COLOR = new Color(180, 180, 180, 255);
+    public static readonly Color LIST_ELEMENT_SELECTED_COLOR = new Color(0, 200, 0, 255);
+    public static readonly Color LIST_ELEMENT_UNAVAILABLE_COLOR = new Color(100, 100, 100, 255);
+    public static readonly Color CHECKMARK_COLOR = new Color(0, 255, 0, 255);
 
-    private static readonly TimeSpan HOVER_FADE_DURATION = TimeSpan.FromSeconds(0.1d);
-    private static readonly TimeSpan CLICK_FADE_DURATION = TimeSpan.FromSeconds(0.4d);
+    public static readonly TimeSpan HOVER_FADE_DURATION = TimeSpan.FromSeconds(0.1d);
+    public static readonly TimeSpan CLICK_FADE_DURATION = TimeSpan.FromSeconds(0.4d);
+
+    public const float TEXT_SHADOWN_BRIGHTNESS = 0.25f;
 
 
 
@@ -60,7 +62,7 @@ public class DefaultUIElementFactory : IUIElementFactory
         AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_SLIDER);
         AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_DROPDOWN_LIST);
         AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_CHECKMARK);
-        AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT);
+        AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_MAIN_FONT);
     }
 
     public IBasicButton CreateButton()
@@ -71,13 +73,15 @@ public class DefaultUIElementFactory : IUIElementFactory
             _sceneServices.GetRequired<IUserInput>(),
             AssetProvider,
             AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_BUTTON),
-            AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_BUTTON_FONT))
+            AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_MAIN_FONT))
         {
             ButtonColor = NORMAL_COLOR,
             HoverColor = HOVER_COLOR,
             ClickColor = CLICK_COLOR,
             ClickFadeDuration = CLICK_FADE_DURATION,
-            HoverFadeDuration = HOVER_FADE_DURATION
+            HoverFadeDuration = HOVER_FADE_DURATION,
+
+            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS
         };
     }
 
@@ -96,7 +100,7 @@ public class DefaultUIElementFactory : IUIElementFactory
             NormalColor = NORMAL_COLOR,
 
             HoverFadeDuration = HOVER_FADE_DURATION,
-            ClickFadeDuration = CLICK_FADE_DURATION
+            ClickFadeDuration = CLICK_FADE_DURATION,
         };
     }
 
@@ -121,11 +125,30 @@ public class DefaultUIElementFactory : IUIElementFactory
 
             HoverColorDuration = HOVER_FADE_DURATION,
             ValueChangeColorDuration = CLICK_FADE_DURATION,
+
+            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS
         };
     }
 
     public IBasicSlider CreateSlider()
     {
-        throw new NotImplementedException();
+        ISceneAssetProvider AssetProvider = _sceneServices.GetRequired<ISceneAssetProvider>();
+
+        return new DefaultBasicSlider(_sceneServices.GetRequired<IUserInput>(),
+            _sceneServices.GetRequired<ILogiSoundEngine>(),
+            AssetProvider,
+            AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_SLIDER),
+            AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_MAIN_FONT))
+        {
+            NormalColor = NORMAL_COLOR,
+            HoverColor = HOVER_COLOR,
+            GrabColor = CLICK_COLOR,
+
+            HoverFadeDuration = HOVER_FADE_DURATION,
+            GrabFadeDuration = CLICK_FADE_DURATION,
+
+            TrackColor = NORMAL_COLOR,
+            HandleColor = NORMAL_COLOR,
+        };
     }
 }

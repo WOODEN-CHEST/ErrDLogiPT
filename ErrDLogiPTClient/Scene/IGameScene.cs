@@ -12,7 +12,8 @@ namespace ErrDLogiPTClient.Scene;
 /// <summary>
 /// A game scene represents a separate, whole section of the game, for example the Main Menu, Level editor or in-game section.
 /// <para>Each scene comes with its own services property which has scene-specific services. These services are very
-/// similar to the global services, but with some services which work only for specific scenes.</para>
+/// similar to the global services, but with some services which work only for scenes
+/// (for instance <see cref="ISceneAssetProvider"/>)</para>
 /// <para>To not make the scene cluttered with tens of thousands of lines of code (like the UI elements, for example),
 /// scenes can have "components" which are basically just smaller objects which focus on delivering
 /// specific functionality to a scene, like a UI executor, audio manager, etc.</para>

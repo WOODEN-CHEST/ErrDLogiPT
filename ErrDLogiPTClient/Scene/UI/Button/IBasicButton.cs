@@ -34,7 +34,7 @@ public interface IBasicButton : IUIElement
     IEnumerable<IPreSampledSound> HoverStartSounds { get; set; }
     IEnumerable<IPreSampledSound> HoverEndSounds { get; set; }
     LogiSoundCategory SoundCategory { get; set; }
-    ButtonClickMethod ClickMethod { get; set; }
+    ElementClickMethod ClickMethod { get; set; }
     Action<BasicButtonMainClickArgs>? MainClickAction { get; set; }
     Action<BasicButtonMainHoverStartArgs>? MainHoverStartAction { get; set; }
     Action<BasicButtonMainHoverEndArgs>? MainHoverEndAction { get; set; }

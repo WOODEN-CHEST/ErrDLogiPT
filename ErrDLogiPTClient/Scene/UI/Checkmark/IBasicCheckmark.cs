@@ -23,7 +23,7 @@ public interface IBasicCheckmark : IUIElement
     IEnumerable<IPreSampledSound> HoverEndSounds { get; set; }
     float Volume { get; set; }
     LogiSoundCategory SoundCategory { get; set; }
-    ButtonClickMethod ClickMethod { get; set; }
+    ElementClickMethod ClickMethod { get; set; }
     Color NormalColor { get; set; }
     Color HoverColor { get; set; }
     Color ClickColor { get; set; }

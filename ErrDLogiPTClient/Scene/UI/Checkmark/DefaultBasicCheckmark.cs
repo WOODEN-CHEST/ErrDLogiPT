@@ -78,7 +78,7 @@ public class DefaultBasicCheckmark : IBasicCheckmark
         set => _soundCategory = value ?? throw new ArgumentNullException(nameof(value));
     }
 
-    public ButtonClickMethod ClickMethod
+    public ElementClickMethod ClickMethod
     {
         get => _clickDetector.ClickMethod;
         set => _clickDetector.ClickMethod = value;
