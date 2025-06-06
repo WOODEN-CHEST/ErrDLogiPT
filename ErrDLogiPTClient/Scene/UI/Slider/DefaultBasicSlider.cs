@@ -65,6 +65,7 @@ public class DefaultBasicSlider : IBasicSlider
             _orientation = value;
             UpdateOrientation();
             UpdateRotations();
+            UpdateHandle();
             _previousRenderAspectRatio = null;
         }
     }
@@ -434,6 +435,11 @@ public class DefaultBasicSlider : IBasicSlider
         float CoordinateMin = Vector2.Dot(_position, _orientationVector) - (AreaLength / 2f);
 
         float UnclampedFactor = (CoordinateCurrent - CoordinateMin) / AreaLength;
+        if (Orientation == SliderOrientation.Vertical)
+        {
+            UnclampedFactor = (float)SliderFactorMax - UnclampedFactor;
+        }
+
         SliderFactor = Math.Clamp((float)UnclampedFactor, SliderFactorMin, SliderFactorMax);
 
         if (Step.HasValue)

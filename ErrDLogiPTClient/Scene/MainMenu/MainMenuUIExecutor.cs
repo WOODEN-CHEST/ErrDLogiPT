@@ -91,11 +91,11 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         IUserInput Input = SceneServices.GetRequired<IUserInput>();
         if (Input.WereKeysJustPressed(Keys.Up))
         {
-            _element.Position = new(_element.Position.X, 0.2f);
+            _element.Orientation = SliderOrientation.Horizontal;
         }
         else if (Input.WereKeysJustPressed(Keys.Down))
         {
-            _element.Position = new(_element.Position.X, 0.8f);
+            _element.Orientation = SliderOrientation.Vertical;
         }
     }
 }
