@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -60,8 +61,15 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
         _element = Factory.CreateSlider();
         _element.Position = new Vector2(0.5f, 0.5f);
-        _element.Scale = 0.15f;
+        _element.Scale = 0.1f;
         _element.Length = 32f;
+        _element.Orientation = SliderOrientation.Vertical;
+        _element.ValueDisplayProvider = (factor) =>
+        {
+            return factor.ToString("0.00", CultureInfo.InvariantCulture);
+        };
+
+        //_element.Step = 1d / (4d - 1d);
     }
 
     public override void OnStart()

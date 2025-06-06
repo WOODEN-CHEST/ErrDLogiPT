@@ -328,6 +328,16 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     }
 
     public RectangleF DisplayBounds => _displayButton.ButtonBounds;
+    public Vector2 ShadowOffset
+    {
+        get => _shadowOffset;
+        set
+        {
+            _shadowOffset = value;
+            UpdateAllEntryProperties();
+            UpdateDisplayButtonProperties();
+        }
+    }
 
     public event EventHandler<BasicDropdownExpandStartEventArgs<T>>? ExpandStart;
     public event EventHandler<BasicDropdownExpandFinishEventArgs<T>>? ExpandFinish;
@@ -376,6 +386,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private bool _isTextShadowEnabled = true;
     private float _textShadowBrightness = 1f;
+    private Vector2 _shadowOffset = Vector2.Zero;
 
     private IPreSampledSound[] _clickSounds = Array.Empty<IPreSampledSound>();
     private IPreSampledSound[] _hoverStartSounds = Array.Empty<IPreSampledSound>();
@@ -511,6 +522,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         _displayButton.Length = Length;
         _displayButton.Scale = Scale;
         _displayButton.TextShadowBrightness = TextShadowBrightness;
+        _displayButton.ShadowOffset = ShadowOffset;
 
         if (_selectedElements.Count == 0)
         {
@@ -560,6 +572,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         Button.Text = entry.Element.DisplayName;
         Button.Volume = Volume;
         Button.TextShadowBrightness = TextShadowBrightness;
+        Button.ShadowOffset = ShadowOffset;
     }
 
     private void GenericUpdate(IProgramTime time)

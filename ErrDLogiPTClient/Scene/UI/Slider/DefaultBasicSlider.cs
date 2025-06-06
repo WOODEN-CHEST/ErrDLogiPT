@@ -8,6 +8,7 @@ using GHEngine.Frame.Item;
 using GHEngine.GameFont;
 using GHEngine.IO;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,9 +29,9 @@ public class DefaultBasicSlider : IBasicSlider
             {
                 throw new ArgumentException($"Invalid length: {value}", nameof(value));
             }
-            if (value < 0f)
+            if (value <= 0f)
             {
-                throw new ArgumentException("Length must be >= 0");
+                throw new ArgumentException("Length must be > 0");
             }
             _length = value;
             UpdateSizes();
@@ -52,9 +53,9 @@ public class DefaultBasicSlider : IBasicSlider
             }
             _scale = value;
             UpdateSizes();
+            _previousRenderAspectRatio = null;
         }
     }
-    public bool IsTargeted { get; set; } = false;
 
     public SliderOrientation Orientation
     {
@@ -86,14 +87,33 @@ public class DefaultBasicSlider : IBasicSlider
             {
                 throw new ArgumentException($"Invalid slider factor: {value}", nameof(value));
             }
-            _factor = Math.Clamp(value, SliderFactorMin, SliderFactorMax);
+
+            double UnclampedFactor = Step.HasValue ? (Math.Round(value / Step.Value) * Step.Value) : value;
+            _factor = Math.Clamp(UnclampedFactor, SliderFactorMin, SliderFactorMax);
             UpdateHandle();
         }
     }
     public double? Step
     {
         get => _step;
-        set => _step = value;
+        set
+        {
+            if (value == null)
+            {
+                _step = null;
+                return;
+            }
+
+            if (double.IsNaN(value.Value) || double.IsInfinity(value.Value))
+            {
+                throw new ArgumentException($"Invalid slider factor: {value}", nameof(value));
+            }
+            if (value.Value <= 0d)
+            {
+                throw new ArgumentException("Step must be > 0", nameof(value));
+            }
+            _step = Math.Clamp(value.Value, double.Epsilon, SliderFactorMax);
+        }
     }
 
     public IEnumerable<IPreSampledSound> GrabSounds
@@ -204,6 +224,16 @@ public class DefaultBasicSlider : IBasicSlider
     public double SliderFactorMax => 1d;
     public double SliderFactorMin => 0d;
 
+    public Vector2 ShadowOffset
+    {
+        get => _shadowOffset;
+        set
+        {
+            _shadowOffset = value;
+            _previousRenderAspectRatio = null;
+        }
+    }
+
     public event EventHandler<BasicSliderGrabEventArgs>? Grab;
     public event EventHandler<BasicSliderReleaseEventArgs>? Release;
     public event EventHandler<BasicSliderFactorChangeEventArgs>? FactorChange;
@@ -216,7 +246,10 @@ public class DefaultBasicSlider : IBasicSlider
     private const int ANIMATION_FRAME_INDEX_HANDLE = 1;
     private const float HANDLE_SCALE = 1.5f;
     private const float TEXT_MAX_SIZE_SCALE_Y = 2f;
-    private const float TEXT_MAX_OFFSET_SCALE = 2.5f;
+    private const float TEXT_MAX_OFFSET_SCALE = 2f;
+    private const float SHIFT_HOLD_PRECISION_SCALE = 0.25f;
+    private static readonly Keys PRECISION_KEY = Keys.LeftShift;
+    private const double SCROLL_FACTOR = 0.2d;
 
 
     // Private fields.
@@ -232,6 +265,7 @@ public class DefaultBasicSlider : IBasicSlider
     private string? _displayTextOverride = null;
 
     private Vector2 _position = Vector2.Zero;
+    private Vector2 _handlePosition = Vector2.Zero;
 
     private SliderOrientation _orientation = SliderOrientation.Horizontal;
     private Vector2 _orientationVector = new Vector2(1f, 0f);
@@ -246,8 +280,6 @@ public class DefaultBasicSlider : IBasicSlider
     private float _scale = 1f;
     private double? _step = null;
     private double _factor = 0d;
-    private float _minLocationCoordinate;
-    private float _maxLocationCoordinate;
 
     private RandomSequence<IPreSampledSound> _grabSounds = new(Array.Empty<IPreSampledSound>());
     private RandomSequence<IPreSampledSound> _releaseSounds = new(Array.Empty<IPreSampledSound>());
@@ -258,9 +290,12 @@ public class DefaultBasicSlider : IBasicSlider
 
     private bool _isGrabbed = false;
     private Vector2? _grabStartLocation = null;
+    private Vector2 _grabOffset = Vector2.Zero;
 
     private float? _previousRenderAspectRatio = null;
     private float _previousInputAreaAspectRatio = 0f;
+
+    private Vector2 _shadowOffset = Vector2.Zero;
 
 
     // Constructors.
@@ -303,6 +338,8 @@ public class DefaultBasicSlider : IBasicSlider
         UpdateOrientation();
         UpdateRotations();
         UpdateSizes();
+        UpdateDisplayText();
+        UpdateClickBounds();
     }
 
 
@@ -326,13 +363,13 @@ public class DefaultBasicSlider : IBasicSlider
         switch (_orientation)
         {
             case SliderOrientation.Horizontal:
-                _orientationVector = new(0f, 1f);
+                _orientationVector = new(1f, 0f);
                 _orientationRotation = 0f;
                 break;
 
             case SliderOrientation.Vertical:
-                _orientationVector = new(1f, 0f);
-                _orientationRotation = -MathF.PI / 2f;
+                _orientationVector = new(0f, 1f);
+                _orientationRotation = MathF.PI / 2f;
                 break;
 
             default:
@@ -368,39 +405,85 @@ public class DefaultBasicSlider : IBasicSlider
     private void UpdateRenderPositions(float aspectRatio)
     {
         _track.Position = _position;
-        _displayText.Position = _position + (Vector2.Rotate(_orientationVector, -MathF.PI / 2f) * TEXT_MAX_OFFSET_SCALE);
+
+        float Rotation = MathF.PI / 2f;
+        Vector2 DisplayTextPosition = _position
+            + (Vector2.Rotate(_orientationVector * _scale, Rotation)
+            * TEXT_MAX_OFFSET_SCALE);
+
+        _displayText.Position = DisplayTextPosition;
+        _displayTextShadow.Position = DisplayTextPosition 
+            + (GHMath.GetWindowAdjustedVector(ShadowOffset, aspectRatio) * _scale);
         UpdateHandle();
     }
 
     private void UpdateHandle()
     {
-        Vector2 MovementAmount = _orientationVector * (_maxLocationCoordinate - _minLocationCoordinate);
-        _handle.Position = _position + (MovementAmount * (float)_factor) - (MovementAmount / 2f);
+        Vector2 MovementAmount = _orientationVector * GHMath.GetWindowAdjustedVector(_track.Size, _input.InputAreaRatio);
+        _handlePosition = _position + (MovementAmount * (float)_factor) - (MovementAmount / 2f);
+        _handle.Position = _handlePosition;
+        UpdateClickBounds();
+        UpdateDisplayText();
     }
 
     private void UpdateFactorFromPosition(Vector2 clickPosition)
     {
-        float AreaLength = Vector2.Dot(GHMath.GetWindowAdjustedVector(_track.Size, _input.InputAreaRatio), _orientationVector);
+        float AreaLength = Vector2.Dot(GHMath.GetWindowAdjustedVector(new(_track.Size.X),
+            _input.InputAreaRatio), _orientationVector);
         float CoordinateCurrent = Vector2.Dot(_orientationVector, clickPosition);
         float CoordinateMin = Vector2.Dot(_position, _orientationVector) - (AreaLength / 2f);
 
-        float UnclampedFactor = (AreaLength - CoordinateMin) / AreaLength;
+        float UnclampedFactor = (CoordinateCurrent - CoordinateMin) / AreaLength;
         SliderFactor = Math.Clamp((float)UnclampedFactor, SliderFactorMin, SliderFactorMax);
+
+        if (Step.HasValue)
+        {
+            PlayGenericSound(_incrementSounds, BasicSliderSoundOrigin.FactorIncrement);
+        }
     }
 
     private void UpdateClickBounds()
     {
+        SetClickBounds(_trackDetector, _position, _track.Size);
+        SetClickBounds(_handleDetector, _handlePosition, _handle.Size);
+    }
+
+    private void SetClickBounds(ClickDetector detector, Vector2 centerPosition, Vector2 spriteSize)
+    {
         float AspectRatio = _input.InputAreaRatio;
 
-        Vector2 AdjustedTrackSize = GHMath.GetWindowAdjustedVector(_track.Size, AspectRatio);
+        Vector2 AdjustedTrackSize = GHMath.GetWindowAdjustedVector(spriteSize, AspectRatio);
 
         Vector2 RotatedHalfSize = Vector2.Rotate(AdjustedTrackSize / 2f, _orientationRotation);
-        Vector2 TrackCorner1 = _track.Position - RotatedHalfSize;
-        Vector2 TrackCorner2 = _track.Position + RotatedHalfSize;
-        Vector2 TrackDimensions = TrackCorner2 - TrackCorner1;
+        Vector2 Corner1 = centerPosition - RotatedHalfSize;
+        Vector2 Corner2 = centerPosition + RotatedHalfSize;
+        Vector2 Dimensions = Corner2 - Corner1;
+        detector.ElementBounds = new(Corner1.X, Corner1.Y, Dimensions.X, Dimensions.Y);
 
-        
-        _trackDetector.ElementBounds = new(TrackCorner1.X, TrackCorner2.Y, TrackDimensions.X, TrackDimensions.Y);
+        Vector2 AdjustedHandleSize = GHMath.GetWindowAdjustedVector(_handle.Size, AspectRatio);
+    }
+
+    private void UpdateDisplayText()
+    {
+        string Text;
+
+        if (ValueDisplayOverride != null)
+        {
+            Text = ValueDisplayOverride;
+        }
+        else if (ValueDisplayProvider != null)
+        {
+            Text = ValueDisplayProvider.Invoke(SliderFactor);
+        }
+        else
+        {
+            Text = string.Empty;
+        }
+
+        _displayText.First().Text = Text;
+        _displayTextShadow.First().Text = Text;
+
+        _displayTextShadow.Brightness = TextShadowBrightness;
     }
 
     private void OnHandleHoverStartEvent(object? sender, ClickDetectorHoverStartEventArgs args)
@@ -416,11 +499,16 @@ public class DefaultBasicSlider : IBasicSlider
     private void OnHandleClickStartEvent(object? sender, ClickDetectorClickStartEventArgs args)
     {
         _isGrabbed = true;
+        _grabStartLocation = args.ClickStartLocation;
+        _grabOffset = args.ClickStartLocation - _handlePosition;
+        _colorCalculator.OnClickStart();
     }
 
     private void OnHandleClickEndEvent(object? sender, ClickDetectorClickEndEventArgs args)
     {
         _isGrabbed = false;
+        _grabStartLocation = null;
+        _colorCalculator.OnClickEnd();
     }
 
     private void OnTrackClickStartEvent(object? sender, ClickDetectorClickStartEventArgs args)
@@ -431,6 +519,51 @@ public class DefaultBasicSlider : IBasicSlider
         }
 
         UpdateFactorFromPosition(args.ClickStartLocation);
+        _handleDetector.ForceStartClick(UIElementClickType.Left);
+    }
+
+    private void OnScrollEvent(object? sender, ClickDetectorScrollEventArgs args)
+    {
+        double ScrollAmount;
+        if (Step.HasValue)
+        {
+            ScrollAmount = Step.Value;
+        }
+        else
+        {
+            ScrollAmount = _input.AreKeysDown(PRECISION_KEY) ? SCROLL_FACTOR * SHIFT_HOLD_PRECISION_SCALE : SCROLL_FACTOR;
+        }
+        ScrollAmount *= Math.Sign(args.ScrollAmount);
+        SliderFactor += ScrollAmount;
+    }
+
+    private void OnGrabUpdate(IProgramTime time)
+    {
+        if (_grabStartLocation == null)
+        {
+            return;
+        }
+
+        Vector2 InputLocation = _input.VirtualMousePositionCurrent;
+
+        Vector2 OffsetFromStartLocation = InputLocation - _grabStartLocation.Value;
+        if (_input.AreKeysDown(PRECISION_KEY))
+        {
+            OffsetFromStartLocation *= SHIFT_HOLD_PRECISION_SCALE;
+        }
+
+        UpdateFactorFromPosition(_grabStartLocation.Value + OffsetFromStartLocation - _grabOffset);
+    }
+
+    private void PlayGenericSound(RandomSequence<IPreSampledSound> soundBank, BasicSliderSoundOrigin origin)
+    {
+
+    }
+
+    private void UpdateColors(IProgramTime time)
+    {
+        _colorCalculator.Update(time);
+        _handle.Mask = _colorCalculator.FinalColor;
     }
 
 
@@ -447,6 +580,8 @@ public class DefaultBasicSlider : IBasicSlider
         _handleDetector.ClickStart += OnHandleClickStartEvent;
         _handleDetector.ClickEnd += OnHandleClickEndEvent;
         _trackDetector.ClickStart += OnTrackClickStartEvent;
+
+        _trackDetector.Scroll += OnScrollEvent;
     }
 
 
@@ -462,6 +597,8 @@ public class DefaultBasicSlider : IBasicSlider
         _handleDetector.ClickStart -= OnHandleClickStartEvent;
         _handleDetector.ClickEnd -= OnHandleClickEndEvent;
         _trackDetector.ClickStart -= OnTrackClickStartEvent;
+
+        _trackDetector.Scroll -= OnScrollEvent;
     }
 
     public bool IsPositionOverEntireSlider(Vector2 position)
@@ -477,6 +614,25 @@ public class DefaultBasicSlider : IBasicSlider
     public bool IsPositionOverTrack(Vector2 position)
     {
         return IsPositionOverHandle(position) || IsPositionOverTrack(position);
+    }
+
+    public void Update(IProgramTime time)
+    {
+        if (_previousInputAreaAspectRatio != _input.InputAreaRatio)
+        {
+            _previousInputAreaAspectRatio = _input.InputAreaRatio;
+            UpdateClickBounds();
+        }
+
+        _handleDetector.Update(time);
+        _trackDetector.Update(time);
+
+        if (_isGrabbed)
+        {
+            OnGrabUpdate(time);
+        }
+
+        UpdateColors(time);
     }
 
     public void Render(IRenderer renderer, IProgramTime time)
@@ -500,17 +656,5 @@ public class DefaultBasicSlider : IBasicSlider
             _displayTextShadow.Render(renderer, time);
         }
         _displayText.Render(renderer, time);
-    }
-
-    public void Update(IProgramTime time)
-    {
-        if (_previousInputAreaAspectRatio != _input.InputAreaRatio)
-        {
-            _previousInputAreaAspectRatio = _input.InputAreaRatio;
-            UpdateClickBounds();
-        }
-
-        _handleDetector.Update(time);
-        _trackDetector.Update(time);
     }
 }

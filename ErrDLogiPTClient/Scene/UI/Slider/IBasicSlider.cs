@@ -14,7 +14,6 @@ public interface IBasicSlider : IUIElement
     // Fields.
     float Length { get; set; }
     float Scale { get; set; }
-    bool IsTargeted { get; set; }
     SliderOrientation Orientation { get; set; }
     Vector2 Position { get; set; }
     double SliderFactorMax { get; }
@@ -35,6 +34,7 @@ public interface IBasicSlider : IUIElement
     TimeSpan GrabFadeDuration { get; set; }
     bool IsTextShadowEnabled { get; set; }
     float TextShadowBrightness { get; set; }
+    Vector2 ShadowOffset {  get; set; }
     Func<double, string>? ValueDisplayProvider { get; set; }
     string? ValueDisplayOverride { get; set; }
 

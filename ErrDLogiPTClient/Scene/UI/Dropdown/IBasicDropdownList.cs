@@ -35,6 +35,7 @@ public interface IBasicDropdownList<T> : IUIElement
     TimeSpan ElementPopupDelay { get; set; }
     bool IsTextShadowEnabled { get; set; }
     float TextShadowBrightness { get; set; }
+    Vector2 ShadowOffset { get; set; }
     float Volume {  get; set; }
     IEnumerable<IPreSampledSound> ClickSounds { get; set; }
     IEnumerable<IPreSampledSound> HoverStartSounds { get; set; }

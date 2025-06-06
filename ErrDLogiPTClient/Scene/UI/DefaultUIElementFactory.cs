@@ -38,6 +38,7 @@ public class DefaultUIElementFactory : IUIElementFactory
     public static readonly TimeSpan CLICK_FADE_DURATION = TimeSpan.FromSeconds(0.4d);
 
     public const float TEXT_SHADOWN_BRIGHTNESS = 0.25f;
+    public const float TEXT_SHADOWN_OFFSET = 0.08f;
 
 
 
@@ -81,7 +82,8 @@ public class DefaultUIElementFactory : IUIElementFactory
             ClickFadeDuration = CLICK_FADE_DURATION,
             HoverFadeDuration = HOVER_FADE_DURATION,
 
-            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS
+            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS,
+            ShadowOffset = new(TEXT_SHADOWN_OFFSET)
         };
     }
 
@@ -149,6 +151,9 @@ public class DefaultUIElementFactory : IUIElementFactory
 
             TrackColor = NORMAL_COLOR,
             HandleColor = NORMAL_COLOR,
+
+            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS,
+            ShadowOffset = new(TEXT_SHADOWN_OFFSET)
         };
     }
 }

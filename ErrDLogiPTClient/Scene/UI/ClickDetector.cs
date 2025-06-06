@@ -236,6 +236,29 @@ public class ClickDetector : ITimeUpdatable
         return GHMath.IsPointInArea(position, BottomLeft, TopRight, 0f);
     }
 
+    public void ForceStartClick(UIElementClickType clickType)
+    {
+        if (clickType == UIElementClickType.None)
+        {
+            return;
+        }
+
+        _currentClickType = clickType;
+        _clickStartPosition = _input.VirtualMousePositionCurrent;
+        ClickStart?.Invoke(this, new(this, _input.VirtualMousePositionCurrent, clickType));
+    }
+
+    public void ForceEndClick()
+    {
+        Vector2 InputPosition = _input.VirtualMousePositionCurrent;
+        ClickEnd?.Invoke(this, new(this,
+            _clickStartPosition,
+            InputPosition,
+            _currentClickType, 
+            _clickDuration, 
+            IsPositionOverClickArea(InputPosition)));
+    }
+
 
     // Inherited methods
     public void Update(IProgramTime time)

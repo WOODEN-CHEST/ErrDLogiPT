@@ -278,7 +278,7 @@ public class DefaultBasicButton : IBasicButton
     private Vector2 _position = Vector2.Zero;
     private float _scale = 1f;
     private Vector2 _textPadding = new(0.125f);
-    private Vector2 _shadowOffset = new(0.08f);
+    private Vector2 _shadowOffset = new(0f);
     private bool _isEnabled = true;
 
     private RandomSequence<IPreSampledSound> _clickSounds = new(Array.Empty<IPreSampledSound>());
