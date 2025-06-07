@@ -78,8 +78,7 @@ public class ClickDetector : ITimeUpdatable
     // Private methods.
     private void UpdateIsTargeted()
     {
-        _isTargeted = IsEnabled && ((_isTargeted && (_input.VirtualMousePositionPrevious == _input.VirtualMousePositionCurrent))
-            || IsPositionOverClickArea(_input.VirtualMousePositionCurrent));
+        _isTargeted = IsEnabled &&  IsPositionOverClickArea(_input.VirtualMousePositionCurrent);
     }
 
     private void OnButtonClick(UIElementClickType type)

@@ -256,7 +256,6 @@ public class DefaultBasicSlider : IBasicSlider
     private const int ANIMATION_FRAME_INDEX_HANDLE = 1;
     private const float HANDLE_SCALE = 1.5f;
     private const float TEXT_MAX_SIZE_SCALE_Y = 2f;
-    private const float TEXT_MAX_OFFSET_SCALE = 2f;
     private const float SHIFT_HOLD_PRECISION_SCALE = 0.25f;
     private static readonly Keys PRECISION_KEY = Keys.LeftShift;
     private const double SCROLL_FACTOR = 0.2d;
@@ -417,11 +416,11 @@ public class DefaultBasicSlider : IBasicSlider
     {
         _track.Position = _position;
 
-        float Rotation = MathF.PI / 2f;
+        float Rotation = _orientationRotation;
 
         Vector2 DisplayTextPosition = _position
-            + Vector2.Rotate(GHMath.GetWindowAdjustedVector(new Vector2(0f, _track.Size.Y / 2f), aspectRatio)
-            + new Vector2(_displayText.DrawSize.Y, 0f), Rotation);
+            + Vector2.Rotate(GHMath.GetWindowAdjustedVector(new Vector2(0f, _handle.Size.Y / 2f), aspectRatio)
+            + new Vector2(0f, _displayText.DrawSize.Y / 2f), Rotation);
 
         _displayText.Position = DisplayTextPosition;
         _displayTextShadow.Position = DisplayTextPosition 

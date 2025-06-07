@@ -61,8 +61,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
         _element = Factory.CreateSlider();
         _element.Position = new Vector2(0.5f, 0.5f);
-        _element.Scale = 0.1f;
-        _element.Length = 32f;
+        _element.Scale = 0.025f;
+        _element.Length = 64f;
         _element.Orientation = SliderOrientation.Vertical;
         _element.ValueDisplayProvider = (factor) =>
         {
