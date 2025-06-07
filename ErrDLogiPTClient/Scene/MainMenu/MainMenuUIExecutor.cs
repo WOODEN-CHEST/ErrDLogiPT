@@ -32,8 +32,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private readonly ILayer _backgroundLayer;
     private readonly ILayer _foregroundLayer;
 
-    private IBasicSlider _element;
-    
+    private readonly MainMenuStartingUI _startingUI;
+
 
     // Constructors.
     public MainMenuUIExecutor(MainMenuScene scene, GenericServices sceneServices) : base(scene, sceneServices)
@@ -44,6 +44,9 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _foregroundLayer = new GHLayer(LAYER_NAME_FOREGROUND);
         _frame.AddLayer(_backgroundLayer);
         _frame.AddLayer(_foregroundLayer);
+
+        _startingUI = new(TypedScene, SceneServices, _foregroundLayer);
+        AddComponent(_startingUI);
     }
 
 
@@ -58,44 +61,15 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
         IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
         Factory.LoadAssets();
-
-        _element = Factory.CreateSlider();
-        _element.Position = new Vector2(0.5f, 0.5f);
-        _element.Scale = 0.025f;
-        _element.Length = 64f;
-        _element.Orientation = SliderOrientation.Vertical;
-        _element.ValueDisplayProvider = (factor) =>
-        {
-            return factor.ToString("0.00", CultureInfo.InvariantCulture);
-        };
-
-        //_element.Step = 1d / (4d - 1d);
     }
 
     public override void OnStart()
     {
         base.OnStart();
 
+        _startingUI.IsVisible = true;
+        _startingUI.IsEnabled = true;
+        
         SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
-
-        _element.Initialize();
-        _foregroundLayer.AddItem(_element);
-    }
-
-    public override void Update(IProgramTime time)
-    {
-        base.Update(time);
-
-        _element.Update(time);
-
-        IUserInput Input = SceneServices.GetRequired<IUserInput>();
-        if (Input.WereKeysJustPressed(Keys.Up))
-        {
-            _element.Orientation = SliderOrientation.Horizontal;
-        }
-        else if (Input.WereKeysJustPressed(Keys.Down))
-        {
-            _element.Orientation = SliderOrientation.Vertical;
-        }
     }
 }

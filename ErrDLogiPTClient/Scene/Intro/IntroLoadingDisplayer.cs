@@ -161,7 +161,7 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
             _periodCount = 0;
             _loadingText.Origin = new(0.5f);
             AssetProvider.RegisterRenderedItem(_loadingText);
-            TextBoxAssetLoader.LoadTextures(_loadingText);
+            _loadingText.PrepareTexturesForRendering(Enumerable.Empty<char>());
 
             OnLoadFinish();
         });
