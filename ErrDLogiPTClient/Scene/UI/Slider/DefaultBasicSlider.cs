@@ -169,7 +169,15 @@ public class DefaultBasicSlider : IBasicSlider
         set => _displayTextShadow.Brightness = value;
     }
 
-    public Func<double, string>? ValueDisplayProvider { get; set; } = null;
+    public Func<double, string>? ValueDisplayProvider
+    {
+        get => _displayTextProvder;
+        set
+        {
+            _displayTextProvder = value;
+            UpdateDisplayText();
+        }
+    }
 
     public string? ValueDisplayOverride
     {
@@ -181,6 +189,7 @@ public class DefaultBasicSlider : IBasicSlider
             {
                 _displayText.First().Text = value;
                 _displayTextShadow.First().Text = value;
+                UpdateDisplayText();
             }
         }
     }
@@ -264,6 +273,7 @@ public class DefaultBasicSlider : IBasicSlider
     private readonly TextBox _displayText;
     private readonly TextBox _displayTextShadow;
     private string? _displayTextOverride = null;
+    private Func<double, string>? _displayTextProvder = null;
 
     private Vector2 _position = Vector2.Zero;
     private Vector2 _handlePosition = Vector2.Zero;
@@ -369,7 +379,7 @@ public class DefaultBasicSlider : IBasicSlider
                 break;
 
             case SliderOrientation.Vertical:
-                _orientationVector = new(0f, 1f);
+                _orientationVector = new(0f, -1f);
                 _orientationRotation = MathF.PI / 2f;
                 break;
 
@@ -408,9 +418,13 @@ public class DefaultBasicSlider : IBasicSlider
         _track.Position = _position;
 
         float Rotation = MathF.PI / 2f;
+        //Vector2 DisplayTextPosition = _position
+        //    + (Vector2.Rotate(_orientationVector * _scale, Rotation)
+        //    * TEXT_MAX_OFFSET_SCALE);
+
         Vector2 DisplayTextPosition = _position
-            + (Vector2.Rotate(_orientationVector * _scale, Rotation)
-            * TEXT_MAX_OFFSET_SCALE);
+            + (GHMath.GetWindowAdjustedVector(_track.Size, aspectRatio) * _orientationVector)
+            + (Vector2.Rotate(new Vector2(_displayText.DrawSize.Y, 0f), Rotation));
 
         _displayText.Position = DisplayTextPosition;
         _displayTextShadow.Position = DisplayTextPosition 
@@ -421,6 +435,7 @@ public class DefaultBasicSlider : IBasicSlider
     private void UpdateHandle()
     {
         Vector2 MovementAmount = _orientationVector * GHMath.GetWindowAdjustedVector(_track.Size, _input.InputAreaRatio);
+
         _handlePosition = _position + (MovementAmount * (float)_factor) - (MovementAmount / 2f);
         _handle.Position = _handlePosition;
         UpdateClickBounds();
@@ -440,7 +455,14 @@ public class DefaultBasicSlider : IBasicSlider
             UnclampedFactor = (float)SliderFactorMax - UnclampedFactor;
         }
 
-        SliderFactor = Math.Clamp((float)UnclampedFactor, SliderFactorMin, SliderFactorMax);
+        double ClampedFactor = Math.Clamp(UnclampedFactor, SliderFactorMin, SliderFactorMax);
+        const double MARGIN_OF_ERROR = 0.001d;
+        if (Math.Abs(ClampedFactor - SliderFactor) <= MARGIN_OF_ERROR)
+        {
+            return;
+        }
+
+        SliderFactor = ClampedFactor;
 
         if (Step.HasValue)
         {
@@ -508,6 +530,7 @@ public class DefaultBasicSlider : IBasicSlider
         _grabStartLocation = args.ClickStartLocation;
         _grabOffset = args.ClickStartLocation - _handlePosition;
         _colorCalculator.OnClickStart();
+        PlayGenericSound(_grabSounds, BasicSliderSoundOrigin.Grab);
     }
 
     private void OnHandleClickEndEvent(object? sender, ClickDetectorClickEndEventArgs args)
@@ -515,6 +538,7 @@ public class DefaultBasicSlider : IBasicSlider
         _isGrabbed = false;
         _grabStartLocation = null;
         _colorCalculator.OnClickEnd();
+        PlayGenericSound(_releaseSounds, BasicSliderSoundOrigin.Release);
     }
 
     private void OnTrackClickStartEvent(object? sender, ClickDetectorClickStartEventArgs args)
@@ -537,7 +561,7 @@ public class DefaultBasicSlider : IBasicSlider
         }
         else
         {
-            ScrollAmount = _input.AreKeysDown(PRECISION_KEY) ? SCROLL_FACTOR * SHIFT_HOLD_PRECISION_SCALE : SCROLL_FACTOR;
+            ScrollAmount = _input.AreKeysDown(PRECISION_KEY) ? (SCROLL_FACTOR * SHIFT_HOLD_PRECISION_SCALE) : SCROLL_FACTOR;
         }
         ScrollAmount *= Math.Sign(args.ScrollAmount);
         SliderFactor += ScrollAmount;
@@ -563,7 +587,25 @@ public class DefaultBasicSlider : IBasicSlider
 
     private void PlayGenericSound(RandomSequence<IPreSampledSound> soundBank, BasicSliderSoundOrigin origin)
     {
+        if (soundBank.Count == 0)
+        {
+            return;
+        }
 
+        ILogiSoundInstance Sound = _soundEngine.CreateSoundInstance(soundBank.Get()!, SoundCategory);
+        BasicSliderPlaySoundEventArgs EventArgs = new(this, Sound);
+        PlaySound?.Invoke(this, EventArgs);
+        if (EventArgs.IsCancelled)
+        {
+            EventArgs.ExecuteActions();
+            return;
+        }
+
+        if (EventArgs.Sound != null)
+        {
+            _soundEngine.AddSoundInstance(EventArgs.Sound);
+        }
+        EventArgs.ExecuteActions();
     }
 
     private void UpdateColors(IProgramTime time)
