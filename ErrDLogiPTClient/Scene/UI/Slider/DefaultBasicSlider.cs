@@ -418,13 +418,10 @@ public class DefaultBasicSlider : IBasicSlider
         _track.Position = _position;
 
         float Rotation = MathF.PI / 2f;
-        //Vector2 DisplayTextPosition = _position
-        //    + (Vector2.Rotate(_orientationVector * _scale, Rotation)
-        //    * TEXT_MAX_OFFSET_SCALE);
 
         Vector2 DisplayTextPosition = _position
-            + (GHMath.GetWindowAdjustedVector(_track.Size, aspectRatio) * _orientationVector)
-            + (Vector2.Rotate(new Vector2(_displayText.DrawSize.Y, 0f), Rotation));
+            + Vector2.Rotate(GHMath.GetWindowAdjustedVector(new Vector2(0f, _track.Size.Y / 2f), aspectRatio)
+            + new Vector2(_displayText.DrawSize.Y, 0f), Rotation);
 
         _displayText.Position = DisplayTextPosition;
         _displayTextShadow.Position = DisplayTextPosition 
