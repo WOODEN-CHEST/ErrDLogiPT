@@ -11,39 +11,26 @@ using System;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
-public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
+public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUISection
 {
     // Fields
     public bool IsEnabled
     {
-        get => _isEnabled;
-        set
-        {
-            _isEnabled = value;
-            foreach (IBasicButton Button in _allButtons ?? Array.Empty<IBasicButton>())
-            {
-                Button.IsEnabled = value;
-            }
-        }
+        get => _buttonGroup.IsEnabled;
+        set => _buttonGroup.IsEnabled = value;
     }
 
     public bool IsVisible
     {
-        get => _isVisible;
-        set
-        {
-            _isVisible = value;
-            foreach (IBasicButton Button in _allButtons ?? Array.Empty<IBasicButton>())
-            {
-                Button.IsVisible = value;
-            }
-        }
+        get => _buttonGroup.IsVisible;
+        set => _buttonGroup.IsVisible = value;
     }
+
+    public event EventHandler<EventArgs> ClickPlay;
 
 
     // Private static fields.
     private const string ASSET_NAME_LOGO = "main_logo";
-    private const float LOGO_SIZE_Y = 0.15f;
 
     private const string BUTTON_NAME_PLAY = "Play";
     private const string BUTTON_NAME_LEVEL_EDITOR = "Level Editor";
@@ -52,10 +39,6 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
     private const string BUTTON_NAME_SOURCE = "Source";
     private const string BUTTON_NAME_EXIT = "Exit";
 
-    private const float BUTTON_LENGTH = 12f;
-    private const float BUTTON_SCALE = 0.1f;
-    private const float LOGO_OFFSET_Y = 0.05f;
-    private const float BUTTON_BOUNDS_OFFSET_SCALE = 1.15f;
 
 
     // Private fields.
@@ -66,18 +49,23 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
     private IBasicButton _sourceButton;
     private IBasicButton _exitButton;
     private IBasicButton[]? _allButtons;
+    private UIElementGroup _buttonGroup = new();
+
     private SpriteItem _logo;
 
-    private bool _isEnabled = false;
-    private bool _isVisible = false;
-
     private readonly ILayer _renderLayer;
+    private readonly MainMenuUIProperties _uiProperties;
 
 
     // Constructors.
-    public MainMenuStartingUI(MainMenuScene scene, GenericServices services, ILayer renderLayer) : base(scene, services)
+    public MainMenuStartingUI(MainMenuScene scene, 
+        GenericServices services,
+        ILayer renderLayer,
+        MainMenuUIProperties properties) : base(scene, services)
     {
         _renderLayer = renderLayer ?? throw new ArgumentNullException(nameof(renderLayer));
+        _uiProperties = properties ?? throw new ArgumentNullException(nameof(properties));
+
     }
 
 
@@ -88,8 +76,8 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
         _logo = new(AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO).CreateInstance());
 
         _logo.Origin = new(0.5f, 0.5f);
-        _logo.Size = new(_logo.FrameSize.X / _logo.FrameSize.Y * LOGO_SIZE_Y, LOGO_SIZE_Y);
-        _logo.Position = new(0.5f, (_logo.Size.Y / 2f) + LOGO_OFFSET_Y);
+        _logo.Size = new Vector2(_logo.FrameSize.X / _logo.FrameSize.Y, 1f) * _uiProperties.LogoSizeY;
+        _logo.Position = _uiProperties.LogoPosition;
         _renderLayer.AddItem(_logo);
     }
 
@@ -117,13 +105,14 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
     private void InitButtons()
     {
         CreateButtons();
-
-        Vector2 Position = _logo.Position + new Vector2(0f, _logo.Size.Y + LOGO_OFFSET_Y);
+        
+        Vector2 Position = _uiProperties.ButtonStartingPosition;
         foreach (IBasicButton Button in _allButtons!)
         {
             GenericInitSingleButton(Button, Position);
-            Position += new Vector2(0f, Button.ButtonBounds.Height * BUTTON_BOUNDS_OFFSET_SCALE);
+            Position += new Vector2(0f, Button.ButtonBounds.Height * _uiProperties.ButtonOffsetY);
         }
+        _buttonGroup.Add(_allButtons);
 
         SpecificButtonInit();
     }
@@ -131,10 +120,8 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
     protected void GenericInitSingleButton(IBasicButton button, Vector2 position)
     {
         button.Initialize();
-        button.IsVisible = IsVisible;
-        button.IsEnabled = IsEnabled;
-        button.Length = BUTTON_LENGTH;
-        button.Scale = BUTTON_SCALE;
+        button.Length = _uiProperties.ButtonLength;
+        button.Scale = _uiProperties.ButtonScale;
         button.Position = position;
         button.IsDisabledOnClick = true;
         _renderLayer.AddItem(button);
@@ -142,28 +129,47 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
 
     private void SpecificButtonInit()
     {
-        _playButton.Text = BUTTON_NAME_PLAY;
-        _levelEditorButton.Text = BUTTON_NAME_LEVEL_EDITOR;
-        _optionsButton.Text = BUTTON_NAME_OPTIONS;
-        _modsButton.Text = BUTTON_NAME_MODS;
-        _sourceButton.Text = BUTTON_NAME_SOURCE;
-        _exitButton.Text = BUTTON_NAME_EXIT;
-
-        InitExitButton(_exitButton);
         InitPlayButton(_playButton);
-    }
-
-    private void InitExitButton(IBasicButton button)
-    {
-        button.MainClickAction = args => SceneServices.GetRequired<ISceneExecutor>().Exit();
+        InitLevelEditorButton(_levelEditorButton);
+        InitOptionsButton(_optionsButton);
+        InitModsButton(_modsButton);
+        InitSourceButton(_sourceButton);
+        InitExitButton(_exitButton);
     }
 
     private void InitPlayButton(IBasicButton button)
     {
-        button.MainClickAction = args => 
+        button.Text = BUTTON_NAME_PLAY;
+        button.MainClickAction = args =>
         {
-
+            ClickPlay?.Invoke(this, EventArgs.Empty);
         };
+    }
+
+    private void InitModsButton(IBasicButton button)
+    {
+        button.Text = BUTTON_NAME_MODS;
+    }
+
+    private void InitSourceButton(IBasicButton button)
+    {
+        button.Text = BUTTON_NAME_SOURCE;
+    }
+
+    private void InitLevelEditorButton(IBasicButton button)
+    {
+        button.Text = BUTTON_NAME_LEVEL_EDITOR;
+    }
+
+    private void InitOptionsButton(IBasicButton button)
+    {
+        button.Text = BUTTON_NAME_OPTIONS;
+    }
+
+    private void InitExitButton(IBasicButton button)
+    {
+        button.Text = BUTTON_NAME_EXIT;
+        button.MainClickAction = args => SceneServices.GetRequired<ISceneExecutor>().Exit();
     }
 
 
@@ -185,9 +191,6 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
     {
         base.HandleUpdatePostComponent(time);
 
-        foreach (IBasicButton Button in _allButtons!)
-        {
-            Button.Update(time);
-        }
+        _buttonGroup.Update(time);
     }
 }

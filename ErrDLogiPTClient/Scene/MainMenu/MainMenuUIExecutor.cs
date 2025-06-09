@@ -26,6 +26,12 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private const string LAYER_NAME_BACKGROUND = "background";
     private const string LAYER_NAME_FOREGROUND = "foreground";
 
+    private const float BUTTON_LENGTH = 12f;
+    private const float BUTTON_SCALE = 0.1f;
+    private const float LOGO_OFFSET_Y = 0.05f;
+    private const float BUTTON_BOUNDS_OFFSET_SCALE = 1.15f;
+    private const float LOGO_SIZE_Y = 0.15f;
+
 
     // Private fields.
     private IGameFrame _frame;
@@ -34,10 +40,39 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
     private MainMenuBackground _background;
     private MainMenuStartingUI _startingUI;
+    private MainMenuPlayUI _playUI;
 
 
     // Constructors.
     public MainMenuUIExecutor(MainMenuScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+
+
+    // Private methods.
+    private void InitEventHandlers()
+    {
+        InitStartingEventHandlers();
+        InitPlayEventHandlers();
+    }
+
+    private void SwitchUISections(IMainMenuUISection oldSection, IMainMenuUISection newSection)
+    {
+        oldSection.IsEnabled = false;
+        oldSection.IsVisible = false;
+
+        newSection.IsEnabled = true;
+        newSection.IsVisible = true;
+    }
+
+    private void InitStartingEventHandlers()
+    {
+        _startingUI.ClickPlay += (sender, args) => SwitchUISections(_startingUI, _playUI);
+    }
+
+    private void InitPlayEventHandlers()
+    {
+        _playUI.ClickBack += (sender, args) => SwitchUISections(_playUI, _startingUI);
+    }
+
 
 
     // Inherited methods.
@@ -55,13 +90,28 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
         Factory.LoadAssets();
 
-        _startingUI = new(TypedScene, SceneServices, _foregroundLayer);
+        MainMenuUIProperties UIProperties = new()
+        {
+            ButtonOffsetY = BUTTON_BOUNDS_OFFSET_SCALE,
+            ButtonLength = BUTTON_LENGTH,
+            ButtonScale = BUTTON_SCALE,
+            ButtonStartingPosition = new(0.5f, (LOGO_OFFSET_Y * 2f) + LOGO_SIZE_Y + (BUTTON_SCALE / 2f)),
+            LogoPosition = new(0.5f, LOGO_OFFSET_Y + (LOGO_SIZE_Y / 2f)),
+            LogoSizeY = LOGO_SIZE_Y
+        };
+
+        _startingUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);
         _startingUI.IsVisible = true;
         _startingUI.IsEnabled = true;
         AddComponent(_startingUI);
 
+        _playUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);
+        AddComponent(_playUI);
+
         _background = new(TypedScene, SceneServices, _backgroundLayer);
         AddComponent(_background);
+
+        InitEventHandlers();
     }
 
     protected override void HandleStartPreComponent()
