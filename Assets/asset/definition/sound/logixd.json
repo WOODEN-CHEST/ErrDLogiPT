@@ -1,0 +1,24 @@
+{
+    "sound": [
+        {
+            "name": "logixd_intro",
+            "path": "os/logixd/intro"
+        },
+        {
+            "name": "logixd_outro",
+            "path": "os/logixd/outro"
+        },
+        {
+            "name": "logixd_error0",
+            "path": "os/logixd/error0"
+        },
+        {
+            "name": "logixd_error1",
+            "path": "os/logixd/error1"
+        },
+        {
+            "name": "logixd_error2",
+            "path": "os/logixd/error2"
+        }
+    ]
+}

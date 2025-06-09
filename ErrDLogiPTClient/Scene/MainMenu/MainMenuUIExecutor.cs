@@ -64,6 +64,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     {
         base.HandleStartPreComponent();
         
+        
         SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
     }
 }
