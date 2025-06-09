@@ -33,8 +33,10 @@ public class MainMenuBackground : SceneComponentBase<MainMenuScene>
     // Inherited methods.
     protected override void HandleLoadPreComponent()
     {
-        _background = new(SceneServices.GetRequired<ISceneAssetProvider>()
-            .GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_PIXEL).CreateInstance())
+        _background = new(SceneServices
+            .GetRequired<ISceneAssetProvider>()
+            .GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_PIXEL)
+            .CreateInstance())
         {
             Mask = BACKGROUND_COLOR,
             IsPositionAdjusted = false,

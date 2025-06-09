@@ -19,6 +19,18 @@
         {
             "name": "logixd_error2",
             "path": "os/logixd/error2"
+        },
+        {
+            "name": "logixd_dialog0",
+            "path": "os/logixd/dialog0"
+        },
+         {
+            "name": "logixd_dialog1",
+            "path": "os/logixd/dialog1"
+        },
+         {
+            "name": "logixd_dialog2",
+            "path": "os/logixd/dialog2"
         }
     ]
 }

@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Mod;
+using ErrDLogiPTClient.Registry;
 using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI;
@@ -88,6 +89,7 @@ public abstract class SceneBase : IGameScene
         SceneServices.Set<IModifiableProgramTime>(GlobalServices.Get<IModifiableProgramTime>());
         SceneServices.Set<IUIElementFactory>(GlobalServices.GetRequired<ISceneFactoryProvider>().GetUIElementFactory(this));
         SceneServices.Set<IFulLScreenToggler>(GlobalServices.Get<IFulLScreenToggler>());
+        SceneServices.Set<IGameRegistryStorage>(GlobalServices.Get<IGameRegistryStorage>());
     }
 
 

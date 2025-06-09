@@ -1,4 +1,7 @@
 ﻿using ErrDLogiPTClient.Mod;
+using ErrDLogiPTClient.OS;
+using ErrDLogiPTClient.OS.Logi.LogiXD;
+using ErrDLogiPTClient.Registry;
 using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.MainMenu;
 using GHEngine;
@@ -42,6 +45,23 @@ public class IntroScene : SceneBase
         }
     }
 
+    private void CreateRegistryStorage()
+    {
+        IGameRegistryStorage RegistryStorage = new DefaultRegistryStorage();
+        RegistryStorage.SetRegistry<IGameOSDefinition>(GetOSRegistry());
+        GlobalServices.Set<IGameRegistryStorage>(RegistryStorage);
+    }
+
+    private IGameItemRegistry<IGameOSDefinition> GetOSRegistry()
+    {
+        IGameItemRegistry<IGameOSDefinition> Registry = new DefaultItemRegistry<IGameOSDefinition>();
+
+        IGameOSDefinition LogiXDDefinition = new LogiXDDefinition();
+        Registry.Register(LogiXDDefinition.DefinitionKey, LogiXDDefinition);
+
+        return Registry;
+    }
+
 
     // Inherited methods.
     protected override void HandleLoadPreComponent()
@@ -56,6 +76,7 @@ public class IntroScene : SceneBase
         IModManager ModManager = SceneServices.GetRequired<IModManager>();
         ILogiAssetLoader AssetLoader = SceneServices.GetRequired<ILogiAssetLoader>();
         IGamePathStructure Structure = SceneServices.GetRequired<IGamePathStructure>();
+        CreateRegistryStorage();
 
         ModManager.LoadMods(Structure.ModRoot);
         AssetLoader.SetAssetRootPaths(Array.Empty<string>());
