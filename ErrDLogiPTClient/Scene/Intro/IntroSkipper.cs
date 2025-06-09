@@ -16,12 +16,13 @@ public class IntroSkipper : SceneComponentBase<IntroScene>
 
 
     // Private fields.
-    private readonly Keys[] _introSkipKeys = new Keys[] { Keys.Enter, Keys.Escape, Keys.Back };
+    private readonly Keys[] _introSkipKeys = new Keys[] { Keys.Enter, Keys.Escape, Keys.Back, Keys.Space };
     private bool _wasIntroSkipped = false;
 
 
     // Constructors.
     public IntroSkipper(IntroScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+
 
     // Private methods.
     private void SkipIntro()
@@ -50,9 +51,10 @@ public class IntroSkipper : SceneComponentBase<IntroScene>
 
 
     // Inherited methods.
-    public override void Update(IProgramTime time)
+    protected override void HandleUpdatePreComponent(IProgramTime time)
     {
-        base.Update(time);
+        base.HandleUpdatePreComponent(time);
+
         ListenForIntroSkip();
     }
 }

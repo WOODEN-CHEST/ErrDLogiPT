@@ -5,25 +5,19 @@ namespace ErrDLogiPTClient.Scene.MainMenu;
 
 public class MainMenuScene : SceneBase
 {
-    // Fields.
-    
-
-
     // Private fields.
-    private readonly MainMenuUIExecutor _uiExecutor;
+    private MainMenuUIExecutor _uiExecutor;
 
 
     // Constructors.
-    public MainMenuScene(GenericServices services) : base(services)
-    {
-        _uiExecutor = new(this, SceneServices);
-        AddComponent(_uiExecutor);
-    }
-
+    public MainMenuScene(GenericServices services) : base(services) { }
 
     // Inherited methods.
     protected override void HandleLoadPreComponent()
     {
         base.HandleLoadPreComponent();
+
+        _uiExecutor = new(this, SceneServices);
+        AddComponent(_uiExecutor);
     }
 }

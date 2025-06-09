@@ -10,23 +10,20 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient;
 
-public class DefaultAppStateController : IAppStateController
+public class DefaultFullScreenToggler : IFulLScreenToggler
 {
     // Fields.
     public bool CanSwitchFullScreen { get; set; }
-    public bool IsRestartScheduled { get; private set; }
 
 
     // Private fields.
-    private readonly LogiGame _game;
     private readonly GenericServices _services;
 
 
 
     // Constructors.
-    public DefaultAppStateController(LogiGame game, GenericServices services)
+    public DefaultFullScreenToggler(GenericServices services)
     {
-        _game = game ?? throw new ArgumentNullException(nameof(game));
         _services = services ?? throw new ArgumentNullException(nameof(services));
     }
 
@@ -60,17 +57,6 @@ public class DefaultAppStateController : IAppStateController
 
 
     // Inherited methods.
-    public void Exit()
-    {
-        _game.Exit();
-    }
-
-    public void Restart()
-    {
-        IsRestartScheduled = true;
-        Exit();
-    }
-
     public void Update(IProgramTime time)
     {
         TrySwitchFullScreenMode();

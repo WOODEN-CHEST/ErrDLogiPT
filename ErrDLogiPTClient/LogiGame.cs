@@ -105,7 +105,7 @@ namespace ErrDLogiPTClient
             // Issues regarding blend state exist, see https://github.com/MonoGame/MonoGame/issues/6978
             FrameExecutor.Renderer.RenderBlendState = BlendState.NonPremultiplied;
             FrameExecutor.Renderer.ScreenColor = Color.Black;
-            ISceneExecutor SceneExecutor = new DefaultSceneExecutor(Logger);
+            ISceneExecutor SceneExecutor = new DefaultSceneExecutor(this, Logger);
 
             LogiGameServices = new();
             LogiGameServices.Set<ILogger>(Logger);
@@ -121,7 +121,7 @@ namespace ErrDLogiPTClient
             LogiGameServices.Set<ISceneExecutor>(SceneExecutor);
             LogiGameServices.Set<IModifiableProgramTime>(new GenericProgramTime());
             LogiGameServices.Set<ISceneFactoryProvider>(new DefaultSceneFactoryProvider());
-            LogiGameServices.Set<IAppStateController>(new DefaultAppStateController(this, LogiGameServices));
+            LogiGameServices.Set<IFulLScreenToggler>(new DefaultFullScreenToggler(LogiGameServices));
 
             IModManager ModManager = new DefaultModManager(LogiGameServices);
             ILogiAssetLoader AssetManager = new DefaultLogiAssetLoader(LogiGameServices);
@@ -167,7 +167,7 @@ namespace ErrDLogiPTClient
                 LogiGameServices.Get<IUserInput>()?.RefreshInput();
                 LogiGameServices.Get<ISceneExecutor>()?.Update(ProgramTime);
                 LogiGameServices.Get<ILogiSoundEngine>()?.Update(ProgramTime);
-                LogiGameServices.Get<IAppStateController>()?.Update(ProgramTime);
+                LogiGameServices.Get<IFulLScreenToggler>()?.Update(ProgramTime);
             }
             catch (Exception e)
             {

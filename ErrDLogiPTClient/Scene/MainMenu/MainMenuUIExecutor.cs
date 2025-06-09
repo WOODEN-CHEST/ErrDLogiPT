@@ -28,16 +28,22 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
 
     // Private fields.
-    private readonly IGameFrame _frame;
-    private readonly ILayer _backgroundLayer;
-    private readonly ILayer _foregroundLayer;
+    private IGameFrame _frame;
+    private ILayer _backgroundLayer;
+    private ILayer _foregroundLayer;
 
-    private readonly MainMenuStartingUI _startingUI;
+    private MainMenuStartingUI _startingUI;
 
 
     // Constructors.
-    public MainMenuUIExecutor(MainMenuScene scene, GenericServices sceneServices) : base(scene, sceneServices)
+    public MainMenuUIExecutor(MainMenuScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+
+
+    // Inherited methods.
+    protected override void HandleLoadPreComponent()
     {
+        base.HandleLoadPreComponent();
+
         _frame = new GHGameFrame();
 
         _backgroundLayer = new GHLayer(LAYER_NAME_BACKGROUND);
@@ -45,30 +51,18 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _frame.AddLayer(_backgroundLayer);
         _frame.AddLayer(_foregroundLayer);
 
+        IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
+        Factory.LoadAssets();
+
         _startingUI = new(TypedScene, SceneServices, _foregroundLayer);
+        _startingUI.IsVisible = true;
+        _startingUI.IsEnabled = true;
         AddComponent(_startingUI);
     }
 
-
-    // Private methods.
-
-
-
-    // Inherited methods.
-    public override void OnLoad()
+    protected override void HandleStartPreComponent()
     {
-        base.OnLoad();
-
-        IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
-        Factory.LoadAssets();
-    }
-
-    public override void OnStart()
-    {
-        base.OnStart();
-
-        _startingUI.IsVisible = true;
-        _startingUI.IsEnabled = true;
+        base.HandleStartPreComponent();
         
         SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
     }

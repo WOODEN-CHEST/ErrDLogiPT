@@ -13,10 +13,11 @@ public class GamePropertiesInitializer : SceneComponentBase<IntroScene>
     // Constructors.
     public GamePropertiesInitializer(IntroScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
 
+
     // Inherited methods.
-    public override void OnStart()
+    protected override void HandleStartPreComponent()
     {
-        base.OnStart();
+        base.HandleStartPreComponent();
 
         IDisplay Display = SceneServices.GetRequired<IDisplay>();
         IUserInput Input = SceneServices.GetRequired<IUserInput>();

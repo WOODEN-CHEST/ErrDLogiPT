@@ -28,31 +28,14 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
 
 
     // Private fields.
-    private readonly IntroLogoDisplayer _logoDisplayer;
-    private readonly IntroLoadingDisplayer _loadingDisplayer;
-    private readonly IGameFrame _frame;
+    private IntroLogoDisplayer _logoDisplayer;
+    private IntroLoadingDisplayer _loadingDisplayer;
+    private IntroSkipper _introSkipper;
+    private IGameFrame _frame;
 
 
     // Constructors.
-    public IntroRenderExecutor(IntroScene scene, GenericServices services)
-        : base(scene, services)
-    {
-        _frame = new GHGameFrame();
-
-        ILayer TargetLayer = new GHLayer(LOGO_LAYER_NAME);
-        _frame.AddLayer(TargetLayer);
-
-        _logoDisplayer = new(TypedScene, SceneServices, TargetLayer);
-        _logoDisplayer.LogoShowFinish += OnLogoShowFinishEvent;
-        AddComponent(_logoDisplayer);
-
-        _loadingDisplayer = new(TypedScene, SceneServices, TargetLayer);
-        AddComponent(_loadingDisplayer);
-
-        IntroSkipper Skipper = new(TypedScene, SceneServices);
-        Skipper.SkippedIntro += OnIntroSkipEvent;
-        AddComponent(Skipper);
-    }
+    public IntroRenderExecutor(IntroScene scene, GenericServices services) : base(scene, services) { }
 
 
     // Private methods.
@@ -76,20 +59,32 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
 
 
     // Inherited methods.
-    public override void OnLoad()
+    protected override void HandleLoadPreComponent()
     {
-        base.OnLoad();
+        base.HandleLoadPreComponent();
+
+        _frame = new GHGameFrame();
+
+        ILayer TargetLayer = new GHLayer(LOGO_LAYER_NAME);
+        _frame.AddLayer(TargetLayer);
+
+        _logoDisplayer = new(TypedScene, SceneServices, TargetLayer);
+        _logoDisplayer.LogoShowFinish += OnLogoShowFinishEvent;
+
+        _loadingDisplayer = new(TypedScene, SceneServices, TargetLayer);
+
+        _introSkipper = new(TypedScene, SceneServices);
+        _introSkipper.SkippedIntro += OnIntroSkipEvent;
+
+        AddComponent(_logoDisplayer);
+        AddComponent(_loadingDisplayer);
+        AddComponent(_introSkipper);
     }
 
-    public override void OnStart()
+    protected override void HandleStartPreComponent()
     {
-        base.OnStart();
+        base.HandleStartPreComponent();
 
         SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
-    }
-
-    public override void Update(IProgramTime time)
-    {
-        base.Update(time);
     }
 }

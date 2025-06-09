@@ -114,9 +114,9 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
 
 
     // Inherited methods.
-    public override void Update(IProgramTime time)
+    protected override void HandleUpdatePreComponent(IProgramTime time)
     {
-        base.Update(time);
+        base.HandleUpdatePreComponent(time);
 
         if (!IsDisplayed)
         {
@@ -136,9 +136,9 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
         UpdateText(time);
     }
 
-    public override void OnLoad()
+    protected override void HandleLoadPreComponent()
     {
-        base.OnLoad();
+        base.HandleLoadPreComponent();
 
         ISceneAssetProvider AssetProvider = SceneServices.GetRequired<ISceneAssetProvider>();
 

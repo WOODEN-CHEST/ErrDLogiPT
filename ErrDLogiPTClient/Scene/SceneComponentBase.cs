@@ -36,45 +36,68 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
     public event EventHandler<SubComponentRemoveEventArgs>? ComponentRemove;
 
 
+    // Protected methods.
+    protected virtual void HandleLoadPreComponent() { }
+    protected virtual void HandleLoadPostComponent() { }
+    protected virtual void HandleUnloadPreComponent() { }
+    protected virtual void HandleUnloadPostComponent() { }
+    protected virtual void HandleStartPreComponent() { }
+    protected virtual void HandleStartPostComponent() { }
+    protected virtual void HandleEndPreComponent() { }
+    protected virtual void HandleEndPostComponent() { }
+    protected virtual void HandleUpdatePreComponent(IProgramTime time) { }
+    protected virtual void HandleUpdatePostComponent(IProgramTime time) { }
+
+
     // Inherited methods.
-    public virtual void OnEnd()
+    public void OnEnd()
     {
+        HandleEndPreComponent();
         foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnEnd();
         }
+        HandleEndPostComponent();
     }
 
-    public virtual void OnLoad()
+    public void OnLoad()
     {
+        HandleLoadPreComponent();
         foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnLoad();
         }
+        HandleLoadPostComponent();
     }
 
-    public virtual void OnStart()
+    public void OnStart()
     {
+        HandleStartPreComponent();
         foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnStart();
         }
+        HandleStartPostComponent();
     }
 
-    public virtual void OnUnload()
+    public void OnUnload()
     {
+        HandleUnloadPreComponent();
         foreach (ISceneComponent Component in _subComponents)
         {
             Component.OnUnload();
         }
+        HandleUnloadPostComponent();
     }
 
-    public virtual void Update(IProgramTime time)
+    public void Update(IProgramTime time)
     {
+        HandleUpdatePreComponent(time);
         foreach (ISceneComponent Component in _subComponents)
         {
             Component.Update(time);
         }
+        HandleUpdatePostComponent(time);
     }
 
     public void AddComponent(ISceneComponent component)

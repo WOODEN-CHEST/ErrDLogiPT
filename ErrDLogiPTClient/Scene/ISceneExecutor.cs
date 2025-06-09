@@ -19,18 +19,23 @@ public interface ISceneExecutor : ITimeUpdatable
     /// <summary>
     /// The scene which is currently active, or <c>null</c> if no scene is active.
     /// </summary>
-    public IGameScene? CurrentScene { get; }
+    IGameScene? CurrentScene { get; }
 
     /// <summary>
     /// Whether the next scene is loaded. A scheduled jump to the next scene executes only when it is loaded.
     /// <para>Returns <c>false</c> if there is no next scene.</para>
     /// </summary>
-    public bool IsNextSceneLoaded { get; }
+    bool IsNextSceneLoaded { get; }
 
     /// <summary>
     /// Gets whether a next scene exists, regardless whether is it loaded or not.
     /// </summary>
-    public bool IsNextSceneAvailable { get; }
+    bool IsNextSceneAvailable { get; }
+
+    /// <summary>
+    /// Whether the game is scheduled to restart after exiting it.
+    /// </summary>
+    bool IsRestartScheduled { get; }
 
     /// <summary>
     /// The event raised when the next scene finishes loading.
@@ -65,4 +70,14 @@ public interface ISceneExecutor : ITimeUpdatable
     /// </summary>
     /// <param name="shouldJump">Whether the scene should be changed.</param>
     void ScheduleJumpToNextScene(bool shouldJump);
+
+    /// <summary>
+    /// Ends the current scene, unloads it and then exits the game.
+    /// </summary>
+    void Exit();
+
+    /// <summary>
+    /// Ends the current scene, unloads it and then restarts the game.
+    /// </summary>
+    void Restart();
 }

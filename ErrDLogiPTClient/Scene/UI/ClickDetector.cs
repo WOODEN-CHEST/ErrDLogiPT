@@ -78,7 +78,7 @@ public class ClickDetector : ITimeUpdatable
     // Private methods.
     private void UpdateIsTargeted()
     {
-        _isTargeted = IsEnabled &&  IsPositionOverClickArea(_input.VirtualMousePositionCurrent);
+        _isTargeted = IsEnabled && IsPositionOverClickArea(_input.VirtualMousePositionCurrent);
     }
 
     private void OnButtonClick(UIElementClickType type)
@@ -262,17 +262,14 @@ public class ClickDetector : ITimeUpdatable
     // Inherited methods
     public void Update(IProgramTime time)
     {
-        if (!IsEnabled)
+        if (IsEnabled)
         {
-            return;
+            UpdateIsTargeted();
+            TestButtonClick(time);
+            UpdateScrollValue();
         }
-
-        UpdateIsTargeted();
-
+        
         _isHovered.SetValue(_isTargeted);
-
-        TestButtonClick(time);
-        UpdateScrollValue();
 
         if (_isTargeted)
         {

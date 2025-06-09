@@ -24,6 +24,8 @@ public class DefaultBasicButton : IBasicButton
         set
         {
             _isEnabled = value;
+
+            bool WasTargeted = IsTargeted;
             _clickDetector.IsEnabled = value;
         }
     }
@@ -457,6 +459,7 @@ public class DefaultBasicButton : IBasicButton
     {
         bool IsFullClickValid = _wasClickStarted && args.WasClickedInBounds;
         _wasClickStarted = false;
+        _colorCalculator.OnClickEnd();
 
         if (ClickMethod == ElementClickMethod.ActivateOnFullClick && !IsFullClickValid || !_detectedClickTypes.Contains(args.ClickType))
         {
@@ -480,7 +483,6 @@ public class DefaultBasicButton : IBasicButton
         }
 
         PlayClickSound();
-        _colorCalculator.OnClickEnd();
         if (IsDisabledOnClick)
         {
             IsEnabled = false;

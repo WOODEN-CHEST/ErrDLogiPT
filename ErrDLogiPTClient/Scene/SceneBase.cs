@@ -64,6 +64,12 @@ public abstract class SceneBase : IGameScene
     protected virtual void HandleLoadPostComponent() { }
     protected virtual void HandleUnloadPreComponent() { }
     protected virtual void HandleUnloadPostComponent() { }
+    protected virtual void HandleStartPreComponent() { }
+    protected virtual void HandleStartPostComponent() { }
+    protected virtual void HandleEndPreComponent() { }
+    protected virtual void HandleEndPostComponent() { }
+    protected virtual void HandleUpdatePreComponent(IProgramTime time) { }
+    protected virtual void HandleUpdatePostComponent(IProgramTime time) { }
 
 
     // Private methods.
@@ -81,7 +87,7 @@ public abstract class SceneBase : IGameScene
         SceneServices.Set<ILogiAssetLoader>(GlobalServices.Get<ILogiAssetLoader>());
         SceneServices.Set<IModifiableProgramTime>(GlobalServices.Get<IModifiableProgramTime>());
         SceneServices.Set<IUIElementFactory>(GlobalServices.GetRequired<ISceneFactoryProvider>().GetUIElementFactory(this));
-        SceneServices.Set<IAppStateController>(GlobalServices.Get<IAppStateController>());
+        SceneServices.Set<IFulLScreenToggler>(GlobalServices.Get<IFulLScreenToggler>());
     }
 
 
@@ -109,20 +115,24 @@ public abstract class SceneBase : IGameScene
         SceneLoadFinish?.Invoke(this, new(this));
     }
 
-    public virtual void OnEnd()
+    public void OnEnd()
     {
+        HandleEndPreComponent();
         foreach (ISceneComponent Component in _components)
         {
             Component.OnEnd();
         }
+        HandleEndPostComponent();
     }
 
-    public virtual void OnStart()
+    public void OnStart()
     {
+        HandleStartPreComponent();
         foreach (ISceneComponent Component in _components)
         {
             Component.OnStart();
         }
+        HandleStartPostComponent();
     }
 
     public void Unload()
@@ -139,12 +149,14 @@ public abstract class SceneBase : IGameScene
         AssetProvider?.Deinitialize();
     }
 
-    public virtual void Update(IProgramTime time)
+    public void Update(IProgramTime time)
     {
+        HandleUpdatePreComponent(time);
         foreach (ISceneComponent Component in _components)
         {
             Component.Update(time);
         }
+        HandleUpdatePostComponent(time);
     }
 
     public void AddComponent(ISceneComponent component)

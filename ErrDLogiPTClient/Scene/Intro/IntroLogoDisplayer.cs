@@ -86,9 +86,9 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
 
 
     // Inherited methods.
-    public override void OnLoad()
+    protected override void HandleLoadPreComponent()
     {
-        base.OnLoad();
+        base.HandleLoadPreComponent();
 
         ISceneAssetProvider AssetProvider = SceneServices.GetRequired<ISceneAssetProvider>();
         ISpriteAnimation Animation = AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO)!;
@@ -108,14 +108,9 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
         AssetProvider.RegisterRenderedItem(_logo);
     }
 
-    public override void OnStart()
+    protected override void HandleUpdatePreComponent(IProgramTime time)
     {
-        base.OnStart();
-    }
-
-    public override void Update(IProgramTime time)
-    {
-        base.Update(time);
+        base.HandleUpdatePreComponent(time);
 
         if (!_isFadeFinished)
         {

@@ -15,25 +15,13 @@ namespace ErrDLogiPTClient.Scene.Intro;
 public class IntroScene : SceneBase
 {
     // Private fields.
-    private readonly IGameScene _nextSceneMainMenu;
-    private readonly IntroRenderExecutor _renderExecutor;
-    private readonly IntroSkipper _introSkipper;
+    private IGameScene _nextSceneMainMenu;
+    private IntroRenderExecutor _renderExecutor;
+    private IntroSkipper _introSkipper;
 
 
     // Constructors.
-    public IntroScene(GenericServices services) : base(services)
-    {
-        _renderExecutor = new(this, SceneServices);
-        _renderExecutor.AnimationDone += OnAnimationFinishEvent;
-
-        AddComponent(_renderExecutor);
-        AddComponent(new GamePropertiesInitializer(this, SceneServices));
-
-        _introSkipper = new(this, SceneServices);
-        AddComponent(_introSkipper);
-
-        _nextSceneMainMenu = new MainMenuScene(GlobalServices);
-    }
+    public IntroScene(GenericServices services) : base(services) { }
 
 
     // Private methods.
@@ -60,6 +48,11 @@ public class IntroScene : SceneBase
     {
         base.HandleLoadPreComponent();
 
+        _renderExecutor = new(this, SceneServices);
+        _renderExecutor.AnimationDone += OnAnimationFinishEvent;
+        _introSkipper = new(this, SceneServices);
+        _nextSceneMainMenu = new MainMenuScene(GlobalServices);
+
         IModManager ModManager = SceneServices.GetRequired<IModManager>();
         ILogiAssetLoader AssetLoader = SceneServices.GetRequired<ILogiAssetLoader>();
         IGamePathStructure Structure = SceneServices.GetRequired<IGamePathStructure>();
@@ -68,11 +61,15 @@ public class IntroScene : SceneBase
         AssetLoader.SetAssetRootPaths(Array.Empty<string>());
         AssetLoader.LoadAssetDefinitions();
         ModManager.InitializeMods(SceneServices);
+
+        AddComponent(_renderExecutor);
+        AddComponent(new GamePropertiesInitializer(this, SceneServices));
+        AddComponent(_introSkipper);
     }
 
-    public override void OnStart()
+    protected override void HandleStartPreComponent()
     {
-        base.OnStart();
+        base.HandleStartPreComponent();
 
         ISceneExecutor SceneExecutor = SceneServices.GetRequired<ISceneExecutor>();
         SceneExecutor.SceneLoadFinish += OnNextSceneLoadEvent;

@@ -53,6 +53,8 @@ public class DefaultSceneExecutor : ISceneExecutor
         }
     }
 
+    public bool IsRestartScheduled { get; private set; }
+
     public event EventHandler<SceneLoadFinishEventArgs>? SceneLoadFinish;
     public event EventHandler<NextSceneChangeEventArgs>? NextSceneChange;
     public event EventHandler<SceneChangeEventArgs>? ActiveSceneChange;
@@ -70,12 +72,14 @@ public class DefaultSceneExecutor : ISceneExecutor
     private IGameScene? _currentScene = null;
     private bool _isNextSceneLoaded = false;
     private bool _isNextSceneAvailable = false;
+    private readonly LogiGame _game;
 
 
     // Constructors.
-    public DefaultSceneExecutor(ILogger? logger)
+    public DefaultSceneExecutor(LogiGame game, ILogger? logger)
     {
         Logger = logger;
+        _game = game ?? throw new ArgumentNullException(nameof(game));
     }
 
 
@@ -236,5 +240,24 @@ public class DefaultSceneExecutor : ISceneExecutor
         {
             CurrentScene?.Update(time);
         }
+    }
+
+    public void Exit()
+    {
+        IGameScene? SceneToEnd = CurrentScene;
+
+        if (SceneToEnd != null)
+        {
+            SceneToEnd.OnEnd();
+            SceneToEnd.Unload();
+        }
+
+        _game.Exit();
+    }
+
+    public void Restart()
+    {
+        IsRestartScheduled = true;
+        Exit();
     }
 }
