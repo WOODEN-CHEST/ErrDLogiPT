@@ -1,0 +1,11 @@
+{
+    "animation": [
+        {
+            "name": "pixel",
+            "frames": [
+                "global/pixel/0"
+            ],
+            "is_animated": false
+        }
+    ]
+}

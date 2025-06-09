@@ -32,6 +32,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private ILayer _backgroundLayer;
     private ILayer _foregroundLayer;
 
+    private MainMenuBackground _background;
     private MainMenuStartingUI _startingUI;
 
 
@@ -58,12 +59,14 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         _startingUI.IsVisible = true;
         _startingUI.IsEnabled = true;
         AddComponent(_startingUI);
+
+        _background = new(TypedScene, SceneServices, _backgroundLayer);
+        AddComponent(_background);
     }
 
     protected override void HandleStartPreComponent()
     {
         base.HandleStartPreComponent();
-        
         
         SceneServices.GetRequired<IFrameExecutor>().SetFrame(_frame);
     }

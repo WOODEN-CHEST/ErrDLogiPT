@@ -11,9 +11,10 @@ public interface IGameOSDefinition
     // Fields.
     string Name { get; }
     string Description { get; }
-    DateTime ReleaseData { get; }
+    DateTime ReleaseDate { get; }
+    string DefinitionKey { get; }
 
 
     // Methods.
-    IGameOS CreateInstance();
+    IGameOSInstance CreateInstance(GenericServices sceneServices);
 }

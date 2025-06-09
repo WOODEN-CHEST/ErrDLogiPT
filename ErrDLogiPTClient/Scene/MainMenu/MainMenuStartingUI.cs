@@ -1,4 +1,5 @@
-﻿using ErrDLogiPTClient.Scene.UI;
+﻿using ErrDLogiPTClient.Scene.InGame;
+using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Scene.UI.Button;
 using GHEngine;
 using GHEngine.Assets.Def;
@@ -6,12 +7,7 @@ using GHEngine.Frame;
 using GHEngine.Frame.Animation;
 using GHEngine.Frame.Item;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
@@ -154,11 +150,20 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>
         _exitButton.Text = BUTTON_NAME_EXIT;
 
         InitExitButton(_exitButton);
+        InitPlayButton(_playButton);
     }
 
     private void InitExitButton(IBasicButton button)
     {
         button.MainClickAction = args => SceneServices.GetRequired<ISceneExecutor>().Exit();
+    }
+
+    private void InitPlayButton(IBasicButton button)
+    {
+        button.MainClickAction = args => 
+        {
+
+        };
     }
 
 

@@ -14,6 +14,7 @@ public class DefaultFullScreenToggler : IFulLScreenToggler
 {
     // Fields.
     public bool CanSwitchFullScreen { get; set; }
+    public IntVector FullScreenSize { get; set; }
 
 
     // Private fields.
@@ -25,6 +26,7 @@ public class DefaultFullScreenToggler : IFulLScreenToggler
     public DefaultFullScreenToggler(GenericServices services)
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
+        FullScreenSize = services.GetRequired<IDisplay>().ScreenSize;
     }
 
 
@@ -49,7 +51,7 @@ public class DefaultFullScreenToggler : IFulLScreenToggler
             IDisplay? Display = _services.Get<IDisplay>();
             if (Display != null)
             {
-                Display.FullScreenSize = Display.ScreenSize;
+                Display.FullScreenSize = FullScreenSize;
                 Display.IsFullScreen = !Display.IsFullScreen;
             }
         }
