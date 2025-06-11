@@ -22,6 +22,7 @@ public class GamePropertiesInitializer : SceneComponentBase<IntroScene>
         IDisplay Display = SceneServices.GetRequired<IDisplay>();
         IUserInput Input = SceneServices.GetRequired<IUserInput>();
 
+        SceneServices.GetRequired<IFulLScreenToggler>().RestoreFullScreenSize();
         Display.IsUserResizingAllowed = true;
         Input.IsMouseVisible = true;
         Input.IsAltF4Allowed = true;

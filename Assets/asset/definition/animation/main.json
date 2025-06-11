@@ -38,6 +38,22 @@
                 "main/ui/checkmark/1"
             ],
             "is_animated": false
+        },
+        {
+            "name": "main_textbox",
+            "frames": [
+                "main/ui/textbox/0",
+                "main/ui/textbox/1",
+                "main/ui/textbox/2",
+                "main/ui/textbox/3",
+                "main/ui/textbox/4",
+                "main/ui/textbox/5",
+                "main/ui/textbox/6",
+                "main/ui/textbox/7",
+                "main/ui/textbox/8"
+            ],
+            "is_animated": false
         }
+        
     ]
 }

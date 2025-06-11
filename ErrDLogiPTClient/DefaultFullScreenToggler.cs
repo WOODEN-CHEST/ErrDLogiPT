@@ -13,20 +13,16 @@ namespace ErrDLogiPTClient;
 public class DefaultFullScreenToggler : IFulLScreenToggler
 {
     // Fields.
-    public bool CanSwitchFullScreen { get; set; }
-    public IntVector FullScreenSize { get; set; }
+    public bool CanSwitchFullScreen { get; set; } = true;
 
 
     // Private fields.
     private readonly GenericServices _services;
 
-
-
     // Constructors.
     public DefaultFullScreenToggler(GenericServices services)
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
-        FullScreenSize = services.GetRequired<IDisplay>().ScreenSize;
     }
 
 
@@ -40,6 +36,11 @@ public class DefaultFullScreenToggler : IFulLScreenToggler
     // Private methods.
     private void TrySwitchFullScreenMode()
     {
+        if (!CanSwitchFullScreen)
+        {
+            return;
+        }
+
         IUserInput? Input = _services.Get<IUserInput>();
         if (Input == null)
         {
@@ -51,7 +52,6 @@ public class DefaultFullScreenToggler : IFulLScreenToggler
             IDisplay? Display = _services.Get<IDisplay>();
             if (Display != null)
             {
-                Display.FullScreenSize = FullScreenSize;
                 Display.IsFullScreen = !Display.IsFullScreen;
             }
         }
@@ -62,5 +62,11 @@ public class DefaultFullScreenToggler : IFulLScreenToggler
     public void Update(IProgramTime time)
     {
         TrySwitchFullScreenMode();
+    }
+
+    public void RestoreFullScreenSize()
+    {
+        IDisplay Display = _services.GetRequired<IDisplay>();
+        Display.FullScreenSize = Display.ScreenSize;
     }
 }

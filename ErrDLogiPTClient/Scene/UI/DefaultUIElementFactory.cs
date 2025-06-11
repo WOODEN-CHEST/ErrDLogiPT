@@ -3,6 +3,7 @@ using ErrDLogiPTClient.Scene.UI.Button;
 using ErrDLogiPTClient.Scene.UI.Checkmark;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
 using ErrDLogiPTClient.Scene.UI.Slider;
+using ErrDLogiPTClient.Scene.UI.UITextBox;
 using GHEngine.Assets.Def;
 using GHEngine.Frame.Animation;
 using GHEngine.GameFont;
@@ -25,6 +26,7 @@ public class DefaultUIElementFactory : IUIElementFactory
     public const string ASSET_NAME_BASIC_SLIDER = "main_slider";
     public const string ASSET_NAME_BASIC_DROPDOWN_LIST = "main_dropdown_list";
     public const string ASSET_NAME_BASIC_CHECKMARK = "main_checkmark";
+    public const string ASSET_NAME_BASIC_TEXTBOX = "main_textbox";
 
     public static readonly Color NORMAL_COLOR = Color.White;
     public static readonly Color HOVER_COLOR = new Color(173, 255, 110, 255);
@@ -33,6 +35,7 @@ public class DefaultUIElementFactory : IUIElementFactory
     public static readonly Color LIST_ELEMENT_SELECTED_COLOR = new Color(0, 200, 0, 255);
     public static readonly Color LIST_ELEMENT_UNAVAILABLE_COLOR = new Color(100, 100, 100, 255);
     public static readonly Color CHECKMARK_COLOR = new Color(0, 255, 0, 255);
+    public static readonly Color TEXTBOX_TEXT_COLOR = Color.Black;
 
     public static readonly TimeSpan HOVER_FADE_DURATION = TimeSpan.FromSeconds(0.1d);
     public static readonly TimeSpan CLICK_FADE_DURATION = TimeSpan.FromSeconds(0.4d);
@@ -154,6 +157,19 @@ public class DefaultUIElementFactory : IUIElementFactory
 
             TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS,
             ShadowOffset = new(TEXT_SHADOWN_OFFSET)
+        };
+    }
+
+    public IBasicTextBox CreateTextBox()
+    {
+        ISceneAssetProvider AssetProvider = _sceneServices.GetRequired<ISceneAssetProvider>();
+
+        return new DefaultBasicTextBox(_sceneServices.GetRequired<IUserInput>(),
+            AssetProvider,
+            AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_TEXTBOX))
+        {
+            BoxColor = NORMAL_COLOR,
+            GlobalTextColor = TEXTBOX_TEXT_COLOR
         };
     }
 }

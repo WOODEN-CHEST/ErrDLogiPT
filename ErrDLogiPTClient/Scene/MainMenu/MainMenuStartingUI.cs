@@ -1,11 +1,13 @@
 ﻿using ErrDLogiPTClient.Scene.InGame;
 using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Scene.UI.Button;
+using ErrDLogiPTClient.Scene.UI.UITextBox;
 using GHEngine;
 using GHEngine.Assets.Def;
 using GHEngine.Frame;
 using GHEngine.Frame.Animation;
 using GHEngine.Frame.Item;
+using GHEngine.GameFont;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -30,8 +32,6 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
 
 
     // Private static fields.
-    private const string ASSET_NAME_LOGO = "main_logo";
-
     private const string BUTTON_NAME_PLAY = "Play";
     private const string BUTTON_NAME_LEVEL_EDITOR = "Level Editor";
     private const string BUTTON_NAME_OPTIONS = "Options";
@@ -49,11 +49,8 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
     private IBasicButton _sourceButton;
     private IBasicButton _exitButton;
     private IBasicButton[]? _allButtons;
-    private UIElementGroup _buttonGroup = new();
+    private UIElementGroup _buttonGroup;
 
-    private SpriteItem _logo;
-
-    private readonly ILayer _renderLayer;
     private readonly MainMenuUIProperties _uiProperties;
 
 
@@ -63,23 +60,13 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
         ILayer renderLayer,
         MainMenuUIProperties properties) : base(scene, services)
     {
-        _renderLayer = renderLayer ?? throw new ArgumentNullException(nameof(renderLayer));
         _uiProperties = properties ?? throw new ArgumentNullException(nameof(properties));
-
+        _buttonGroup = new(renderLayer);
     }
 
 
     // Private methods.
-    private void InitLogo()
-    {
-        ISceneAssetProvider AssetProvider = SceneServices.GetRequired<ISceneAssetProvider>();
-        _logo = new(AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO).CreateInstance());
 
-        _logo.Origin = new(0.5f, 0.5f);
-        _logo.Size = new Vector2(_logo.FrameSize.X / _logo.FrameSize.Y, 1f) * _uiProperties.LogoSizeY;
-        _logo.Position = _uiProperties.LogoPosition;
-        _renderLayer.AddItem(_logo);
-    }
 
     protected void CreateButtons()
     {
@@ -100,6 +87,20 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
             _sourceButton,
             _exitButton
         };
+
+        IBasicTextBox Box = ElementFactory.CreateTextBox();
+        Box.Scale = 0.2f;
+        Box.Dimensions = new(1f, 0.5f);
+        Box.Position = new(0.75f, 0.5f);
+        Box.AddComponent(new(SceneServices.GetRequired<ISceneAssetProvider>()
+            .GetAsset<GHFontFamily>(AssetType.Font, "main"), "Hello World! Hello World! Hello World! Hello World!")
+        {
+            FontSize = 0.06f
+        });
+
+        _buttonGroup.Add(_allButtons);
+        _buttonGroup.Add(Box);
+        _buttonGroup.Initialize();
     }
 
     private void InitButtons()
@@ -112,19 +113,16 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
             GenericInitSingleButton(Button, Position);
             Position += new Vector2(0f, Button.ButtonBounds.Height * _uiProperties.ButtonOffsetY);
         }
-        _buttonGroup.Add(_allButtons);
 
         SpecificButtonInit();
     }
 
     protected void GenericInitSingleButton(IBasicButton button, Vector2 position)
     {
-        button.Initialize();
         button.Length = _uiProperties.ButtonLength;
         button.Scale = _uiProperties.ButtonScale;
         button.Position = position;
         button.IsDisabledOnClick = true;
-        _renderLayer.AddItem(button);
     }
 
     private void SpecificButtonInit()
@@ -178,7 +176,6 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
     {
         base.HandleLoadPreComponent();
 
-        InitLogo();
         InitButtons();
     }
 

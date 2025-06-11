@@ -1,6 +1,8 @@
 ﻿using ErrDLogiPTClient.Scene.UI.Button;
+using ErrDLogiPTClient.Scene.UI.Dropdown;
 using ErrDLogiPTClient.Scene.UI.Slider;
 using GHEngine;
+using GHEngine.Frame;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -42,9 +44,20 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
 
     // Private fields.
+    private readonly ILayer? _renderLayer = null;
     private readonly HashSet<IUIElement> _elements = new();
     private bool _isEnabled = false;
     private bool _isVisible = false;
+
+
+    // Constructors.
+    public UIElementGroup() { }
+
+    public UIElementGroup(ILayer? renderLayer)
+    {
+        _renderLayer = renderLayer;
+    }
+
 
 
     // Methods.
@@ -54,9 +67,18 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
         foreach (IUIElement Element in elements)
         {
-            _elements.Add(Element);
+            if (!_elements.Add(Element))
+            {
+                continue;
+            }
+
             Element.IsEnabled = IsEnabled;
             Element.IsVisible = IsVisible;
+
+            if (IsVisible)
+            {
+                _renderLayer?.AddItem(Element);
+            }
         }
     }
 
@@ -66,12 +88,31 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
         foreach (IUIElement Element in elements)
         {
-            _elements.Add(Element);
-            Element.IsEnabled = IsEnabled;
-            Element.IsVisible = IsVisible;
+            _elements.Remove(Element);
+            Element.IsEnabled = false;
+            Element.IsVisible = false;
+            _renderLayer?.RemoveItem(Element);
         }
     }
 
+    public void Initialize()
+    {
+        foreach (IUIElement Element in _elements)
+        {
+            Element.Initialize();
+        }
+    }
+
+    public void Deinitialize()
+    {
+        foreach (IUIElement Element in _elements)
+        {
+            Element.Deinitialize();
+        }
+    }
+
+
+    // Inherited methods.
     public IEnumerator<IUIElement> GetEnumerator()
     {
         return _elements.GetEnumerator();
@@ -84,11 +125,6 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
     public void Update(IProgramTime time)
     {
-        if (!IsEnabled)
-        {
-            return;
-        }
-
         foreach (IUIElement Element in _elements)
         {
             Element.Update(time);

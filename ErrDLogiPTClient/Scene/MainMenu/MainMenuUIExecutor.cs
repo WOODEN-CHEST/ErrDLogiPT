@@ -28,9 +28,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
     private const float BUTTON_LENGTH = 12f;
     private const float BUTTON_SCALE = 0.1f;
-    private const float LOGO_OFFSET_Y = 0.05f;
     private const float BUTTON_BOUNDS_OFFSET_SCALE = 1.15f;
-    private const float LOGO_SIZE_Y = 0.15f;
 
 
     // Private fields.
@@ -39,6 +37,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private ILayer _foregroundLayer;
 
     private MainMenuBackground _background;
+    private MainMenuLogoDisplayer _logo;
     private MainMenuStartingUI _startingUI;
     private MainMenuPlayUI _playUI;
 
@@ -90,14 +89,19 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
         Factory.LoadAssets();
 
+        _logo = new(TypedScene, SceneServices, _foregroundLayer);
+        _logo.IsVisible = true;
+        _logo.IsEnabled = true;
+        AddComponent(_logo);
+
+        float LogoOffsetY = _logo.LogoOffsetY;
+        float LogoSizeY = _logo.LogoSizeY;
         MainMenuUIProperties UIProperties = new()
         {
             ButtonOffsetY = BUTTON_BOUNDS_OFFSET_SCALE,
             ButtonLength = BUTTON_LENGTH,
             ButtonScale = BUTTON_SCALE,
-            ButtonStartingPosition = new(0.5f, (LOGO_OFFSET_Y * 2f) + LOGO_SIZE_Y + (BUTTON_SCALE / 2f)),
-            LogoPosition = new(0.5f, LOGO_OFFSET_Y + (LOGO_SIZE_Y / 2f)),
-            LogoSizeY = LOGO_SIZE_Y
+            ButtonStartingPosition = new(0.5f, (LogoOffsetY * 2f) + LogoSizeY + (BUTTON_SCALE / 2f))
         };
 
         _startingUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);

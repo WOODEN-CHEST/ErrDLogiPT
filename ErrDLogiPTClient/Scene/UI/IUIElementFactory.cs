@@ -2,6 +2,7 @@
 using ErrDLogiPTClient.Scene.UI.Checkmark;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
 using ErrDLogiPTClient.Scene.UI.Slider;
+using ErrDLogiPTClient.Scene.UI.UITextBox;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,4 +18,5 @@ public interface IUIElementFactory
     IBasicCheckmark CreateCheckmark();
     IBasicDropdownList<T> CreateDropdownList<T>();
     IBasicSlider CreateSlider();
+    IBasicTextBox CreateTextBox();
 }

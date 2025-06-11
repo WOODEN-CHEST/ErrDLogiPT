@@ -11,5 +11,8 @@ public interface IFulLScreenToggler : ITimeUpdatable
 {
     // Fields.
     bool CanSwitchFullScreen { get; set; }
-    IntVector FullScreenSize { get; set; }
+
+
+    // Methods.
+    void RestoreFullScreenSize();
 }

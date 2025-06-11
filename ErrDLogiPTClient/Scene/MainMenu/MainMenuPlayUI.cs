@@ -95,6 +95,7 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
 
     private void GenericButtonInit(IBasicButton button, Vector2 position)
     {
+        button.Initialize();
         button.Position = position;
         button.IsDisabledOnClick = true;
         button.Length = _uiProperties.ButtonLength;

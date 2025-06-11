@@ -14,6 +14,4 @@ public class MainMenuUIProperties
     public required Vector2 ButtonStartingPosition { get; init; }
     public required float ButtonScale { get; init; }
     public required float ButtonLength { get; init; }
-    public required float LogoSizeY { get; init; }
-    public required Vector2 LogoPosition {  get; init; }
 }
