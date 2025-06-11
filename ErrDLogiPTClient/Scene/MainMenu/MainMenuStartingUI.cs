@@ -10,6 +10,7 @@ using GHEngine.Frame.Item;
 using GHEngine.GameFont;
 using Microsoft.Xna.Framework;
 using System;
+using System.Text;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
@@ -92,11 +93,21 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
         Box.Scale = 0.2f;
         Box.Dimensions = new(1f, 0.5f);
         Box.Position = new(0.75f, 0.5f);
-        Box.AddComponent(new(SceneServices.GetRequired<ISceneAssetProvider>()
-            .GetAsset<GHFontFamily>(AssetType.Font, "main"), "Hello World! Hello World! Hello World! Hello World!")
+
+        GHFontFamily FontFamily = SceneServices.GetRequired<ISceneAssetProvider>().GetAsset<GHFontFamily>(AssetType.Font, "main");
+
+        StringBuilder Text = new();
+        for (int i = 0; i < 15; i++)
         {
-            FontSize = 0.06f
-        });
+            if (i != 0)
+            {
+                Text.Append('\n');
+            }
+            Text.Append($"Hello World {i}");
+        }
+
+        Box.AddComponent(new(FontFamily, Text.ToString())
+        {  FontSize = 0.025f, Mask = Color.Black });
 
         _buttonGroup.Add(_allButtons);
         _buttonGroup.Add(Box);

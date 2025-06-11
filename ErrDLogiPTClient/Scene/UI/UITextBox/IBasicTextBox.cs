@@ -14,9 +14,6 @@ public interface IBasicTextBox : IUIElement
 {
     // Fields.
     Vector2 Position { get; set; }
-    bool IsTextShadowEnabled { get; set; }
-    float ShadowBrightness { get; set; }
-    Vector2 ShadowOffset { get; set; }
     bool IsTypingEnabled { get; set; }
     float Scale {  get; set; }
     Vector2 Dimensions { get; set; }
@@ -25,7 +22,9 @@ public interface IBasicTextBox : IUIElement
     float GlobalTextBrightness { get; set; }
     float GlobalTextOpacity { get; set; }
     Color BoxColor { get; set; }
-
+    float ScrollFactor { get; set; }
+    float ScrollFactorMin { get; }
+    float ScrollFactorMax { get; }
     int ComponentCount { get; }
     IEnumerable<TextComponent> Components { get; }
 

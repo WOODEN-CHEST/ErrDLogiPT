@@ -27,10 +27,6 @@ public class DefaultBasicTextBox : IBasicTextBox
         }
     }
 
-    public bool IsTextShadowEnabled { get; set; }
-    public float ShadowBrightness { get; set; }
-    public Vector2 ShadowOffset { get; set; }
-
     public bool IsTypingEnabled
     {
         get => _isTypingEnabled;
@@ -127,6 +123,24 @@ public class DefaultBasicTextBox : IBasicTextBox
         }
     }
 
+    public float ScrollFactor
+    {
+        get => _scrollFactor;
+        set
+        {
+            if (float.IsNaN(value))
+            {
+                throw new ArgumentException($"Invalid scroll factor: {value}", nameof(value));
+            }
+            _scrollFactor = Math.Clamp(value, ScrollFactorMin, ScrollFactorMax);
+            UpdateWrappedTextBox();
+        }
+    }
+
+    public float ScrollFactorMin => 0f;
+
+    public float ScrollFactorMax => 1f;
+
 
     // Private static fields.
     private const int FRAME_INDEX_TOP_LEFT_CORNER = 0;
@@ -160,7 +174,9 @@ public class DefaultBasicTextBox : IBasicTextBox
     private Vector2 _dimensions = Vector2.One;
     private Color _boxColor = Color.White;
     private bool _isEnabled = true;
+
     private bool _isTypingEnabled = false;
+    private float _scrollFactor = 0f;
 
     private float? _previousRenderAspectRatio = null;
 
@@ -209,7 +225,7 @@ public class DefaultBasicTextBox : IBasicTextBox
 
         _wrappedTextBox = new(input);
         _wrappedTextBox.FitMethod = TextFitMethod.Resize;
-        _wrappedTextBox.Origin = new(0f, 0f);
+        _wrappedTextBox.Origin = new(0.0f, 0.0f);
         _wrappedTextBox.IsNewlineAllowed = true;
 
         UpdateSizes();
@@ -235,7 +251,7 @@ public class DefaultBasicTextBox : IBasicTextBox
         _leftBar.Position = Position + new Vector2(-HalfCenterSize.X, 0f);
 
         _previousRenderAspectRatio = aspectRatio;
-        _wrappedTextBox.Position = Position - HalfCenterSize;
+        UpdateWrappedTextBox();
     }
 
     private void UpdateSizes()
@@ -257,8 +273,8 @@ public class DefaultBasicTextBox : IBasicTextBox
         _leftBar.Size = new(BorderSize.X, _center.Size.Y);
         _rightBar.Size = new(BorderSize.X, _center.Size.Y);
 
-        _wrappedTextBox.MaxSize = new(_center.Size.X, _center.Size.Y);
-        _wrappedTextBox.DrawBounds = new(0f, 0f, float.PositiveInfinity, _center.Size.Y / _scale);
+        _wrappedTextBox.MaxSize = new(_center.Size.X, float.PositiveInfinity);
+        UpdateWrappedTextBox();
     }
 
     private void UpdateBounds()
@@ -280,6 +296,48 @@ public class DefaultBasicTextBox : IBasicTextBox
         if (!IsEnabled)
         {
             _wrappedTextBox.IsFocused = false;
+        }
+
+        Vector2 DrawSize = _wrappedTextBox.DrawSize;
+        float AbsoluteCutOffAmount = Math.Max(DrawSize.Y - _center.Size.Y, 0f);
+        float RelativeCutHeight = AbsoluteCutOffAmount / DrawSize.Y;
+        float RelativeDrawHeight = 1f - RelativeCutHeight;
+
+        _wrappedTextBox.DrawBounds = new(
+            0f,
+            _scrollFactor * RelativeCutHeight,
+            float.PositiveInfinity,
+            RelativeDrawHeight);
+
+        Vector2 HalfCenterSize = GHMath.GetWindowAdjustedVector(_center.Size / 2f, _input.InputAreaRatio);
+        _wrappedTextBox.Position = new(
+            _position.X - HalfCenterSize.X,
+            _position.Y - (_scrollFactor * RelativeCutHeight * DrawSize.Y) - HalfCenterSize.Y);
+    }
+
+    private void TryScrollText()
+    {
+        if (!IsPositionOverArea(_input.VirtualMousePositionCurrent))
+        {
+            return;
+        }
+
+        Vector2 DrawSize = _wrappedTextBox.DrawSize;
+        if ((DrawSize.X <= 0f) || (DrawSize.Y <= 0f))
+        {
+            return;
+        }
+
+        const float STEP_SIZE = 0.2f;
+        float Step = STEP_SIZE * _scale / DrawSize.Y;
+         
+        if (_input.MouseScrollChangeAmount > 0)
+        {
+            ScrollFactor -= Step;
+        }
+        else if (_input.MouseScrollChangeAmount < 0)
+        {
+            ScrollFactor += Step;
         }
     }
 
@@ -344,6 +402,8 @@ public class DefaultBasicTextBox : IBasicTextBox
         {
             
         }
+
+        TryScrollText();
 
         _wrappedTextBox.Update(time);
     }
