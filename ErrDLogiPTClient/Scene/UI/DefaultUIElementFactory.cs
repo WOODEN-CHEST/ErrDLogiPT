@@ -28,22 +28,22 @@ public class DefaultUIElementFactory : IUIElementFactory
     public const string ASSET_NAME_BASIC_CHECKMARK = "main_checkmark";
     public const string ASSET_NAME_BASIC_TEXTBOX = "main_textbox";
 
-    public static readonly Color NORMAL_COLOR = Color.White;
-    public static readonly Color HOVER_COLOR = new Color(173, 255, 110, 255);
-    public static readonly Color CLICK_COLOR = new Color(79, 299, 240, 255);
-    public static readonly Color LIST_ELEMENT_COLOR = new Color(180, 180, 180, 255);
-    public static readonly Color LIST_ELEMENT_SELECTED_COLOR = new Color(0, 200, 0, 255);
-    public static readonly Color LIST_ELEMENT_UNAVAILABLE_COLOR = new Color(100, 100, 100, 255);
-    public static readonly Color CHECKMARK_COLOR = new Color(0, 255, 0, 255);
-    public static readonly Color TEXTBOX_TEXT_COLOR = Color.Black;
+    public const float TEXT_SHADOWN_BRIGHTNESS = 0.25f;
+    public const float TEXT_SHADOWN_OFFSET = 0.08f;
 
     public static readonly TimeSpan HOVER_FADE_DURATION = TimeSpan.FromSeconds(0.1d);
     public static readonly TimeSpan CLICK_FADE_DURATION = TimeSpan.FromSeconds(0.4d);
 
-    public const float TEXT_SHADOWN_BRIGHTNESS = 0.25f;
-    public const float TEXT_SHADOWN_OFFSET = 0.08f;
 
-
+    // Fields.
+    public Color NormalColor => Color.White;
+    public Color HoverColor => new Color(173, 255, 110, 255);
+    public Color ClickColor => new Color(79, 299, 240, 255);
+    public Color ListElementColor => new Color(180, 180, 180, 255);
+    public Color ListElementSelectedColor => new Color(0, 200, 0, 255);
+    public Color UnavailableColor => new Color(100, 100, 100, 255);
+    public Color CheckmarkColor => new Color(0, 255, 0, 255);
+    public Color TextboxTextColor => Color.Black;
 
 
     // Private fields.
@@ -79,9 +79,9 @@ public class DefaultUIElementFactory : IUIElementFactory
             AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_BUTTON),
             AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_MAIN_FONT))
         {
-            ButtonColor = NORMAL_COLOR,
-            HoverColor = HOVER_COLOR,
-            ClickColor = CLICK_COLOR,
+            ButtonColor = NormalColor,
+            HoverColor = HoverColor,
+            ClickColor = ClickColor,
             ClickFadeDuration = CLICK_FADE_DURATION,
             HoverFadeDuration = HOVER_FADE_DURATION,
 
@@ -99,10 +99,10 @@ public class DefaultUIElementFactory : IUIElementFactory
             AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_CHECKMARK),
             AssetProvider)
         {
-            CheckmarkColor = CHECKMARK_COLOR,
-            HoverColor = HOVER_COLOR,
-            ClickColor = CLICK_COLOR,
-            NormalColor = NORMAL_COLOR,
+            CheckmarkColor = CheckmarkColor,
+            HoverColor = HoverColor,
+            ClickColor = ClickColor,
+            NormalColor = NormalColor,
 
             HoverFadeDuration = HOVER_FADE_DURATION,
             ClickFadeDuration = CLICK_FADE_DURATION,
@@ -118,15 +118,15 @@ public class DefaultUIElementFactory : IUIElementFactory
             () => CreateButton(),
             AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_DROPDOWN_LIST))
         {
-            DefaultElementColor = LIST_ELEMENT_COLOR,
-            DefaultElementHoverColor = HOVER_COLOR,
-            DefaultElementClickColor = CLICK_COLOR,
-            DefaultElementSelectedColor = LIST_ELEMENT_SELECTED_COLOR,
-            DefaultElementUnavailableColor = LIST_ELEMENT_UNAVAILABLE_COLOR,
+            DefaultElementColor = ListElementColor,
+            DefaultElementHoverColor = HoverColor,
+            DefaultElementClickColor = ClickColor,
+            DefaultElementSelectedColor = ListElementSelectedColor,
+            DefaultElementUnavailableColor = UnavailableColor,
 
-            ValueDisplayColor = NORMAL_COLOR,
-            ValueDisplayHoverColor = HOVER_COLOR,
-            ValueDisplayChangeColor = CLICK_COLOR,
+            ValueDisplayColor = NormalColor,
+            ValueDisplayHoverColor = HoverColor,
+            ValueDisplayChangeColor = ClickColor,
 
             HoverColorDuration = HOVER_FADE_DURATION,
             ValueChangeColorDuration = CLICK_FADE_DURATION,
@@ -145,15 +145,15 @@ public class DefaultUIElementFactory : IUIElementFactory
             AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_SLIDER),
             AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_MAIN_FONT))
         {
-            NormalColor = NORMAL_COLOR,
-            HoverColor = HOVER_COLOR,
-            GrabColor = CLICK_COLOR,
+            NormalColor = NormalColor,
+            HoverColor = HoverColor,
+            GrabColor = ClickColor,
 
             HoverFadeDuration = HOVER_FADE_DURATION,
             GrabFadeDuration = CLICK_FADE_DURATION,
 
-            TrackColor = NORMAL_COLOR,
-            HandleColor = NORMAL_COLOR,
+            TrackColor = NormalColor,
+            HandleColor = NormalColor,
 
             TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS,
             ShadowOffset = new(TEXT_SHADOWN_OFFSET)
@@ -168,8 +168,8 @@ public class DefaultUIElementFactory : IUIElementFactory
             AssetProvider,
             AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_TEXTBOX))
         {
-            BoxColor = NORMAL_COLOR,
-            GlobalTextColor = TEXTBOX_TEXT_COLOR
+            BoxColor = NormalColor,
+            GlobalTextColor = TextboxTextColor
         };
     }
 }

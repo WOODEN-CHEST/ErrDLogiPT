@@ -26,7 +26,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         set
         {
             _isEnabled = value;
-            UpdateElementAbilities();
+            UpdateElementProperties();
         }
     }
 
@@ -36,7 +36,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         set
         {
             _isVisible = value;
-            UpdateElementAbilities();
+            UpdateElementProperties();
         }
     }
 
@@ -46,7 +46,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         set
         {
             _areExcludedElementsVisible = value;
-            UpdateElementAbilities();
+            UpdateElementProperties();
         }
     }
 
@@ -56,7 +56,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         set
         {
             _areExcludedElementsEnabled = value;
-            UpdateElementAbilities();
+            UpdateElementProperties();
         }
     }
 
@@ -66,7 +66,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         set
         {
             _areElementExcluded = value;
-            UpdateElementAbilities();
+            UpdateElementProperties();
         }
     }
 
@@ -99,16 +99,22 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
 
     // Private methods.
-    private void UpdateElementAbilities()
+    private void UpdateElementProperties()
     {
-        bool IsElementVisibleIfExcluded = !AreElementsExcluded || AreExcludedElementsVisible;
         bool IsElementEnabledIfExcluded = !AreElementsExcluded || AreExcludedElementsEnabled;
+        bool IsElementVisibleIfExcluded = !AreElementsExcluded || AreExcludedElementsVisible;
 
         foreach (var Entry in _elements)
         {
             bool IsElementActive = _activeElements.Contains(Entry.Key);
-            Entry.Key.IsEnabled = IsEnabled && (IsElementEnabledIfExcluded || IsElementActive);
-            bool IsThisElementVisible = IsVisible && (IsElementVisibleIfExcluded || IsElementActive);
+
+            Entry.Key.IsEnabled = IsEnabled 
+                && ((Entry.Value.AbilityOverride.HasValue && Entry.Value.AbilityOverride.Value)
+                || (!Entry.Value.AbilityOverride.HasValue && (IsElementEnabledIfExcluded || IsElementActive)));
+
+            bool IsThisElementVisible = IsVisible
+                && ((Entry.Value.VisibilityOverride.HasValue && Entry.Value.VisibilityOverride.Value)
+                || (!Entry.Value.VisibilityOverride.HasValue && (IsElementVisibleIfExcluded || IsElementActive)));
 
             if (_renderLayer != null)
             {
@@ -133,7 +139,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         }
         _elements[element] = new(element, zIndex);
 
-        UpdateElementAbilities();
+        UpdateElementProperties();
     }
 
     public void AddElements(float zIndex, params IUIElement[] elements)
@@ -145,7 +151,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
             _elements[Element] = new(Element, zIndex);
         }
 
-        UpdateElementAbilities();
+        UpdateElementProperties();
     }
 
     public void RemoveElement(IUIElement element)
@@ -168,7 +174,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
             _elements.Remove(Element);
         }
 
-        UpdateElementAbilities();
+        UpdateElementProperties();
     }
 
     public void SetActiveElements(params IUIElement[] elements)
@@ -180,27 +186,45 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         {
             _activeElements.Add(Element);
         }
-        UpdateElementAbilities();
+        UpdateElementProperties();
     }
 
     public void AddActiveElement(IUIElement element)
     {
         ArgumentNullException.ThrowIfNull(element, nameof(element));
         _activeElements.Add(element);
-        UpdateElementAbilities();
+        UpdateElementProperties();
     }
 
     public void RemoveActiveElement(IUIElement element)
     {
         ArgumentNullException.ThrowIfNull(element, nameof(element));
         _activeElements.Remove(element);
-        UpdateElementAbilities();
+        UpdateElementProperties();
     }
 
     public void ClearActiveElements()
     {
         _activeElements.Clear();
-        UpdateElementAbilities();
+        UpdateElementProperties();
+    }
+
+    public void SetAbilityOverride(IUIElement element, bool? value)
+    {
+        if (_elements.TryGetValue(element, out ElementData? Data))
+        {
+            Data.AbilityOverride = value;
+            UpdateElementProperties();
+        }
+    }
+
+    public void SetVisibilityOverride(IUIElement element, bool? value)
+    {
+        if (_elements.TryGetValue(element, out ElementData? Data))
+        {
+            Data.VisibilityOverride = value;
+            UpdateElementProperties();
+        }
     }
 
     public void Initialize()
@@ -241,5 +265,9 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
 
     // Types.
-    private record class ElementData(IUIElement Element, float ZIndex);
+    private record class ElementData(IUIElement Element, float ZIndex)
+    {
+        public bool? AbilityOverride { get; set; } = null;
+        public bool? VisibilityOverride { get; set; } = null;
+    }
 }

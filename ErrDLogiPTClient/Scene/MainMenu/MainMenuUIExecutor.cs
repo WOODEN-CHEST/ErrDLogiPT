@@ -30,6 +30,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private const float BUTTON_SCALE = 0.1f;
     private const float BUTTON_BOUNDS_OFFSET_SCALE = 1.15f;
     private const string ASSET_NAME_FONT = "main";
+    private const float DEFAULT_FONT_SIZE = 0.03f;
+    private const float DEFAULT_TEXTBOX_SCALE = 0.3f;
 
 
     // Private fields.
@@ -54,6 +56,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     {
         InitStartingEventHandlers();
         InitPlayEventHandlers();
+        InitExploreEventHandlers();
     }
 
     private void SwitchUISections(IMainMenuUISection oldSection, IMainMenuUISection newSection)
@@ -73,7 +76,20 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private void InitPlayEventHandlers()
     {
         _playUI.ClickBack += (sender, args) => SwitchUISections(_playUI, _startingUI);
-        _playUI.ClickExplore += (sender, args) => SwitchUISections(_playUI, _exploreUI);
+        _playUI.ClickExplore += (sender, args) =>
+        {
+            SwitchUISections(_playUI, _exploreUI);
+            _logo.IsVisible = false;
+        };
+    }
+
+    private void InitExploreEventHandlers()
+    {
+        _exploreUI.ClickBack += (sender, args) =>
+        {
+            SwitchUISections(_exploreUI, _playUI);
+            _logo.IsVisible = true;
+        };
     }
 
 
@@ -105,7 +121,9 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
             ButtonLength = BUTTON_LENGTH,
             ButtonScale = BUTTON_SCALE,
             ButtonStartingPosition = new(0.5f, (LogoOffsetY * 2f) + LogoSizeY + (BUTTON_SCALE / 2f)),
-            DefaultFontAssetName = ASSET_NAME_FONT
+            DefaultFontAssetName = ASSET_NAME_FONT,
+            DefaultFontSize = DEFAULT_FONT_SIZE,
+            TextBoxScale = DEFAULT_TEXTBOX_SCALE,
         };
 
         _startingUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);

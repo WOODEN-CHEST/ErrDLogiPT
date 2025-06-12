@@ -71,7 +71,6 @@ public class IntroScene : SceneBase
         _renderExecutor = new(this, SceneServices);
         _renderExecutor.AnimationDone += OnAnimationFinishEvent;
         _introSkipper = new(this, SceneServices);
-        _nextSceneMainMenu = new MainMenuScene(GlobalServices);
 
         IModManager ModManager = SceneServices.GetRequired<IModManager>();
         ILogiAssetLoader AssetLoader = SceneServices.GetRequired<ILogiAssetLoader>();
@@ -86,6 +85,8 @@ public class IntroScene : SceneBase
         AddComponent(_renderExecutor);
         AddComponent(new GamePropertiesInitializer(this, SceneServices));
         AddComponent(_introSkipper);
+
+        _nextSceneMainMenu = new MainMenuScene(GlobalServices);
     }
 
     protected override void HandleStartPreComponent()

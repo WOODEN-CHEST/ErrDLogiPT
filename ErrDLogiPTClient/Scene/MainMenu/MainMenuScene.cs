@@ -12,6 +12,7 @@ public class MainMenuScene : SceneBase
     // Constructors.
     public MainMenuScene(GenericServices services) : base(services) { }
 
+
     // Inherited methods.
     protected override void HandleLoadPreComponent()
     {
