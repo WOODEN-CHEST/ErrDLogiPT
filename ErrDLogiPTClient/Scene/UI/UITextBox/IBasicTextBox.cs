@@ -27,6 +27,7 @@ public interface IBasicTextBox : IUIElement
     float ScrollFactorMax { get; }
     int ComponentCount { get; }
     IEnumerable<TextComponent> Components { get; }
+    TextAlignOption Alignment { get; set; }
 
 
 

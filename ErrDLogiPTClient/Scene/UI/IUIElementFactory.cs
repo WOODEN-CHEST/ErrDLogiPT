@@ -13,6 +13,11 @@ namespace ErrDLogiPTClient.Scene.UI;
 
 public interface IUIElementFactory
 {
+    // Fields.
+
+
+
+    // Methods.
     void LoadAssets();
     IBasicButton CreateButton();
     IBasicCheckmark CreateCheckmark();

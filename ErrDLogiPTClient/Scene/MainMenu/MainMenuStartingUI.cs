@@ -8,6 +8,7 @@ using GHEngine.Frame;
 using GHEngine.Frame.Animation;
 using GHEngine.Frame.Item;
 using GHEngine.GameFont;
+using GHEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
 using System.Text;
@@ -67,9 +68,7 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
 
 
     // Private methods.
-
-
-    protected void CreateButtons()
+    private void CreateButtons()
     {
         IUIElementFactory ElementFactory = SceneServices.GetRequired<IUIElementFactory>();
 
@@ -89,28 +88,7 @@ public class MainMenuStartingUI : SceneComponentBase<MainMenuScene>, IMainMenuUI
             _exitButton
         };
 
-        IBasicTextBox Box = ElementFactory.CreateTextBox();
-        Box.Scale = 0.2f;
-        Box.Dimensions = new(1f, 0.5f);
-        Box.Position = new(0.75f, 0.5f);
-
-        GHFontFamily FontFamily = SceneServices.GetRequired<ISceneAssetProvider>().GetAsset<GHFontFamily>(AssetType.Font, "main");
-
-        StringBuilder Text = new();
-        for (int i = 0; i < 15; i++)
-        {
-            if (i != 0)
-            {
-                Text.Append('\n');
-            }
-            Text.Append($"Hello World {i}");
-        }
-
-        Box.AddComponent(new(FontFamily, Text.ToString())
-        {  FontSize = 0.025f, Mask = Color.Black });
-
-        _buttonGroup.Add(_allButtons);
-        _buttonGroup.Add(Box);
+        _buttonGroup.AddElements(UIElementGroup.Z_INDEX_DEFAULT, _allButtons);
         _buttonGroup.Initialize();
     }
 

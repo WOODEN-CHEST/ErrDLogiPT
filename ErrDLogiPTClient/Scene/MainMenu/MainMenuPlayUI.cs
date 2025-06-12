@@ -26,6 +26,8 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
         set => _buttonGroup.IsVisible = value;
     }
 
+
+    public event EventHandler<EventArgs>? ClickExplore;
     public event EventHandler<EventArgs>? ClickBack;
 
 
@@ -42,9 +44,8 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
     private IBasicButton _exploreButton;
     private IBasicButton _backButton;
     private IBasicButton[]? _buttons;
-    private UIElementGroup _buttonGroup = new();
+    private UIElementGroup _buttonGroup;
 
-    private readonly ILayer _layer;
     private readonly MainMenuUIProperties _uiProperties;
 
 
@@ -54,8 +55,8 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
         ILayer layer,
         MainMenuUIProperties properties) : base(scene, services)
     {
-        _layer = layer ?? throw new ArgumentNullException(nameof(layer));
         _uiProperties = properties ?? throw new ArgumentNullException(nameof(properties));
+        _buttonGroup = new(layer);
     }
 
 
@@ -64,7 +65,8 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
     private void InitButtons()
     {
         CreateButtons();
-        _buttonGroup.Add(_buttons!);
+        _buttonGroup.AddElements(UIElementGroup.Z_INDEX_DEFAULT, _buttons!);
+        _buttonGroup.Initialize();
 
         Vector2 Position = _uiProperties.ButtonStartingPosition;
         foreach (IBasicButton Button in _buttons!)
@@ -95,12 +97,10 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
 
     private void GenericButtonInit(IBasicButton button, Vector2 position)
     {
-        button.Initialize();
         button.Position = position;
         button.IsDisabledOnClick = true;
         button.Length = _uiProperties.ButtonLength;
         button.Scale = _uiProperties.ButtonScale;
-        _layer.AddItem(button);
     }
 
     private void InitSpecificButtons()
@@ -123,6 +123,10 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
     private void InitExploreButton(IBasicButton button)
     {
         button.Text = BUTTON_NAME_EXPLORE;
+        button.MainClickAction = args =>
+        {
+            ClickExplore?.Invoke(this, EventArgs.Empty);
+        };
     }
 
     private void InitBackButton(IBasicButton button)

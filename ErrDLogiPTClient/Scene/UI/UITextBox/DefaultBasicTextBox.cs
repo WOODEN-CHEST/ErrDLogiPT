@@ -141,6 +141,12 @@ public class DefaultBasicTextBox : IBasicTextBox
 
     public float ScrollFactorMax => 1f;
 
+    public TextAlignOption Alignment
+    {
+        get => _wrappedTextBox.Alignment;
+        set => _wrappedTextBox.Alignment = value;
+    }
+
 
     // Private static fields.
     private const int FRAME_INDEX_TOP_LEFT_CORNER = 0;
@@ -312,7 +318,7 @@ public class DefaultBasicTextBox : IBasicTextBox
         Vector2 HalfCenterSize = GHMath.GetWindowAdjustedVector(_center.Size / 2f, _input.InputAreaRatio);
         _wrappedTextBox.Position = new(
             _position.X - HalfCenterSize.X,
-            _position.Y - (_scrollFactor * RelativeCutHeight * DrawSize.Y) - HalfCenterSize.Y);
+            _position.Y - (ScrollFactor * RelativeCutHeight * DrawSize.Y) - HalfCenterSize.Y);
     }
 
     private void TryScrollText()
@@ -338,6 +344,21 @@ public class DefaultBasicTextBox : IBasicTextBox
         else if (_input.MouseScrollChangeAmount < 0)
         {
             ScrollFactor += Step;
+        }
+    }
+
+    private void TypingEnabledUpdate()
+    {
+        if (_input.WereMouseButtonsJustPressed(MouseButton.Left))
+        {
+            if (IsPositionOverArea(_input.VirtualMousePositionCurrent) && !_wrappedTextBox.IsFocused)
+            {
+                _wrappedTextBox.IsFocused = true;
+            }
+            else
+            {
+                _wrappedTextBox.IsFocused = false;
+            }
         }
     }
 
@@ -400,7 +421,7 @@ public class DefaultBasicTextBox : IBasicTextBox
     {
         if (IsTypingEnabled)
         {
-            
+            TypingEnabledUpdate();
         }
 
         TryScrollText();

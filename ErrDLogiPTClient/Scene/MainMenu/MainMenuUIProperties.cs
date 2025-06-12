@@ -14,4 +14,5 @@ public class MainMenuUIProperties
     public required Vector2 ButtonStartingPosition { get; init; }
     public required float ButtonScale { get; init; }
     public required float ButtonLength { get; init; }
+    public required string DefaultFontAssetName { get; init; }
 }

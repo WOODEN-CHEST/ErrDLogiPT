@@ -15,6 +15,10 @@ namespace ErrDLogiPTClient.Scene.UI;
 
 public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 {
+    // Static fields.
+    public const float Z_INDEX_DEFAULT = 0f;
+
+
     // Fields.
     public bool IsEnabled
     {
@@ -22,10 +26,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         set
         {
             _isEnabled = value;
-            foreach (IUIElement Element in _elements)
-            {
-                Element.IsEnabled = _isEnabled;
-            }
+            UpdateElementAbilities();
         }
     }
 
@@ -35,19 +36,57 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
         set
         {
             _isVisible = value;
-            foreach (IUIElement Element in _elements)
-            {
-                Element.IsVisible = _isVisible;
-            }
+            UpdateElementAbilities();
         }
     }
+
+    public bool AreExcludedElementsVisible
+    {
+        get => _areExcludedElementsVisible;
+        set
+        {
+            _areExcludedElementsVisible = value;
+            UpdateElementAbilities();
+        }
+    }
+
+    public bool AreExcludedElementsEnabled
+    {
+        get => _areExcludedElementsEnabled;
+        set
+        {
+            _areExcludedElementsEnabled = value;
+            UpdateElementAbilities();
+        }
+    }
+
+    public bool AreElementsExcluded
+    {
+        get => _areElementExcluded;
+        set
+        {
+            _areElementExcluded = value;
+            UpdateElementAbilities();
+        }
+    }
+
+    public int ActiveElementCount => _activeElements.Count;
+
+    public IEnumerable<IUIElement> ActiveElements => _activeElements;
+
 
 
     // Private fields.
     private readonly ILayer? _renderLayer = null;
-    private readonly HashSet<IUIElement> _elements = new();
+    private readonly Dictionary<IUIElement, ElementData> _elements = new();
+
     private bool _isEnabled = false;
     private bool _isVisible = false;
+
+    private readonly HashSet<IUIElement> _activeElements = new();
+    private bool _areElementExcluded = false;
+    private bool _areExcludedElementsVisible = true;
+    private bool _areExcludedElementsEnabled = false;
 
 
     // Constructors.
@@ -59,45 +98,114 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
     }
 
 
+    // Private methods.
+    private void UpdateElementAbilities()
+    {
+        bool IsElementVisibleIfExcluded = !AreElementsExcluded || AreExcludedElementsVisible;
+        bool IsElementEnabledIfExcluded = !AreElementsExcluded || AreExcludedElementsEnabled;
+
+        foreach (var Entry in _elements)
+        {
+            bool IsElementActive = _activeElements.Contains(Entry.Key);
+            Entry.Key.IsEnabled = IsEnabled && (IsElementEnabledIfExcluded || IsElementActive);
+            bool IsThisElementVisible = IsVisible && (IsElementVisibleIfExcluded || IsElementActive);
+
+            if (_renderLayer != null)
+            {
+                _renderLayer.RemoveItem(Entry.Key);
+                if (IsThisElementVisible)
+                {
+                    _renderLayer.AddItem(Entry.Key, Entry.Value.ZIndex);
+                }
+            }
+        }
+    }
+
 
     // Methods.
-    public void Add(params IUIElement[] elements)
+    public void AddElement(IUIElement element, float zIndex = Z_INDEX_DEFAULT)
+    {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+
+        if (_elements.ContainsKey(element))
+        {
+            return;
+        }
+        _elements[element] = new(element, zIndex);
+
+        UpdateElementAbilities();
+    }
+
+    public void AddElements(float zIndex, params IUIElement[] elements)
     {
         ArgumentNullException.ThrowIfNull(elements, nameof(elements));
 
         foreach (IUIElement Element in elements)
         {
-            if (!_elements.Add(Element))
-            {
-                continue;
-            }
-
-            Element.IsEnabled = IsEnabled;
-            Element.IsVisible = IsVisible;
-
-            if (IsVisible)
-            {
-                _renderLayer?.AddItem(Element);
-            }
+            _elements[Element] = new(Element, zIndex);
         }
+
+        UpdateElementAbilities();
     }
 
-    public void Remove(params IUIElement[] elements)
+    public void RemoveElement(IUIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+
+        _elements.Remove(element);
+        _activeElements.Remove(element);
+        element.IsEnabled = false;
+        element.IsVisible = false;
+        _renderLayer?.RemoveItem(element);
+    }
+
+    public void RemoveElements(params IUIElement[] elements)
     {
         ArgumentNullException.ThrowIfNull(elements, nameof(elements));
 
         foreach (IUIElement Element in elements)
         {
             _elements.Remove(Element);
-            Element.IsEnabled = false;
-            Element.IsVisible = false;
-            _renderLayer?.RemoveItem(Element);
         }
+
+        UpdateElementAbilities();
+    }
+
+    public void SetActiveElements(params IUIElement[] elements)
+    {
+        ArgumentNullException.ThrowIfNull(elements, nameof(elements));
+
+        _activeElements.Clear();
+        foreach (IUIElement Element in  elements)
+        {
+            _activeElements.Add(Element);
+        }
+        UpdateElementAbilities();
+    }
+
+    public void AddActiveElement(IUIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+        _activeElements.Add(element);
+        UpdateElementAbilities();
+    }
+
+    public void RemoveActiveElement(IUIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+        _activeElements.Remove(element);
+        UpdateElementAbilities();
+    }
+
+    public void ClearActiveElements()
+    {
+        _activeElements.Clear();
+        UpdateElementAbilities();
     }
 
     public void Initialize()
     {
-        foreach (IUIElement Element in _elements)
+        foreach (IUIElement Element in _elements.Keys)
         {
             Element.Initialize();
         }
@@ -105,7 +213,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
     public void Deinitialize()
     {
-        foreach (IUIElement Element in _elements)
+        foreach (IUIElement Element in _elements.Keys)
         {
             Element.Deinitialize();
         }
@@ -115,7 +223,7 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
     // Inherited methods.
     public IEnumerator<IUIElement> GetEnumerator()
     {
-        return _elements.GetEnumerator();
+        return _elements.Keys.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -125,9 +233,13 @@ public class UIElementGroup : IEnumerable<IUIElement>, ITimeUpdatable
 
     public void Update(IProgramTime time)
     {
-        foreach (IUIElement Element in _elements)
+        foreach (IUIElement Element in _elements.Keys)
         {
             Element.Update(time);
         }
     }
+
+
+    // Types.
+    private record class ElementData(IUIElement Element, float ZIndex);
 }

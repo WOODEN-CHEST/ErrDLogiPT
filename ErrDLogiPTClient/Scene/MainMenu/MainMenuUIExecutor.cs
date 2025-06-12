@@ -29,6 +29,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private const float BUTTON_LENGTH = 12f;
     private const float BUTTON_SCALE = 0.1f;
     private const float BUTTON_BOUNDS_OFFSET_SCALE = 1.15f;
+    private const string ASSET_NAME_FONT = "main";
 
 
     // Private fields.
@@ -38,8 +39,10 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
     private MainMenuBackground _background;
     private MainMenuLogoDisplayer _logo;
+
     private MainMenuStartingUI _startingUI;
     private MainMenuPlayUI _playUI;
+    private MainMenuExploreUI _exploreUI;
 
 
     // Constructors.
@@ -70,8 +73,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private void InitPlayEventHandlers()
     {
         _playUI.ClickBack += (sender, args) => SwitchUISections(_playUI, _startingUI);
+        _playUI.ClickExplore += (sender, args) => SwitchUISections(_playUI, _exploreUI);
     }
-
 
 
     // Inherited methods.
@@ -101,7 +104,8 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
             ButtonOffsetY = BUTTON_BOUNDS_OFFSET_SCALE,
             ButtonLength = BUTTON_LENGTH,
             ButtonScale = BUTTON_SCALE,
-            ButtonStartingPosition = new(0.5f, (LogoOffsetY * 2f) + LogoSizeY + (BUTTON_SCALE / 2f))
+            ButtonStartingPosition = new(0.5f, (LogoOffsetY * 2f) + LogoSizeY + (BUTTON_SCALE / 2f)),
+            DefaultFontAssetName = ASSET_NAME_FONT
         };
 
         _startingUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);
@@ -114,6 +118,9 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
         _background = new(TypedScene, SceneServices, _backgroundLayer);
         AddComponent(_background);
+
+        _exploreUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);
+        AddComponent(_exploreUI);
 
         InitEventHandlers();
     }
