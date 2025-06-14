@@ -339,6 +339,8 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         }
     }
 
+    public BasicDropdownDirection ElementAppearDirection { get; set; } = BasicDropdownDirection.Auto;
+
     public event EventHandler<BasicDropdownExpandStartEventArgs<T>>? ExpandStart;
     public event EventHandler<BasicDropdownExpandFinishEventArgs<T>>? ExpandFinish;
     public event EventHandler<BasicDropdownContractStartEventArgs<T>>? ContractStart;
@@ -444,7 +446,17 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
     // Private methods.
     private int GetMovementYStep()
     {
-        return _position.Y >= POSITION_MIDDLE ? -1 : 1;
+        if (ElementAppearDirection == BasicDropdownDirection.Auto)
+        {
+            return _position.Y >= POSITION_MIDDLE ? -1 : 1;
+        }
+
+        return ElementAppearDirection switch
+        {
+            BasicDropdownDirection.Up => -1,
+            BasicDropdownDirection.Down => 1,
+            _ => throw new EnumValueException(nameof(ElementAppearDirection), ElementAppearDirection)
+        };
     }
     
     private void InitArrowIndicator(SpriteItem item)
@@ -814,7 +826,12 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
 
     private void OnClickDeselectAllElements()
     {
-        EnsureSelectedElementCount(MinSelectedElementCount);
+        DropdownListElement<T>[] SelectedElementCopy = _selectedElements.ToArray();
+        for (int i = 0; i < SelectedElementCopy.Length; i++)
+        {
+            bool RaiseEvent = i <= SelectedElementCopy.Length - 1;
+            SetIsElementSelectedInternal(SelectedElementCopy[i], false, RaiseEvent);
+        }
     }
 
     private void OnClickSelectElement(DropdownEntry entry)
@@ -871,6 +888,7 @@ public class DefaultBasicDropdownList<T> : IBasicDropdownList<T>
         foreach (var Element in ModifiedElements)
         {
             UpdateSingleEntryProperties(GetEntryByElement(Element)!);
+            UpdateDisplayButtonProperties();
         }
         EventArgs?.ExecuteActions();
     }

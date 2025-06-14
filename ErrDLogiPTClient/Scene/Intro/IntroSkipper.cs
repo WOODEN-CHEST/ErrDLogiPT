@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-public class IntroSkipper : SceneComponentBase<IntroScene>
+public class IntroSkipper : SceneComponentBase
 {
     // Fields
     public event EventHandler<EventArgs>? SkippedIntro;
@@ -21,7 +21,7 @@ public class IntroSkipper : SceneComponentBase<IntroScene>
 
 
     // Constructors.
-    public IntroSkipper(IntroScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+    public IntroSkipper(IGameScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
 
 
     // Private methods.

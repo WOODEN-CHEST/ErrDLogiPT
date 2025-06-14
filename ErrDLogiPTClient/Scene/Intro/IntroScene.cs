@@ -20,11 +20,30 @@ public class IntroScene : SceneBase
     // Private fields.
     private IGameScene _nextSceneMainMenu;
     private IntroRenderExecutor _renderExecutor;
-    private IntroSkipper _introSkipper;
 
 
     // Constructors.
     public IntroScene(GenericServices services) : base(services) { }
+
+
+    // Protected methods.
+    protected virtual IntroRenderExecutor GetIntroRenderExecutor()
+    {
+        return new IntroRenderExecutor(this, SceneServices);
+    }
+
+    protected void OnAnimationFinishEvent(object? sender, EventArgs args)
+    {
+        if (_nextSceneMainMenu.LoadStatus == SceneLoadStatus.FinishedLoading)
+        {
+            OnReadyForNextScene();
+        }
+    }
+
+    protected virtual void OnReadyForNextScene()
+    {
+        SceneServices.GetRequired<ISceneExecutor>().ScheduleJumpToNextScene(true);
+    }
 
 
     // Private methods.
@@ -35,14 +54,6 @@ public class IntroScene : SceneBase
             SceneServices.GetRequired<ISceneExecutor>().ScheduleJumpToNextScene(true);
         }
         _renderExecutor.IsLoadingShown = false;
-    }
-
-    private void OnAnimationFinishEvent(object? sender, EventArgs args)
-    {
-        if (_nextSceneMainMenu.LoadStatus == SceneLoadStatus.FinishedLoading)
-        {
-            SceneServices.GetRequired<ISceneExecutor>().ScheduleJumpToNextScene(true);
-        }
     }
 
     private void CreateRegistryStorage()
@@ -68,9 +79,8 @@ public class IntroScene : SceneBase
     {
         base.HandleLoadPreComponent();
 
-        _renderExecutor = new(this, SceneServices);
-        _renderExecutor.AnimationDone += OnAnimationFinishEvent;
-        _introSkipper = new(this, SceneServices);
+        _renderExecutor = GetIntroRenderExecutor();
+        _renderExecutor.LogoAnimationDone += OnAnimationFinishEvent;
 
         IModManager ModManager = SceneServices.GetRequired<IModManager>();
         ILogiAssetLoader AssetLoader = SceneServices.GetRequired<ILogiAssetLoader>();
@@ -84,7 +94,6 @@ public class IntroScene : SceneBase
 
         AddComponent(_renderExecutor);
         AddComponent(new GamePropertiesInitializer(this, SceneServices));
-        AddComponent(_introSkipper);
 
         _nextSceneMainMenu = new MainMenuScene(GlobalServices);
     }

@@ -10,19 +10,23 @@ namespace ErrDLogiPTClient.Scene.InGame;
 public class InGameScene : SceneBase
 {
     // Private fields.
-    private IGameOSInstance _operatingSystem;
+    private readonly InGameOSCreateOptions _osOptions;
     private InGameRenderExecutor _renderExecutor;
+
+    private IGameOSInstance _osInstance;
 
 
     // Constructors.
-    public InGameScene(GenericServices globalServices) : base(globalServices) { }
+    public InGameScene(GenericServices globalServices, InGameOSCreateOptions osOptions) : base(globalServices)
+    {
+        _osOptions = osOptions ?? throw new ArgumentNullException(nameof(osOptions));
+    }
 
 
     // Inherited methods.
     protected override void HandleLoadPreComponent()
     {
-        _renderExecutor = new(this, SceneServices);
-        _operatingSystem = null;
+        _osInstance = _osOptions.TargetOS.CreateInstance(SceneServices);
 
         base.HandleLoadPreComponent();
     }

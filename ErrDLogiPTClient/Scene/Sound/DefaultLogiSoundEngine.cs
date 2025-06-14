@@ -99,6 +99,7 @@ public class DefaultLogiSoundEngine : ILogiSoundEngine
         {
             if (_sounds.TryGetValue(args.Instance, out ILogiSoundInstance? LogiSound))
             {
+                RemoveSound(LogiSound);
                 LogiSound.InvokeFinishEvent();
             }
         });

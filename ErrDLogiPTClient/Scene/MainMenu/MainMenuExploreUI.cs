@@ -27,7 +27,17 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
     public bool IsEnabled
     {
         get => _elementGroup.IsVisible;
-        set => _elementGroup.IsVisible = value;
+        set
+        {
+            _elementGroup.IsVisible = value;
+            if (value)
+            {
+                foreach (var Element in _osSelectionDropdown.SelectedElements.ToArray())
+                {
+                    _osSelectionDropdown.SetIsElementSelected(Element, false);
+                }
+            }
+        }
     }
 
     public bool IsVisible
@@ -48,6 +58,10 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
     private const float DROPDOWN_LIST_RELATIVE_SCALE = 0.5f;
     private const float DROPDOWN_LIST_RELATIVE_LENGTH = 1f;
     private const float TEXTBOX_OFFSET_Y = 0.05f;
+    private readonly Vector2 TEXTBOX_DIMENSIONS = new(3, 0.75f);
+    private const string DEFAULT_TEXTBOX_BODY =
+        "Explore an operating system without any active viruses. Simply select the operating " +
+        $"system you wish to explore and click \"{BUTTON_TEXT_BOOT_INTO_OS}\"!";
 
 
     // Private fields.
@@ -96,9 +110,10 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
             + BothButtonOffset
             - new Vector2(MAIN_BUTTON_OFFSET_X + ButtonDimensions.X / 2f, 0f);
 
-        _actionTextbox.Position = new(0.5f, _actionTextbox.Bounds.Height / 2f + TEXTBOX_OFFSET_Y);
+        _actionTextbox.Position = new(0.5f, (_actionTextbox.Bounds.Height / 2f) + TEXTBOX_OFFSET_Y);
         _osSelectionDropdown.Position = _actionTextbox.Position
-            + new Vector2(0f, _actionTextbox.Bounds.Height + TEXTBOX_OFFSET_Y);
+            + new Vector2(0f, (_actionTextbox.Bounds.Height / 2f) 
+            + TEXTBOX_OFFSET_Y + _osSelectionDropdown.DisplayBounds.Height / 2f);
     }
 
     private void CreateElements()
@@ -152,6 +167,8 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
         dropdownList.SelectionUpdate += OnSelectOSEvent;
         dropdownList.Scale = _uiProperties.ButtonScale * DROPDOWN_LIST_RELATIVE_SCALE;
         dropdownList.Length = _uiProperties.ButtonLength * DROPDOWN_LIST_RELATIVE_LENGTH;
+        dropdownList.ElementAppearDirection = BasicDropdownDirection.Down;
+        dropdownList.MinSelectedElementCount = 0;
     }
 
     private void InitActionText(IBasicTextBox text)
@@ -159,16 +176,11 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
         ISceneAssetProvider AssetProvider = SceneServices.GetRequired<ISceneAssetProvider>();
         GHFontFamily Font = AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, _uiProperties.DefaultFontAssetName);
 
-        text.AddComponent(new(Font,
-            "Explore an operating system without any active viruses. Simply select the operating " +
-            $"system you wish to explore and click \"{BUTTON_TEXT_BOOT_INTO_OS}\"!")
-        {
-            FontSize = _uiProperties.DefaultFontSize,
-        });
+        text.Text = DEFAULT_TEXTBOX_BODY;
 
         text.Alignment = TextAlignOption.Center;
         text.Scale = _uiProperties.TextBoxScale;
-        text.Dimensions = new(2f, 0.4f);
+        text.Dimensions = TEXTBOX_DIMENSIONS;
     }
 
     private void InitBackButton(IBasicButton button)
@@ -208,6 +220,16 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
     private void OnSelectOSEvent(object? sender, BasicDropdownSelectionUpdateEventArgs<IGameOSDefinition> args)
     {
         args.AddSuccessAction(UpdateBootIntoOSButton);
+
+        DropdownListElement<IGameOSDefinition>[] Elements = args.SelectedElements.ToArray();
+        if (Elements.Length == 0)
+        {
+            _actionTextbox.Text = DEFAULT_TEXTBOX_BODY;
+        }
+        else
+        {
+            _actionTextbox.Text = Elements[0].Value.Description;
+        }
     }
 
     protected void OnScreenSizeChangeEvent(object? sender, ScreenSizeChangeEventArgs args)

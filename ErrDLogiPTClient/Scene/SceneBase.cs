@@ -178,13 +178,13 @@ public abstract class SceneBase : IGameScene
         SceneComponentAddEventArgs AddArgs = new(this, component);
         SceneComponentAdd?.Invoke(this, AddArgs);
 
-        if (AddArgs.IsCancelled)
+        if (AddArgs.IsCancelled || (AddArgs.Component == null))
         {
             AddArgs.ExecuteActions();
             return;
         }
 
-        _components.Insert(index, component);
+        _components.Insert(index, AddArgs.Component);
         AddArgs.ExecuteActions();
     }
 
@@ -201,7 +201,11 @@ public abstract class SceneBase : IGameScene
             return;
         }
 
-        _components.Remove(component);
+        if (RemoveArgs.Component != null)
+        {
+            _components.Remove(RemoveArgs.Component);
+        }
+        
         RemoveArgs.ExecuteActions();
     }
 

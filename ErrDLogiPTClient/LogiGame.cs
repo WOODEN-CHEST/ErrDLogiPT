@@ -27,7 +27,6 @@ namespace ErrDLogiPTClient
 
         // Private fields.
         private readonly GraphicsDeviceManager _graphics;
-        private string _latestLogPath;
 
 
         // Constructors.
@@ -64,9 +63,10 @@ namespace ErrDLogiPTClient
             try
             {
                 Logger?.Dispose();
-                if (_latestLogPath != null)
+                string? LatestLogPath = LogiGameServices?.Get<IGamePathStructure>()?.LatestLogPath;
+                if (LatestLogPath != null)
                 {
-                    Process.Start("notepad", _latestLogPath);
+                    Process.Start("notepad", LatestLogPath);
                 }
             }
             catch (Exception) { }
@@ -76,57 +76,7 @@ namespace ErrDLogiPTClient
         private void InitializeGame()
         {
             string ExecutableRootPath = Path.GetDirectoryName(Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location)!;
-            IGamePathStructure Structure = new DefaultGamePathStructure(ExecutableRootPath);
 
-            ILogger Logger = new LogInitializer().InitializeLogger(Structure);
-            _latestLogPath = Structure.LatestLogPath;
-
-            IDisplay Display = new GHDisplay(_graphics, Window);
-            IsFixedTimeStep = false;
-            Display.Initialize();
-
-            IUserInput Input = new GHUserInput(Window, this);
-            Display.ScreenSizeChange += (sender, args) => Input.InputAreaSizePixels = (Vector2)args.NewSize;
-            Input.InputAreaSizePixels = (Vector2)Display.CurrentWindowSize;
-
-            ILogiSoundEngine SoundEngine = new DefaultLogiSoundEngine(new GHAudioEngine(10));
-            SoundEngine.Start();
-            
-            IAssetDefinitionCollection AssetDefinitions = new GHAssetDefinitionCollection();
-            GHAssetStreamOpener AssetStreamOpener = new();
-            GHGenericAssetLoader AssetLoader = new();
-            IAssetProvider AssetProvider = new GHAssetProvider(AssetLoader, AssetDefinitions, Logger);
-            AssetLoader.SetTypeLoader(AssetType.Animation, new AnimationLoader(AssetStreamOpener, _graphics.GraphicsDevice));
-            AssetLoader.SetTypeLoader(AssetType.Sound, new SoundLoader(AssetStreamOpener, SoundEngine.Format));
-            AssetLoader.SetTypeLoader(AssetType.Font, new FontLoader(AssetStreamOpener, _graphics.GraphicsDevice));
-
-            IFrameExecutor FrameExecutor = new DefaultFrameExecutor(_graphics.GraphicsDevice, Display);
-
-            // Issues regarding blend state exist, see https://github.com/MonoGame/MonoGame/issues/6978
-            FrameExecutor.Renderer.RenderBlendState = BlendState.NonPremultiplied;
-            FrameExecutor.Renderer.ScreenColor = Color.Black;
-            ISceneExecutor SceneExecutor = new DefaultSceneExecutor(this, Logger);
-
-            LogiGameServices = new();
-            LogiGameServices.Set<ILogger>(Logger);
-            LogiGameServices.Set<IGamePathStructure>(Structure);
-            LogiGameServices.Set<IDisplay>(Display);
-            LogiGameServices.Set<IUserInput>(Input);
-            LogiGameServices.Set<ILogiSoundEngine>(SoundEngine);
-            LogiGameServices.Set<IAssetDefinitionCollection>(AssetDefinitions);
-            LogiGameServices.Set<IAssetStreamOpener>(AssetStreamOpener);
-            LogiGameServices.Set<IAssetLoader>(AssetLoader);
-            LogiGameServices.Set<IAssetProvider>(AssetProvider);
-            LogiGameServices.Set<IFrameExecutor>(FrameExecutor);
-            LogiGameServices.Set<ISceneExecutor>(SceneExecutor);
-            LogiGameServices.Set<IModifiableProgramTime>(new GenericProgramTime());
-            LogiGameServices.Set<ISceneFactoryProvider>(new DefaultSceneFactoryProvider());
-            LogiGameServices.Set<IFulLScreenToggler>(new DefaultFullScreenToggler(LogiGameServices));
-
-            IModManager ModManager = new DefaultModManager(LogiGameServices);
-            ILogiAssetLoader AssetManager = new DefaultLogiAssetLoader(LogiGameServices);
-            LogiGameServices.Set<IModManager>(ModManager);
-            LogiGameServices.Set<ILogiAssetLoader>(AssetManager);
 
             IGameScene StartingScene = new IntroScene(LogiGameServices);
             SceneExecutor.ScheduleNextSceneSet(StartingScene);

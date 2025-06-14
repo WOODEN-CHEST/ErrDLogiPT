@@ -28,7 +28,7 @@ public class DefaultUIElementFactory : IUIElementFactory
     public const string ASSET_NAME_BASIC_CHECKMARK = "main_checkmark";
     public const string ASSET_NAME_BASIC_TEXTBOX = "main_textbox";
 
-    public const float TEXT_SHADOWN_BRIGHTNESS = 0.25f;
+    public const float TEXT_SHADOW_BRIGHTNESS = 0.25f;
     public const float TEXT_SHADOWN_OFFSET = 0.08f;
 
     public static readonly TimeSpan HOVER_FADE_DURATION = TimeSpan.FromSeconds(0.1d);
@@ -85,7 +85,7 @@ public class DefaultUIElementFactory : IUIElementFactory
             ClickFadeDuration = CLICK_FADE_DURATION,
             HoverFadeDuration = HOVER_FADE_DURATION,
 
-            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS,
+            TextShadowBrightness = TEXT_SHADOW_BRIGHTNESS,
             ShadowOffset = new(TEXT_SHADOWN_OFFSET)
         };
     }
@@ -131,7 +131,8 @@ public class DefaultUIElementFactory : IUIElementFactory
             HoverColorDuration = HOVER_FADE_DURATION,
             ValueChangeColorDuration = CLICK_FADE_DURATION,
 
-            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS
+            TextShadowBrightness = TEXT_SHADOW_BRIGHTNESS,
+            ShadowOffset = new(TEXT_SHADOWN_OFFSET)
         };
     }
 
@@ -155,7 +156,7 @@ public class DefaultUIElementFactory : IUIElementFactory
             TrackColor = NormalColor,
             HandleColor = NormalColor,
 
-            TextShadowBrightness = TEXT_SHADOWN_BRIGHTNESS,
+            TextShadowBrightness = TEXT_SHADOW_BRIGHTNESS,
             ShadowOffset = new(TEXT_SHADOWN_OFFSET)
         };
     }
@@ -166,7 +167,8 @@ public class DefaultUIElementFactory : IUIElementFactory
 
         return new DefaultBasicTextBox(_sceneServices.GetRequired<IUserInput>(),
             AssetProvider,
-            AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_TEXTBOX))
+            AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_BASIC_TEXTBOX),
+            AssetProvider.GetAsset<GHFontFamily>(AssetType.Font, ASSET_NAME_MAIN_FONT))
         {
             BoxColor = NormalColor,
             GlobalTextColor = TextboxTextColor

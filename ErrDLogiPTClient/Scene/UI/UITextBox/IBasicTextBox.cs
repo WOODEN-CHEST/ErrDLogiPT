@@ -25,17 +25,13 @@ public interface IBasicTextBox : IUIElement
     float ScrollFactor { get; set; }
     float ScrollFactorMin { get; }
     float ScrollFactorMax { get; }
-    int ComponentCount { get; }
-    IEnumerable<TextComponent> Components { get; }
+    public string Text { get; set; }
+    public Color TextColor { get; set; }
     TextAlignOption Alignment { get; set; }
 
 
 
     // Methods.
     bool IsPositionOverArea(Vector2 position);
-    void AddComponent(TextComponent component);
-    void RemoveComponent(TextComponent component);
-    void InsertComponent(TextComponent component, int index);
-    void ClearComponents(TextComponent component);
     void PrepareTexturesForRendering();
 }

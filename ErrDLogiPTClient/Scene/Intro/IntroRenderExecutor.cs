@@ -15,16 +15,24 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-public class IntroRenderExecutor : SceneComponentBase<IntroScene>
+public class IntroRenderExecutor : SceneComponentBase
 {
     // Fields.
     public bool IsLoadingShown { get; set; } = true;
     public bool IsAnimationDone { get; private set; } = false;
-    public event EventHandler<EventArgs>? AnimationDone;
+
+    public event EventHandler<EventArgs>? LogoAnimationDone;
 
 
-    // Private static fields.
-    private const string LOGO_LAYER_NAME = "main";
+    // Protected fields.
+    protected string LogoLayerName
+    {
+        get => _logoLayerName;
+        set => _logoLayerName = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    protected IGameFrame Frame { get; }
+
 
 
     // Private fields.
@@ -32,6 +40,7 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
     private IntroLoadingDisplayer _loadingDisplayer;
     private IntroSkipper _introSkipper;
     private IGameFrame _frame;
+    protected string _logoLayerName = "main";
 
 
     // Constructors.
@@ -54,7 +63,7 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
     {
         _loadingDisplayer.IsDisplayed = IsLoadingShown;
         IsAnimationDone = true;
-        AnimationDone?.Invoke(this, EventArgs.Empty);
+        LogoAnimationDone?.Invoke(this, EventArgs.Empty);
     }
 
 
@@ -65,7 +74,7 @@ public class IntroRenderExecutor : SceneComponentBase<IntroScene>
 
         _frame = new GHGameFrame();
 
-        ILayer TargetLayer = new GHLayer(LOGO_LAYER_NAME);
+        ILayer TargetLayer = new GHLayer(LogoLayerName);
         _frame.AddLayer(TargetLayer);
 
         _logoDisplayer = new(TypedScene, SceneServices, TargetLayer);

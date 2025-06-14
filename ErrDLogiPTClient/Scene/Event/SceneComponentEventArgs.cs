@@ -9,12 +9,12 @@ namespace ErrDLogiPTClient.Scene.Event;
 public class SceneComponentEventArgs : SceneEventArgs
 {
     // Fields.
-    public ISceneComponent Component { get; private init; }
+    public ISceneComponent? Component { get; set; }
 
 
     // Constructors.
-    public SceneComponentEventArgs(IGameScene scene, ISceneComponent component) : base(scene)
+    public SceneComponentEventArgs(IGameScene scene, ISceneComponent? component) : base(scene)
     {
-        Component = component ?? throw new ArgumentNullException(nameof(component));
+        Component = component;
     }
 }

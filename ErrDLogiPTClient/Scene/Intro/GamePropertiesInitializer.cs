@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-public class GamePropertiesInitializer : SceneComponentBase<IntroScene>
+public class GamePropertiesInitializer : SceneComponentBase
 {
     // Constructors.
-    public GamePropertiesInitializer(IntroScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+    public GamePropertiesInitializer(IGameScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
 
 
     // Inherited methods.

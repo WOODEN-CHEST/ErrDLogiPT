@@ -17,32 +17,14 @@ public class ModLogger : ILogger
     // Private fields.
     private readonly string _modName;
     private readonly ILogger _wrappedLogger;
+    private readonly GenericServices _services;
 
 
     // Constructors.
-    public ModLogger(ILogger? wrappedLogger, string modName)
+    public ModLogger(GenericServices? services, string modName)
     {
         _modName = modName ?? throw new ArgumentNullException(nameof(modName));
-        _wrappedLogger = wrappedLogger ?? throw new ArgumentNullException(nameof(wrappedLogger));
-    }
-
-
-    // Methods.
-    public void Initialize()
-    {
-        _wrappedLogger.LogMessage += OnLogEvent;
-    }
-
-
-    // Private methods.
-    private void OnLogEvent(object? sender, LoggerLogEventArgs args)
-    {
-        LoggerLogEventArgs LogArgs = new(args.Level, args.Message, args.TimeStamp);
-        LogMessage?.Invoke(this, LogArgs);
-
-        args.Message = $"[{_modName}] {LogArgs.Message}";
-        args.Level = LogArgs.Level;
-        args.TimeStamp = LogArgs.TimeStamp;
+        _services = services ?? throw new ArgumentNullException(nameof(services));
     }
 
 
@@ -54,31 +36,31 @@ public class ModLogger : ILogger
 
     public void Critical(string message)
     {
-        _wrappedLogger.Critical(message);
+        Log(LogLevel.CRITICAL, message);
     }
 
     public void Error(string message)
     {
-        _wrappedLogger.Error(message);
+        Log(LogLevel.Error, message);
     }
 
     public void Warning(string message)
     {
-        _wrappedLogger.Warning(message);
+        Log(LogLevel.Warning, message);
     }
 
     public void Info(string message)
     {
-        _wrappedLogger.Info(message);
+        Log(LogLevel.Info, message);
     }
 
     public void Log(LogLevel level, string message)
     {
-        _wrappedLogger.Log(level, message);
+        LoggerLogEventArgs LogArgs = new(level, message, DateTime.Now);
+        LogMessage?.Invoke(this, LogArgs);
+
+        _wrappedLogger.Log(level, $"[{_modName}] {LogArgs.Message}");
     }
 
-    public void Dispose()
-    {
-        _wrappedLogger.LogMessage -= OnLogEvent;
-    }
+    public void Dispose() { }
 }

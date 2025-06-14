@@ -1,27 +1,15 @@
-﻿using ErrDLogiPTClient.Scene.Sound;
-using ErrDLogiPTClient.Scene.UI;
-using ErrDLogiPTClient.Scene.UI.Checkmark;
-using ErrDLogiPTClient.Scene.UI.Dropdown;
-using ErrDLogiPTClient.Scene.UI.Slider;
-using GHEngine;
-using GHEngine.Assets.Def;
-using GHEngine.Audio.Source;
+﻿using ErrDLogiPTClient.Scene.UI;
 using GHEngine.Frame;
-using GHEngine.IO;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
 public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 {
+    // Fields.
+
+
+
     // Private static fields.
     private const string LAYER_NAME_BACKGROUND = "background";
     private const string LAYER_NAME_FOREGROUND = "foreground";

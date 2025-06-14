@@ -8,17 +8,13 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene;
 
-public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameScene
+public abstract class SceneComponentBase : ISceneComponent
 {
     // Fields.
-    public IGameScene Scene => TypedScene;
+    public IGameScene Scene { get; private init; }
     public IEnumerable<ISceneComponent> Components => _subComponents;
     public int ComponentCount => _subComponents.Count;
     public GenericServices SceneServices { get; private init; }
-
-
-    // Protected fields.
-    protected T TypedScene { get; private init; }
 
 
     // Private fields.
@@ -26,9 +22,9 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
 
 
     // Constructors.
-    public SceneComponentBase(T scene, GenericServices services)
+    public SceneComponentBase(IGameScene scene, GenericServices services)
     {
-        TypedScene = scene ?? throw new ArgumentNullException(nameof(scene));
+        Scene = scene ?? throw new ArgumentNullException(nameof(scene));
         SceneServices = services ?? throw new ArgumentNullException(nameof(services));
     }
 
@@ -100,17 +96,17 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
         HandleUpdatePostComponent(time);
     }
 
-    public void AddComponent(ISceneComponent component)
+    public virtual void AddComponent(ISceneComponent component)
     {
         InsertComponent(component, ComponentCount);
     }
 
-    public ISceneComponent GetComponent(int index)
+    public virtual ISceneComponent GetComponent(int index)
     {
         return _subComponents[index];
     }
 
-    public void InsertComponent(ISceneComponent component, int index)
+    public virtual void InsertComponent(ISceneComponent component, int index)
     {
         ArgumentNullException.ThrowIfNull(component, nameof(component));
 
@@ -127,7 +123,7 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
         AddArgs.ExecuteActions();
     }
 
-    public void RemoveComponent(ISceneComponent component)
+    public virtual void RemoveComponent(ISceneComponent component)
     {
         ArgumentNullException.ThrowIfNull(component, nameof(component));
 
@@ -144,7 +140,7 @@ public abstract class SceneComponentBase<T> : ISceneComponent where T : IGameSce
         RemoveArgs.ExecuteActions();
     }
 
-    public void ClearComponents()
+    public virtual void ClearComponents()
     {
         foreach (ISceneComponent Component in _subComponents.ToArray())
         {

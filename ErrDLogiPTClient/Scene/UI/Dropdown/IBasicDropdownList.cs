@@ -46,6 +46,7 @@ public interface IBasicDropdownList<T> : IUIElement
     ElementClickMethod ClickMethod { get; set; }
     bool IsTargeted { get; set; }
     RectangleF DisplayBounds { get; }
+    BasicDropdownDirection ElementAppearDirection { get; set; }
 
     event EventHandler<BasicDropdownExpandStartEventArgs<T>>? ExpandStart;
     event EventHandler<BasicDropdownExpandFinishEventArgs<T>>? ExpandFinish;

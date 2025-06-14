@@ -82,9 +82,6 @@ public class DefaultBasicTextBox : IBasicTextBox
     }
 
     public bool IsVisible { get; set; } = true;
-    public int ComponentCount => _wrappedTextBox.ComponentCount;
-
-    public IEnumerable<TextComponent> Components => _wrappedTextBox.Components;
 
     public Color GlobalTextColor
     {
@@ -146,6 +143,17 @@ public class DefaultBasicTextBox : IBasicTextBox
         get => _wrappedTextBox.Alignment;
         set => _wrappedTextBox.Alignment = value;
     }
+    public string Text
+    {
+        get => _wrappedTextBox.First().Text;
+        set => _wrappedTextBox.First().Text = value;
+    }
+
+    public Color TextColor
+    {
+        get => _wrappedTextBox.First().Mask;
+        set => _wrappedTextBox.First().Mask = value;
+    }
 
 
     // Private static fields.
@@ -158,6 +166,7 @@ public class DefaultBasicTextBox : IBasicTextBox
     private const int FRAME_INDEX_BOTTOM_LEFT_CORNER = 6;
     private const int FRAME_INDEX_LEFT_BAR = 7;
     private const int FRAME_INDEX_CENTER = 8;
+    private const float FONT_SIZE = 0.1f;
 
 
     // Private fields.
@@ -186,11 +195,14 @@ public class DefaultBasicTextBox : IBasicTextBox
 
     private float? _previousRenderAspectRatio = null;
 
+    private const float POS_MARGIN_OF_ERROR = 0.001f;
+
 
     // Constructors.
     public DefaultBasicTextBox(IUserInput input,
         ISceneAssetProvider assetProvider,
-        ISpriteAnimation boxAnimation)
+        ISpriteAnimation boxAnimation,
+        GHFontFamily font)
     {
         ArgumentNullException.ThrowIfNull(input, nameof(input));
         ArgumentNullException.ThrowIfNull(assetProvider, nameof(assetProvider));
@@ -233,6 +245,7 @@ public class DefaultBasicTextBox : IBasicTextBox
         _wrappedTextBox.FitMethod = TextFitMethod.Resize;
         _wrappedTextBox.Origin = new(0.0f, 0.0f);
         _wrappedTextBox.IsNewlineAllowed = true;
+        _wrappedTextBox.Add(new(font, string.Empty));
 
         UpdateSizes();
         UpdateBounds();
@@ -247,14 +260,29 @@ public class DefaultBasicTextBox : IBasicTextBox
 
         Vector2 HalfCenterSize = GHMath.GetWindowAdjustedVector(_center.Size / 2f, aspectRatio);
 
-        _topLeftCorner.Position = Position + new Vector2(-HalfCenterSize.X, -HalfCenterSize.Y);
-        _topBar.Position = Position + new Vector2(0f, -HalfCenterSize.Y);
-        _topRightCorner.Position = Position + new Vector2(HalfCenterSize.X, -HalfCenterSize.Y);
-        _rightBar.Position = Position + new Vector2(HalfCenterSize.X, 0f);
-        _bottomRightCorner.Position = Position + new Vector2(HalfCenterSize.X, HalfCenterSize.Y);
-        _bottomBar.Position = Position + new Vector2(0f, HalfCenterSize.Y);
-        _bottomLeftCorner.Position = Position + new Vector2(-HalfCenterSize.X, HalfCenterSize.Y);
-        _leftBar.Position = Position + new Vector2(-HalfCenterSize.X, 0f);
+        _topLeftCorner.Position = Position
+            + new Vector2(-HalfCenterSize.X + POS_MARGIN_OF_ERROR, -HalfCenterSize.Y + POS_MARGIN_OF_ERROR);
+
+        _topBar.Position = Position
+            + new Vector2(0f, -HalfCenterSize.Y + POS_MARGIN_OF_ERROR);
+
+        _topRightCorner.Position = Position
+            + new Vector2(HalfCenterSize.X - POS_MARGIN_OF_ERROR, -HalfCenterSize.Y + POS_MARGIN_OF_ERROR);
+
+        _rightBar.Position = Position
+            + new Vector2(HalfCenterSize.X - POS_MARGIN_OF_ERROR, 0f);
+
+        _bottomRightCorner.Position = Position
+            + new Vector2(HalfCenterSize.X - POS_MARGIN_OF_ERROR, HalfCenterSize.Y - POS_MARGIN_OF_ERROR);
+
+        _bottomBar.Position = Position
+            + new Vector2(0f, HalfCenterSize.Y - POS_MARGIN_OF_ERROR);
+
+        _bottomLeftCorner.Position = Position
+            + new Vector2(-HalfCenterSize.X + POS_MARGIN_OF_ERROR, HalfCenterSize.Y - POS_MARGIN_OF_ERROR);
+
+        _leftBar.Position = Position 
+            + new Vector2(-HalfCenterSize.X + POS_MARGIN_OF_ERROR, 0f);
 
         _previousRenderAspectRatio = aspectRatio;
         UpdateWrappedTextBox();
@@ -287,7 +315,7 @@ public class DefaultBasicTextBox : IBasicTextBox
     {
         float AspectRatio = _input.InputAreaRatio;
 
-        Vector2 HalfSize = GHMath.GetWindowAdjustedVector(_center.Size + _topLeftCorner.Size, AspectRatio);
+        Vector2 HalfSize = GHMath.GetWindowAdjustedVector((_center.Size / 2f) + _topLeftCorner.Size, AspectRatio);
 
         Vector2 TopLeft = _position - HalfSize;
         Vector2 BottomRight = _position + HalfSize;
@@ -305,15 +333,24 @@ public class DefaultBasicTextBox : IBasicTextBox
         }
 
         Vector2 DrawSize = _wrappedTextBox.DrawSize;
+
+        if (DrawSize.Y <= 0f)
+        {
+            return;
+        }
+
+        _wrappedTextBox.First().FontSize = FONT_SIZE * Scale;
         float AbsoluteCutOffAmount = Math.Max(DrawSize.Y - _center.Size.Y, 0f);
         float RelativeCutHeight = AbsoluteCutOffAmount / DrawSize.Y;
         float RelativeDrawHeight = 1f - RelativeCutHeight;
 
-        _wrappedTextBox.DrawBounds = new(
+        RectangleF DrawBounds = new(
             0f,
             _scrollFactor * RelativeCutHeight,
             float.PositiveInfinity,
             RelativeDrawHeight);
+
+        _wrappedTextBox.DrawBounds = DrawBounds.Height >= 1f ? null : DrawBounds;
 
         Vector2 HalfCenterSize = GHMath.GetWindowAdjustedVector(_center.Size / 2f, _input.InputAreaRatio);
         _wrappedTextBox.Position = new(
@@ -427,26 +464,6 @@ public class DefaultBasicTextBox : IBasicTextBox
         TryScrollText();
 
         _wrappedTextBox.Update(time);
-    }
-
-    public void AddComponent(TextComponent component)
-    {
-        _wrappedTextBox.Add(component);
-    }
-
-    public void RemoveComponent(TextComponent component)
-    {
-        _wrappedTextBox.Remove(component);
-    }
-
-    public void InsertComponent(TextComponent component, int index)
-    {
-        _wrappedTextBox.Insert(component, index);
-    }
-
-    public void ClearComponents(TextComponent component)
-    {
-        _wrappedTextBox.Clear();
     }
 
     public void PrepareTexturesForRendering()
