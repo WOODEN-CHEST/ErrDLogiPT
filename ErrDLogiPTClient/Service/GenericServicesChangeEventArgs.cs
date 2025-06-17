@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient;
+namespace ErrDLogiPTClient.Service;
 
 /// <summary>
-/// Event args for an event fired from a <see cref="GenericServices"/> object when a service changes
-/// (added, removed or replaced).
+/// Event args for an event fired when a service changes (added, removed or replaced).
 /// <para>If this event is canceled, the service set operation is not executed.</para>
 /// </summary>
 public class GenericServicesChangeEventArgs : CancellableEventBase
@@ -18,7 +17,7 @@ public class GenericServicesChangeEventArgs : CancellableEventBase
     /// <summary>
     /// The generic services which this event was fired from.
     /// </summary>
-    public GenericServices Services { get; private init; }
+    public IGenericServices Services { get; private init; }
 
     /// <summary>
     /// The type of the service.
@@ -41,7 +40,7 @@ public class GenericServicesChangeEventArgs : CancellableEventBase
 
 
     // Constructors.
-    public GenericServicesChangeEventArgs(GenericServices services, 
+    public GenericServicesChangeEventArgs(IGenericServices services, 
         object? serviceOldValue,
         object? serviceNewValue,
         Type serviceType)

@@ -1,4 +1,5 @@
-﻿using GHEngine.Logging;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,6 @@ public interface IGameMod
 
 
     // Methods.
-    void OnStart(GenericServices services);
-    void OnEnd(GenericServices services);
+    void OnStart(GlobalServices services);
+    void OnEnd(GlobalServices services);
 }

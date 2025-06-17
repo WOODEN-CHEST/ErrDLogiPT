@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine;
 using GHEngine.IO;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -21,7 +22,7 @@ public class IntroSkipper : SceneComponentBase
 
 
     // Constructors.
-    public IntroSkipper(IGameScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+    public IntroSkipper(IGameScene scene, GlobalServices sceneServices) : base(scene, sceneServices) { }
 
 
     // Private methods.

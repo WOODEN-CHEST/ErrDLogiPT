@@ -3,6 +3,7 @@ using ErrDLogiPTClient.Registry;
 using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using GHEngine.IO;
 using GHEngine.Logging;
@@ -36,13 +37,13 @@ public abstract class SceneBase : IGameScene
     public event EventHandler<SceneComponentAddEventArgs>? SceneComponentAdd;
     public event EventHandler<SceneComponentRemoveEventArgs>? SceneComponentRemove;
 
-    public GenericServices SceneServices { get; private init; }
+    public GlobalServices SceneServices { get; private init; }
     public IEnumerable<ISceneComponent> Components => _components;
     public int ComponentCount => _components.Count;
 
 
     // Protected fields.
-    protected GenericServices GlobalServices { get; private init; }
+    protected GlobalServices GlobalServices { get; private init; }
 
 
     // Private fields.
@@ -52,7 +53,7 @@ public abstract class SceneBase : IGameScene
 
 
     // Constructors.
-    public SceneBase(GenericServices globalServices)
+    public SceneBase(GlobalServices globalServices)
     {
         GlobalServices = globalServices;
         SceneServices = new();
@@ -85,7 +86,7 @@ public abstract class SceneBase : IGameScene
         SceneServices.Set<IFrameExecutor>(GlobalServices.Get<IFrameExecutor>());
         SceneServices.Set<ISceneExecutor>(GlobalServices.Get<ISceneExecutor>());
         SceneServices.Set<IModManager>(GlobalServices.Get<IModManager>());
-        SceneServices.Set<ILogiAssetLoader>(GlobalServices.Get<ILogiAssetLoader>());
+        SceneServices.Set<ILogiAssetManager>(GlobalServices.Get<ILogiAssetManager>());
         SceneServices.Set<IModifiableProgramTime>(GlobalServices.Get<IModifiableProgramTime>());
         SceneServices.Set<IUIElementFactory>(GlobalServices.GetRequired<ISceneFactoryProvider>().GetUIElementFactory(this));
         SceneServices.Set<IFulLScreenToggler>(GlobalServices.Get<IFulLScreenToggler>());

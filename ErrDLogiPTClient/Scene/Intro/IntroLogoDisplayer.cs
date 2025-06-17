@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine;
 using GHEngine.Assets.Def;
 using GHEngine.Frame;
 using GHEngine.Frame.Animation;
@@ -39,7 +40,7 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
 
 
     // Constructors.
-    public IntroLogoDisplayer(IntroScene scene, GenericServices sceneServices, ILayer logoLayer) : base(scene, sceneServices)
+    public IntroLogoDisplayer(IntroScene scene, GlobalServices sceneServices, ILayer logoLayer) : base(scene, sceneServices)
     {
         _logoLayer = logoLayer ?? throw new ArgumentNullException(nameof(logoLayer));
     }

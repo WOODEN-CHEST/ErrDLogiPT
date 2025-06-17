@@ -1,5 +1,6 @@
 ﻿using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Scene.UI.Button;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using GHEngine.Frame;
 using Microsoft.Xna.Framework;
@@ -51,7 +52,7 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
 
     // Constructors.
     public MainMenuPlayUI(MainMenuScene scene, 
-        GenericServices services,
+        GlobalServices services,
         ILayer layer,
         MainMenuUIProperties properties) : base(scene, services)
     {

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ErrDLogiPTClient.Scene;
 
 /// <summary>
-/// Simple status to determine if the scene is loaded.
+/// Simple status to determine if a scene is loaded.
 /// </summary>
 public enum SceneLoadStatus
 {

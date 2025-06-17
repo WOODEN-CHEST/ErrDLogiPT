@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ErrDLogiPTClient.Service;
+using System;
 using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
@@ -10,7 +11,7 @@ public class MainMenuScene : SceneBase
 
 
     // Constructors.
-    public MainMenuScene(GenericServices services) : base(services) { }
+    public MainMenuScene(GlobalServices services) : base(services) { }
 
 
     // Inherited methods.

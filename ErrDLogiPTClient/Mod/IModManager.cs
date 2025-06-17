@@ -1,4 +1,5 @@
-﻿using GHEngine.Logging;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,6 @@ public interface IModManager
 
     // Methods.
     void LoadMods(string modRootDirPath);
-    void InitializeMods(GenericServices services);
-    void DeinitializeMods(GenericServices services);
+    void InitializeMods(GlobalServices services);
+    void DeinitializeMods(GlobalServices services);
 }

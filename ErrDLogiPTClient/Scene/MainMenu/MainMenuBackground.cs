@@ -1,4 +1,5 @@
-﻿using GHEngine.Assets.Def;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.Assets.Def;
 using GHEngine.Frame;
 using GHEngine.Frame.Animation;
 using GHEngine.Frame.Item;
@@ -24,7 +25,7 @@ public class MainMenuBackground : SceneComponentBase<MainMenuScene>
 
 
     // Constructors.
-    public MainMenuBackground(MainMenuScene scene, GenericServices services, ILayer bgLayer) : base(scene, services)
+    public MainMenuBackground(MainMenuScene scene, GlobalServices services, ILayer bgLayer) : base(scene, services)
     {
         _bgLayer = bgLayer ?? throw new ArgumentNullException(nameof(bgLayer));
     }

@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.UI;
+using ErrDLogiPTClient.Service;
 using GHEngine.Frame;
 
 
@@ -36,7 +37,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
 
     // Constructors.
-    public MainMenuUIExecutor(MainMenuScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+    public MainMenuUIExecutor(MainMenuScene scene, GlobalServices sceneServices) : base(scene, sceneServices) { }
 
 
     // Private methods.

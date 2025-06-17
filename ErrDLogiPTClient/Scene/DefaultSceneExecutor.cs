@@ -1,6 +1,8 @@
 ﻿using ErrDLogiPTClient.Scene.Event;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using GHEngine.Logging;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -61,8 +63,7 @@ public class DefaultSceneExecutor : ISceneExecutor
 
 
     // Protected fields.
-    protected readonly object LockObject = new();
-    protected readonly ILogger? Logger;
+    protected object LockObject { get; } = new();
 
 
     // Private fields.
@@ -72,13 +73,12 @@ public class DefaultSceneExecutor : ISceneExecutor
     private IGameScene? _currentScene = null;
     private bool _isNextSceneLoaded = false;
     private bool _isNextSceneAvailable = false;
-    private readonly LogiGame _game;
+    private readonly Game _game;
 
 
     // Constructors.
-    public DefaultSceneExecutor(LogiGame game, ILogger? logger)
+    public DefaultSceneExecutor(Game game)
     {
-        Logger = logger;
         _game = game ?? throw new ArgumentNullException(nameof(game));
     }
 

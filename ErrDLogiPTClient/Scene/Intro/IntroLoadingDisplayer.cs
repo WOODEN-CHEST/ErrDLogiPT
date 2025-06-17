@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine;
 using GHEngine.Assets.Def;
 using GHEngine.Frame;
 using GHEngine.Frame.Item;
@@ -65,7 +66,7 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
     
 
     // Constructors,
-    public IntroLoadingDisplayer(IntroScene scene, GenericServices sceneServices, ILayer targetLayer) : base(scene, sceneServices)
+    public IntroLoadingDisplayer(IntroScene scene, GlobalServices sceneServices, ILayer targetLayer) : base(scene, sceneServices)
     {
         _targetLayer = targetLayer ?? throw new ArgumentNullException(nameof(targetLayer));
     }

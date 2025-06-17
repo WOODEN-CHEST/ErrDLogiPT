@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Event;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ public interface ISceneComponent : ITimeUpdatable, ISceneComponentHolder
 {
     // Fields.
     IGameScene Scene { get; }
-    GenericServices SceneServices { get; }
+    GlobalServices SceneServices { get; }
     event EventHandler<SubComponentAddEventArgs>? ComponentAdd;
     event EventHandler<SubComponentRemoveEventArgs>? ComponentRemove;
 

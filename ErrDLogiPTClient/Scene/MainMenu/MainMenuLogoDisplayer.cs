@@ -1,4 +1,5 @@
-﻿using GHEngine.Assets.Def;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.Assets.Def;
 using GHEngine.Frame;
 using GHEngine.Frame.Animation;
 using GHEngine.Frame.Item;
@@ -58,7 +59,7 @@ public class MainMenuLogoDisplayer : SceneComponentBase<MainMenuScene>, IMainMen
 
     // Constructors.
     public MainMenuLogoDisplayer(MainMenuScene scene,
-        GenericServices services,
+        GlobalServices services,
         ILayer renderLayer)
         : base(scene, services)
     {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ErrDLogiPTClient.Service;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,5 +17,5 @@ public interface IGameOSDefinition
 
 
     // Methods.
-    IGameOSInstance CreateInstance(GenericServices sceneServices);
+    IGameOSInstance CreateInstance(GlobalServices sceneServices);
 }

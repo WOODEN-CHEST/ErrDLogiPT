@@ -1,4 +1,5 @@
-﻿using GHEngine.IO;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.IO;
 using GHEngine.Screen;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace ErrDLogiPTClient.Scene.Intro;
 public class GamePropertiesInitializer : SceneComponentBase
 {
     // Constructors.
-    public GamePropertiesInitializer(IGameScene scene, GenericServices sceneServices) : base(scene, sceneServices) { }
+    public GamePropertiesInitializer(IGameScene scene, GlobalServices sceneServices) : base(scene, sceneServices) { }
 
 
     // Inherited methods.

@@ -1,4 +1,5 @@
-﻿using GHEngine.Assets;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Frame.Item;
 using GHEngine.GameFont;
@@ -16,7 +17,7 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
     // Private fields.
     private readonly object _lockObject = new();
     private readonly IGameScene _scene;
-    private GenericServices _globalServices;
+    private GlobalServices _globalServices;
 
     private bool _isInitialized = false;
     private readonly HashSet<GHFontFamily> _fonts = new();
@@ -24,7 +25,7 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
 
 
     // Constructors.
-    public DefaultSceneAssetProvider(IGameScene scene, GenericServices sceneServices)
+    public DefaultSceneAssetProvider(IGameScene scene, GlobalServices sceneServices)
     {
         _scene = scene ?? throw new ArgumentNullException(nameof(scene));
         _globalServices = sceneServices ?? throw new ArgumentNullException(nameof(sceneServices));

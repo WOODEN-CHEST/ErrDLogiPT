@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.Scene.Event;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ public abstract class SceneComponentBase : ISceneComponent
     public IGameScene Scene { get; private init; }
     public IEnumerable<ISceneComponent> Components => _subComponents;
     public int ComponentCount => _subComponents.Count;
-    public GenericServices SceneServices { get; private init; }
+    public GlobalServices SceneServices { get; private init; }
 
 
     // Private fields.
@@ -22,7 +23,7 @@ public abstract class SceneComponentBase : ISceneComponent
 
 
     // Constructors.
-    public SceneComponentBase(IGameScene scene, GenericServices services)
+    public SceneComponentBase(IGameScene scene, GlobalServices services)
     {
         Scene = scene ?? throw new ArgumentNullException(nameof(scene));
         SceneServices = services ?? throw new ArgumentNullException(nameof(services));

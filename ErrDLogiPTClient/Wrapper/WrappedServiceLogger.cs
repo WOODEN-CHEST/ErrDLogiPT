@@ -1,36 +1,28 @@
-﻿using GHEngine.Logging;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ErrDLogiPTClient;
+namespace ErrDLogiPTClient.Wrapper;
 
-public class WrappedServiceLogger : ILogger
+public class WrappedServiceLogger : ILogger, IServiceWrapperObject
 {
     // Fields.
     public event EventHandler<LoggerLogEventArgs>? LogMessage;
 
 
     // Private fields.
-    private readonly GenericServices _services;
+    private readonly IGenericServices _services;
 
 
     // Constructors.
-    public WrappedServiceLogger(GenericServices services)
+    public WrappedServiceLogger(IGenericServices services)
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
     }
-
-
-    // Methods.
-    public void Initialize()
-    {
-        SubscribeToLogger(GetLogger());
-        _services.ServiceChange += OnServiceChangeEvent;
-    }
-
 
 
     // Private methods.
@@ -55,19 +47,22 @@ public class WrappedServiceLogger : ILogger
 
     private void OnServiceChangeEvent(object? sender, GenericServicesChangeEventArgs args)
     {
-        if (!args.ServiceType.Equals(typeof(ILogger)))
+        args.AddSuccessAction(() =>
         {
-            return;
-        }
+            if (!args.ServiceType.Equals(typeof(ILogger)))
+            {
+                return;
+            }
 
-        if (args.ServiceOldValue != null)
-        {
-            UnsubscribeFromLogger((ILogger)args.ServiceOldValue);
-        }
-        if (args.ServiceNewValue != null)
-        {
-            SubscribeToLogger((ILogger)args.ServiceNewValue);
-        }
+            if (args.ServiceOldValue != null)
+            {
+                UnsubscribeFromLogger((ILogger)args.ServiceOldValue);
+            }
+            if (args.ServiceNewValue != null)
+            {
+                SubscribeToLogger((ILogger)args.ServiceNewValue);
+            }
+        });
     }
 
     private ILogger GetLogger()
@@ -107,9 +102,17 @@ public class WrappedServiceLogger : ILogger
         GetLogger().Warning(message);
     }
 
-    public void Dispose()
+    public void InitializeWrapper()
+    {
+        SubscribeToLogger(GetLogger());
+        _services.ServiceChange += OnServiceChangeEvent;
+    }
+
+    public void DeinitializeWrapper()
     {
         _services.GetRequired<ILogger>().LogMessage -= OnLogMessageEvent;
         _services.ServiceChange -= OnServiceChangeEvent;
     }
+
+    public void Dispose() { }
 }

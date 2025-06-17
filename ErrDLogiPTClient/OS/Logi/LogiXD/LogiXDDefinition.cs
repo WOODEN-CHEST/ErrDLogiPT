@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ErrDLogiPTClient.Service;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +22,7 @@ public class LogiXDDefinition : AbstractGameOsDefinition
 
 
     // Inherited methods.
-    protected override IGameOSInstance CreateOSInstance(GenericServices sceneServices)
+    protected override IGameOSInstance CreateOSInstance(GlobalServices sceneServices)
     {
         return new LogiXDSystem(this, sceneServices);
     }

@@ -1,5 +1,6 @@
 ﻿using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.Sound;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using System;
 using System.Collections.Generic;
@@ -56,7 +57,7 @@ public interface IGameScene : ITimeUpdatable, ISceneComponentHolder
     /// <summary>
     /// The services used by this scene.
     /// </summary>
-    GenericServices SceneServices { get; }
+    GlobalServices SceneServices { get; }
 
 
     // Methods.

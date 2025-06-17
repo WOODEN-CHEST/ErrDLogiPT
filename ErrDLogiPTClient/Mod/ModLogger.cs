@@ -17,14 +17,31 @@ public class ModLogger : ILogger
     // Private fields.
     private readonly string _modName;
     private readonly ILogger _wrappedLogger;
-    private readonly GenericServices _services;
 
 
     // Constructors.
-    public ModLogger(GenericServices? services, string modName)
+    public ModLogger(ILogger wrappedLogger, string modName)
     {
         _modName = modName ?? throw new ArgumentNullException(nameof(modName));
-        _services = services ?? throw new ArgumentNullException(nameof(services));
+        _wrappedLogger = _wrappedLogger ?? throw new ArgumentNullException(nameof(_wrappedLogger));
+    }
+
+
+    // Methods.
+    public void Initialize()
+    {
+        _wrappedLogger.LogMessage += OnLogMessageEvent;
+    }
+
+
+    // Private methods.
+    private void OnLogMessageEvent(object? sender, LoggerLogEventArgs args)
+    {
+        LoggerLogEventArgs WrappedArgs = new(args.Level, args.Message, args.TimeStamp);
+        LogMessage?.Invoke(this, WrappedArgs);
+        args.Message = WrappedArgs.Message;
+        args.TimeStamp = WrappedArgs.TimeStamp;
+        args.Level = WrappedArgs.Level;
     }
 
 
@@ -62,5 +79,8 @@ public class ModLogger : ILogger
         _wrappedLogger.Log(level, $"[{_modName}] {LogArgs.Message}");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+        _wrappedLogger.LogMessage -= OnLogMessageEvent;
+    }
 }

@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine;
 using GHEngine.Frame;
 using System;
 using System.Collections.Generic;
@@ -13,11 +14,11 @@ public abstract class LogiOSBase : IGameOSInstance
     // Fields.
     public IGameOSDefinition Definition { get; private init; }
     public bool IsVisible { get; set; } = true;
-    public GenericServices Services { get; private init; }
+    public GlobalServices Services { get; private init; }
 
 
     // Constructors.
-    public LogiOSBase(IGameOSDefinition definition, GenericServices services)
+    public LogiOSBase(IGameOSDefinition definition, GlobalServices services)
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         Services = services ?? throw new ArgumentNullException(nameof(services));

@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.OS;
+using ErrDLogiPTClient.Service;
 using GHEngine.Frame;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ public class InGameSceneRenderExecutor : SceneComponentBase<InGameScene>
     private ILayer _osLayer;
 
     // Constructors.
-    public InGameSceneRenderExecutor(InGameScene scene, GenericServices services, IGameOSInstance osInstance)
+    public InGameSceneRenderExecutor(InGameScene scene, GlobalServices services, IGameOSInstance osInstance)
         : base(scene, services)
     {
         _osInstance = osInstance ?? throw new ArgumentNullException(nameof(osInstance));

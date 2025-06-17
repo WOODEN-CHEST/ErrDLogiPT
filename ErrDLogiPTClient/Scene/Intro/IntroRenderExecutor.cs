@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine;
 using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Frame;
@@ -44,7 +45,7 @@ public class IntroRenderExecutor : SceneComponentBase
 
 
     // Constructors.
-    public IntroRenderExecutor(IntroScene scene, GenericServices services) : base(scene, services) { }
+    public IntroRenderExecutor(IntroScene scene, GlobalServices services) : base(scene, services) { }
 
 
     // Private methods.

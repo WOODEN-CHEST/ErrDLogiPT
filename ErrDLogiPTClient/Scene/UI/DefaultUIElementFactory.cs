@@ -4,6 +4,7 @@ using ErrDLogiPTClient.Scene.UI.Checkmark;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
 using ErrDLogiPTClient.Scene.UI.Slider;
 using ErrDLogiPTClient.Scene.UI.UITextBox;
+using ErrDLogiPTClient.Service;
 using GHEngine.Assets.Def;
 using GHEngine.Frame.Animation;
 using GHEngine.GameFont;
@@ -47,11 +48,11 @@ public class DefaultUIElementFactory : IUIElementFactory
 
 
     // Private fields.
-    private readonly GenericServices _sceneServices;
+    private readonly GlobalServices _sceneServices;
 
 
     // Constructors.
-    public DefaultUIElementFactory(GenericServices sceneServices)
+    public DefaultUIElementFactory(GlobalServices sceneServices)
     {
         _sceneServices = sceneServices ?? throw new ArgumentNullException(nameof(sceneServices));
     }

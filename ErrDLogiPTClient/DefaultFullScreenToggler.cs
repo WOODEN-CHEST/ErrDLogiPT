@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine;
 using GHEngine.IO;
 using GHEngine.Screen;
 using Microsoft.Xna.Framework.Input;
@@ -17,10 +18,10 @@ public class DefaultFullScreenToggler : IFulLScreenToggler
 
 
     // Private fields.
-    private readonly GenericServices _services;
+    private readonly GlobalServices _services;
 
     // Constructors.
-    public DefaultFullScreenToggler(GenericServices services)
+    public DefaultFullScreenToggler(GlobalServices services)
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
     }

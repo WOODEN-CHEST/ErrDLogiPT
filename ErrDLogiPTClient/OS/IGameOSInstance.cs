@@ -1,4 +1,5 @@
-﻿using GHEngine;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine;
 using GHEngine.Frame.Item;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ public interface IGameOSInstance : ITimeUpdatable, IRenderableItem
 {
     // Fields.
     IGameOSDefinition Definition { get; }
-    GenericServices Services { get; }
+    GlobalServices Services { get; }
 
 
     // Methods.

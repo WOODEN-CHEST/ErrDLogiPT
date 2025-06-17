@@ -4,6 +4,7 @@ using ErrDLogiPTClient.OS.Logi.LogiXD;
 using ErrDLogiPTClient.Registry;
 using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.MainMenu;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using GHEngine.Assets.Loader;
 using GHEngine.Frame;
@@ -23,7 +24,7 @@ public class IntroScene : SceneBase
 
 
     // Constructors.
-    public IntroScene(GenericServices services) : base(services) { }
+    public IntroScene(GlobalServices services) : base(services) { }
 
 
     // Protected methods.
@@ -83,7 +84,7 @@ public class IntroScene : SceneBase
         _renderExecutor.LogoAnimationDone += OnAnimationFinishEvent;
 
         IModManager ModManager = SceneServices.GetRequired<IModManager>();
-        ILogiAssetLoader AssetLoader = SceneServices.GetRequired<ILogiAssetLoader>();
+        ILogiAssetManager AssetLoader = SceneServices.GetRequired<ILogiAssetManager>();
         IGamePathStructure Structure = SceneServices.GetRequired<IGamePathStructure>();
         CreateRegistryStorage();
 

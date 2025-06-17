@@ -2,6 +2,7 @@
 using ErrDLogiPTClient.Scene;
 using ErrDLogiPTClient.Scene.Intro;
 using ErrDLogiPTClient.Scene.Sound;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using GHEngine.Assets;
 using GHEngine.Assets.Def;
@@ -22,7 +23,7 @@ namespace ErrDLogiPTClient
     public class LogiGame : Game
     {
         // Fields.
-        public GenericServices? LogiGameServices { get; private set; }
+        public GlobalServices? LogiGameServices { get; private set; }
 
 
         // Private fields.

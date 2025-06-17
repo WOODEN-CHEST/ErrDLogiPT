@@ -4,6 +4,7 @@ using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Scene.UI.Button;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
 using ErrDLogiPTClient.Scene.UI.UITextBox;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using GHEngine.Assets.Def;
 using GHEngine.Frame;
@@ -76,7 +77,7 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
 
     // Constructors.
     public MainMenuExploreUI(MainMenuScene scene,
-        GenericServices services,
+        GlobalServices services,
         ILayer renderLayer,
         MainMenuUIProperties properties)
         : base(scene, services)

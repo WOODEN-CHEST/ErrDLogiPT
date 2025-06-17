@@ -1,4 +1,5 @@
-﻿using GHEngine.Frame;
+﻿using ErrDLogiPTClient.Service;
+using GHEngine.Frame;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ public class InGameRenderExecutor : SceneComponentBase<InGameScene>
 
 
     // Constructors.
-    public InGameRenderExecutor(InGameScene scene, GenericServices services) : base(scene, services) { }
+    public InGameRenderExecutor(InGameScene scene, GlobalServices services) : base(scene, services) { }
 
 
     // Inherited methods.

@@ -2,6 +2,7 @@
 using ErrDLogiPTClient.Scene;
 using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI;
+using ErrDLogiPTClient.Service;
 using GHEngine;
 using GHEngine.IO;
 using GHEngine.Logging;
@@ -34,13 +35,13 @@ public abstract class AbstractGameOsDefinition : IGameOSDefinition
 
 
     // Protected methods.
-    protected abstract IGameOSInstance CreateOSInstance(GenericServices sceneServices);
+    protected abstract IGameOSInstance CreateOSInstance(GlobalServices sceneServices);
 
 
     // Private methods.
-    private GenericServices CreateOSServices(GenericServices sceneServices)
+    private GlobalServices CreateOSServices(GlobalServices sceneServices)
     {
-        GenericServices OSServices = new();
+        GlobalServices OSServices = new();
 
         OSServices.Set<IUserInput>(new OSUserInput(sceneServices.GetRequired<IUserInput>()));
         OSServices.Set<ILogiSoundEngine>(sceneServices.GetRequired<ILogiSoundEngine>());
@@ -54,7 +55,7 @@ public abstract class AbstractGameOsDefinition : IGameOSDefinition
 
 
     // Inherited methods.
-    public IGameOSInstance CreateInstance(GenericServices sceneServices)
+    public IGameOSInstance CreateInstance(GlobalServices sceneServices)
     {
         return CreateOSInstance(CreateOSServices(sceneServices));
     }

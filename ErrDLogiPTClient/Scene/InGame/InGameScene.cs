@@ -1,4 +1,5 @@
 ﻿using ErrDLogiPTClient.OS;
+using ErrDLogiPTClient.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ public class InGameScene : SceneBase
 
 
     // Constructors.
-    public InGameScene(GenericServices globalServices, InGameOSCreateOptions osOptions) : base(globalServices)
+    public InGameScene(GlobalServices globalServices, InGameOSCreateOptions osOptions) : base(globalServices)
     {
         _osOptions = osOptions ?? throw new ArgumentNullException(nameof(osOptions));
     }
