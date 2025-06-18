@@ -63,7 +63,7 @@ public abstract class DefaultGenericServices : IGenericServices
             return null;
         }
 
-        if (IsSetServiceValid(EventArgs.ServiceNewValue))
+        if (!IsSetServiceValid(EventArgs.ServiceNewValue))
         {
             throw new ArgumentException($"Invalid service: {EventArgs.ServiceNewValue?.GetType().FullName ?? "null"}");
         }

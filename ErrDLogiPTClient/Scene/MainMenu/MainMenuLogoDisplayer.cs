@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
-public class MainMenuLogoDisplayer : SceneComponentBase<MainMenuScene>, IMainMenuUISection
+public class MainMenuLogoDisplayer : SceneComponentBase, IMainMenuUISection
 {
     // Fields.
     public float LogoSizeY { get; } = 0.15f;
@@ -58,8 +58,8 @@ public class MainMenuLogoDisplayer : SceneComponentBase<MainMenuScene>, IMainMen
 
 
     // Constructors.
-    public MainMenuLogoDisplayer(MainMenuScene scene,
-        GlobalServices services,
+    public MainMenuLogoDisplayer(IGameScene scene,
+        IGenericServices services,
         ILayer renderLayer)
         : base(scene, services)
     {

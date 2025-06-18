@@ -15,7 +15,7 @@ public abstract class SceneComponentBase : ISceneComponent
     public IGameScene Scene { get; private init; }
     public IEnumerable<ISceneComponent> Components => _subComponents;
     public int ComponentCount => _subComponents.Count;
-    public GlobalServices SceneServices { get; private init; }
+    public IGenericServices SceneServices { get; private init; }
 
 
     // Private fields.
@@ -23,7 +23,7 @@ public abstract class SceneComponentBase : ISceneComponent
 
 
     // Constructors.
-    public SceneComponentBase(IGameScene scene, GlobalServices services)
+    public SceneComponentBase(IGameScene scene, IGenericServices services)
     {
         Scene = scene ?? throw new ArgumentNullException(nameof(scene));
         SceneServices = services ?? throw new ArgumentNullException(nameof(services));

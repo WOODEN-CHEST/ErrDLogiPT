@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
-public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISection
+public class MainMenuPlayUI : SceneComponentBase, IMainMenuUISection
 {
     // Fields.
     public bool IsEnabled
@@ -51,8 +51,8 @@ public class MainMenuPlayUI : SceneComponentBase<MainMenuScene>, IMainMenuUISect
 
 
     // Constructors.
-    public MainMenuPlayUI(MainMenuScene scene, 
-        GlobalServices services,
+    public MainMenuPlayUI(IGameScene scene, 
+        IGenericServices services,
         ILayer layer,
         MainMenuUIProperties properties) : base(scene, services)
     {

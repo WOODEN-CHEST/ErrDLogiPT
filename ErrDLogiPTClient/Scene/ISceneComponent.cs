@@ -13,7 +13,7 @@ public interface ISceneComponent : ITimeUpdatable, ISceneComponentHolder
 {
     // Fields.
     IGameScene Scene { get; }
-    GlobalServices SceneServices { get; }
+    IGenericServices SceneServices { get; }
     event EventHandler<SubComponentAddEventArgs>? ComponentAdd;
     event EventHandler<SubComponentRemoveEventArgs>? ComponentRemove;
 

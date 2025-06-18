@@ -11,18 +11,14 @@ using GHEngine.Frame;
 using GHEngine.Frame.Item;
 using GHEngine.GameFont;
 using GHEngine.Screen;
-using Microsoft.Win32;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
-public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUISection
+public class MainMenuExploreUI : SceneComponentBase, IMainMenuUISection
 {
     // Fields.
     public bool IsEnabled
@@ -76,8 +72,8 @@ public class MainMenuExploreUI : SceneComponentBase<MainMenuScene>, IMainMenuUIS
 
 
     // Constructors.
-    public MainMenuExploreUI(MainMenuScene scene,
-        GlobalServices services,
+    public MainMenuExploreUI(IGameScene scene,
+        IGenericServices services,
         ILayer renderLayer,
         MainMenuUIProperties properties)
         : base(scene, services)

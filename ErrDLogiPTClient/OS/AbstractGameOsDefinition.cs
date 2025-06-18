@@ -35,13 +35,13 @@ public abstract class AbstractGameOsDefinition : IGameOSDefinition
 
 
     // Protected methods.
-    protected abstract IGameOSInstance CreateOSInstance(GlobalServices sceneServices);
+    protected abstract IGameOSInstance CreateOSInstance(IGenericServices sceneServices);
 
 
     // Private methods.
-    private GlobalServices CreateOSServices(GlobalServices sceneServices)
+    private IGenericServices CreateOSServices(IGenericServices sceneServices)
     {
-        GlobalServices OSServices = new();
+        IGenericServices OSServices = new GlobalServices();
 
         OSServices.Set<IUserInput>(new OSUserInput(sceneServices.GetRequired<IUserInput>()));
         OSServices.Set<ILogiSoundEngine>(sceneServices.GetRequired<ILogiSoundEngine>());
@@ -55,7 +55,7 @@ public abstract class AbstractGameOsDefinition : IGameOSDefinition
 
 
     // Inherited methods.
-    public IGameOSInstance CreateInstance(GlobalServices sceneServices)
+    public IGameOSInstance CreateInstance(IGenericServices sceneServices)
     {
         return CreateOSInstance(CreateOSServices(sceneServices));
     }

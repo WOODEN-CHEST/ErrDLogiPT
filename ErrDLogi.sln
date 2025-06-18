@@ -5,6 +5,8 @@ VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ErrDLogiPTClient", "ErrDLogiPTClient\ErrDLogiPTClient.csproj", "{4D9FAF94-178B-482F-9831-36F78E63C67A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogiModShowcase", "LogiModShowcase\LogiModShowcase.csproj", "{3AF665CF-C55F-4BCD-B117-93E8D6D0132B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{4D9FAF94-178B-482F-9831-36F78E63C67A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D9FAF94-178B-482F-9831-36F78E63C67A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D9FAF94-178B-482F-9831-36F78E63C67A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AF665CF-C55F-4BCD-B117-93E8D6D0132B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AF665CF-C55F-4BCD-B117-93E8D6D0132B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AF665CF-C55F-4BCD-B117-93E8D6D0132B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AF665CF-C55F-4BCD-B117-93E8D6D0132B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

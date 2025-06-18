@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.InGame;
 
-public class InGameSceneRenderExecutor : SceneComponentBase<InGameScene>
+public class InGameSceneRenderExecutor : SceneComponentBase
 {
     // Private static fields.
     private const string LAYER_NAME_OS = "os";

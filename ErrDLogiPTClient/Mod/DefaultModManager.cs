@@ -35,7 +35,7 @@ public class DefaultModManager : IModManager
         _mods = Loader.LoadMods(modRootDirPath);
     }
 
-    public void InitializeMods(GlobalServices services)
+    public void InitializeMods(IGenericServices services)
     {
         ILogger? ServiceLogger = services.Get<ILogger>();
         WrappedServiceLogger WrappedLogger = new WrappedServiceLogger(_services);
@@ -60,7 +60,7 @@ public class DefaultModManager : IModManager
         }
     }
 
-    public void DeinitializeMods(GlobalServices services)
+    public void DeinitializeMods(IGenericServices services)
     {
         ILogger? ServiceLogger = services.Get<ILogger>();
 

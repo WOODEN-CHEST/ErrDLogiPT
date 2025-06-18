@@ -1,4 +1,5 @@
-﻿using GHEngine.Assets;
+﻿using ErrDLogiPTClient.Wrapper;
+using GHEngine.Assets;
 using GHEngine.Assets.Def;
 using GHEngine.Frame.Item;
 using System;

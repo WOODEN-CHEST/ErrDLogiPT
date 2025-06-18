@@ -22,7 +22,7 @@ public class LogiXDDefinition : AbstractGameOsDefinition
 
 
     // Inherited methods.
-    protected override IGameOSInstance CreateOSInstance(GlobalServices sceneServices)
+    protected override IGameOSInstance CreateOSInstance(IGenericServices sceneServices)
     {
         return new LogiXDSystem(this, sceneServices);
     }

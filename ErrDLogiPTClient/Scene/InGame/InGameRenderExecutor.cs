@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.InGame;
 
-public class InGameRenderExecutor : SceneComponentBase<InGameScene>
+public class InGameRenderExecutor : SceneComponentBase
 {
     // Private fields.
     private IGameFrame _frame;

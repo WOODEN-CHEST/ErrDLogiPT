@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
+public class IntroLoadingDisplayer : SceneComponentBase
 {
     // Fields.
     public bool IsDisplayed
@@ -66,7 +66,8 @@ public class IntroLoadingDisplayer : SceneComponentBase<IntroScene>
     
 
     // Constructors,
-    public IntroLoadingDisplayer(IntroScene scene, GlobalServices sceneServices, ILayer targetLayer) : base(scene, sceneServices)
+    public IntroLoadingDisplayer(IGameScene scene, IGenericServices sceneServices, ILayer targetLayer)
+        : base(scene, sceneServices)
     {
         _targetLayer = targetLayer ?? throw new ArgumentNullException(nameof(targetLayer));
     }

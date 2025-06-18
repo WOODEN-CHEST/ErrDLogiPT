@@ -6,48 +6,69 @@ using GHEngine.Frame.Item;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
-public class MainMenuBackground : SceneComponentBase<MainMenuScene>
+public class MainMenuBackground : SceneComponentBase
 {
-    // Private static fields.
-    private const string ASSET_NAME_PIXEL = "pixel";
-    private static readonly Color BACKGROUND_COLOR = new(0.125f, 0.125f, 0.125f, 1f);
+    // Protected fields.
+    protected virtual ILayer TargetLayer
+    {
+        get => _targetLayer;
+        set => _targetLayer = value ?? throw new ArgumentNullException(nameof(TargetLayer));
+    }
+    protected virtual Color BackgroundColor { get; set; } = new(0.125f, 0.125f, 0.125f, 1f);
+    protected virtual string? BackgroundAssetName { get; set; } = "pixel";
+    protected virtual SpriteItem? BackgroundSprite { get; set; } = null;
 
 
     // Private fields.
-    private readonly ILayer _bgLayer;
+
+    private ILayer _targetLayer;
     private SpriteItem _background;
 
 
     // Constructors.
-    public MainMenuBackground(MainMenuScene scene, GlobalServices services, ILayer bgLayer) : base(scene, services)
+    public MainMenuBackground(IGameScene scene, IGenericServices services,  ILayer bgLayer)
+        : base(scene, services)
     {
-        _bgLayer = bgLayer ?? throw new ArgumentNullException(nameof(bgLayer));
+        TargetLayer = bgLayer;
+    }
+
+
+    // Protected methods.
+    protected virtual SpriteItem CreateBackgroundSprite(ISceneAssetProvider assetProvider)
+    {
+        ISpriteAnimation Animation = assetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, BackgroundAssetName);
+
+        return new(Animation.CreateInstance())
+        {
+            Mask = BackgroundColor,
+            IsPositionAdjusted = false,
+            IsSizeAdjusted = false,
+            Position = new(0f, 0f),
+            Size = new(1f, 1f)
+        };
+    }
+
+    protected virtual void PostProcessBackgroundSprite(SpriteItem sprite) { }
+
+    protected virtual void AddBackgroundSpriteToLayer()
+    {
+        _targetLayer.AddItem(_background, float.NegativeInfinity);
     }
 
 
     // Inherited methods.
     protected override void HandleLoadPreComponent()
     {
-        _background = new(SceneServices
-            .GetRequired<ISceneAssetProvider>()
-            .GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_PIXEL)
-            .CreateInstance())
-        {
-            Mask = BACKGROUND_COLOR,
-            IsPositionAdjusted = false,
-            IsSizeAdjusted = false,
-            Position = new(0f, 0f),
-            Size = new(1f, 1f)
-        };
-
-        _bgLayer.AddItem(_background, float.NegativeInfinity);
-
         base.HandleLoadPreComponent();
+        _background = CreateBackgroundSprite(SceneServices.GetRequired<ISceneAssetProvider>());
+        PostProcessBackgroundSprite(_background);
+        AddBackgroundSpriteToLayer();
     }
 }

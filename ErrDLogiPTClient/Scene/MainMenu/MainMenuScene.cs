@@ -11,7 +11,7 @@ public class MainMenuScene : SceneBase
 
 
     // Constructors.
-    public MainMenuScene(GlobalServices services) : base(services) { }
+    public MainMenuScene(IGenericServices services) : base(services) { }
 
 
     // Inherited methods.

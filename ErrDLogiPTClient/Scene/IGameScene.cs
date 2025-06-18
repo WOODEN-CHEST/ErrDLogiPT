@@ -57,7 +57,7 @@ public interface IGameScene : ITimeUpdatable, ISceneComponentHolder
     /// <summary>
     /// The services used by this scene.
     /// </summary>
-    GlobalServices SceneServices { get; }
+    IGenericServices SceneServices { get; }
 
 
     // Methods.

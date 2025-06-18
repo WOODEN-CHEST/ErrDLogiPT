@@ -64,6 +64,7 @@ public class DefaultSceneExecutor : ISceneExecutor
 
     // Protected fields.
     protected object LockObject { get; } = new();
+    protected IGenericServices GlobalServices { get; private init; }
 
 
     // Private fields.
@@ -77,9 +78,10 @@ public class DefaultSceneExecutor : ISceneExecutor
 
 
     // Constructors.
-    public DefaultSceneExecutor(Game game)
+    public DefaultSceneExecutor(Game game, IGenericServices services)
     {
         _game = game ?? throw new ArgumentNullException(nameof(game));
+        GlobalServices = services ?? throw new ArgumentNullException(nameof(services));
     }
 
 
@@ -112,7 +114,7 @@ public class DefaultSceneExecutor : ISceneExecutor
         }
         catch (Exception e)
         {
-            Logger?.Error($"Unhandled exception while unloading scene: {e}");
+            GlobalServices.GetRequired<ILogger>().Error($"Unhandled exception while unloading scene: {e}");
         }
     }
 

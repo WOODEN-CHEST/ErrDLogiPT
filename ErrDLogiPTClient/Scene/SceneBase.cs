@@ -4,12 +4,14 @@ using ErrDLogiPTClient.Scene.Event;
 using ErrDLogiPTClient.Scene.Sound;
 using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Service;
+using ErrDLogiPTClient.Wrapper;
 using GHEngine;
 using GHEngine.IO;
 using GHEngine.Logging;
 using GHEngine.Screen;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 namespace ErrDLogiPTClient.Scene;
 
 public abstract class SceneBase : IGameScene
@@ -37,13 +39,13 @@ public abstract class SceneBase : IGameScene
     public event EventHandler<SceneComponentAddEventArgs>? SceneComponentAdd;
     public event EventHandler<SceneComponentRemoveEventArgs>? SceneComponentRemove;
 
-    public GlobalServices SceneServices { get; private init; }
+    public IGenericServices SceneServices { get; private init; }
     public IEnumerable<ISceneComponent> Components => _components;
     public int ComponentCount => _components.Count;
 
 
     // Protected fields.
-    protected GlobalServices GlobalServices { get; private init; }
+    protected IGenericServices GlobalGameServices { get; private init; }
 
 
     // Private fields.
@@ -53,10 +55,10 @@ public abstract class SceneBase : IGameScene
 
 
     // Constructors.
-    public SceneBase(GlobalServices globalServices)
+    public SceneBase(IGenericServices globalServices)
     {
-        GlobalServices = globalServices;
-        SceneServices = new();
+        GlobalGameServices = globalServices;
+        SceneServices = new WrapperServices();
         InitializeSceneServices();
     }
 
@@ -77,20 +79,38 @@ public abstract class SceneBase : IGameScene
     // Private methods.
     private void InitializeSceneServices()
     {
-        SceneServices.Set<ILogger>(GlobalServices.Get<ILogger>());
-        SceneServices.Set<IGamePathStructure>(GlobalServices.Get<IGamePathStructure>());
-        SceneServices.Set<IDisplay>(GlobalServices.Get<IDisplay>());
-        SceneServices.Set<IUserInput>(GlobalServices.Get<IUserInput>());
-        SceneServices.Set<ILogiSoundEngine>(GlobalServices.Get<ILogiSoundEngine>());
-        SceneServices.Set<ISceneAssetProvider>(new DefaultSceneAssetProvider(this, GlobalServices));
-        SceneServices.Set<IFrameExecutor>(GlobalServices.Get<IFrameExecutor>());
-        SceneServices.Set<ISceneExecutor>(GlobalServices.Get<ISceneExecutor>());
-        SceneServices.Set<IModManager>(GlobalServices.Get<IModManager>());
-        SceneServices.Set<ILogiAssetManager>(GlobalServices.Get<ILogiAssetManager>());
-        SceneServices.Set<IModifiableProgramTime>(GlobalServices.Get<IModifiableProgramTime>());
-        SceneServices.Set<IUIElementFactory>(GlobalServices.GetRequired<ISceneFactoryProvider>().GetUIElementFactory(this));
-        SceneServices.Set<IFulLScreenToggler>(GlobalServices.Get<IFulLScreenToggler>());
-        SceneServices.Set<IGameRegistryStorage>(GlobalServices.Get<IGameRegistryStorage>());
+        SceneServices.Set<ILogger>(new WrappedServiceLogger(GlobalGameServices));
+        SceneServices.Set<IGamePathStructure>(new WrappedServiceGamePathStructure(GlobalGameServices));
+        SceneServices.Set<IDisplay>(new WrapperServiceDisplay(GlobalGameServices));
+        SceneServices.Set<IUserInput>(new WrapperServiceUserInput(GlobalGameServices));
+        SceneServices.Set<ILogiSoundEngine>(new WrappedServiceLogiSoundEngine(GlobalGameServices));
+        SceneServices.Set<ISceneAssetProvider>(new DefaultSceneAssetProvider(this, GlobalGameServices));
+        SceneServices.Set<IFrameExecutor>(new WrappedServiceFrameExecutor(GlobalGameServices));
+        SceneServices.Set<ISceneExecutor>(new WrappedServiceSceneExecutor(GlobalGameServices));
+        SceneServices.Set<IModManager>(new WrappedServiceModManager(GlobalGameServices));
+        SceneServices.Set<ILogiAssetManager>(new WrappedServicLogiAssetManager(GlobalGameServices));
+        SceneServices.Set<IModifiableProgramTime>(new WrappedServiceModifiableProgramTime(GlobalGameServices));
+        SceneServices.Set<IUIElementFactory>(GlobalGameServices.GetRequired<ISceneFactoryProvider>().GetUIElementFactory(this));
+        SceneServices.Set<IGameRegistryStorage>(new WrappedServiceGameRegistryStorage(GlobalGameServices));
+
+        foreach (var Entry in SceneServices.Services)
+        {
+            if (Entry.Value is IServiceWrapperObject WrapperObject)
+            {
+                WrapperObject.InitializeWrapper();
+            }
+        }
+    }
+
+    protected void DeinitializeSceneServices()
+    {
+        foreach (var Entry in SceneServices.Services)
+        {
+            if (Entry.Value is IServiceWrapperObject WrapperObject)
+            {
+                WrapperObject.DeinitializeWrapper();
+            }
+        }
     }
 
 
@@ -126,6 +146,7 @@ public abstract class SceneBase : IGameScene
             Component.OnEnd();
         }
         HandleEndPostComponent();
+        DeinitializeSceneServices();
     }
 
     public void OnStart()

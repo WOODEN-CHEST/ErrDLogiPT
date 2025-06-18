@@ -13,34 +13,112 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Scene.Intro;
 
-public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
+public class IntroLogoDisplayer : SceneComponentBase
 {
     // Fields.
     public event EventHandler<EventArgs>? LogoShowFinish;
 
 
+    // Protected fields.
+    protected virtual TimeSpan FadeInDuration
+    {
+        get => _fadeInDuration;
+        set
+        {
+            if (value < TimeSpan.Zero)
+            {
+                throw new ArgumentException("Fade in duration cannot be negative");
+            }
+            _fadeInDuration = value;
+        }
+    }
+
+    protected virtual TimeSpan FadeStayDuration
+    {
+        get => _fadeStayDuration;
+        set
+        {
+            if (value < TimeSpan.Zero)
+            {
+                throw new ArgumentException("Fade stay duration cannot be negative");
+            }
+            _fadeStayDuration = value;
+        }
+    }
+
+    protected virtual TimeSpan FadeOutDuration
+    {
+        get => _fadeOutDuration;
+        set
+        {
+            if (value < TimeSpan.Zero)
+            {
+                throw new ArgumentException("Fade out duration cannot be negative");
+            }
+            _fadeOutDuration = value;
+        }
+    }
+
+    protected virtual TimeSpan FulLFadeDuration => FadeInDuration + FadeStayDuration + FadeOutDuration;
+
+    protected virtual float ScaleStart
+    {
+        get => _scaleStart;
+        set
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                throw new ArgumentException($"Invalid start scale: {value}", nameof(value));
+            }
+            _scaleStart = value;
+        }
+    }
+
+    protected virtual float ScaleEnd
+    {
+        get => _scaleEnd;
+        set
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                throw new ArgumentException($"Invalid end scale: {value}", nameof(value));
+            }
+            _scaleEnd = value;
+        }
+    }
+
+    protected virtual SpriteItem Logo
+    {
+        get => _logo;
+        set => _logo = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    protected virtual ILayer LogoLayer => _logoLayer;
+
+
     // Private static fields.
     private const string ASSET_NAME_LOGO = "main_logo";
-    private static readonly TimeSpan FADE_IN_DURATION = TimeSpan.FromSeconds(2d);
-    private static readonly TimeSpan FADE_STAY_DURATION = TimeSpan.FromSeconds(3d);
-    private static readonly TimeSpan FADE_OUT_DURATION = TimeSpan.FromSeconds(2d);
-    private static readonly TimeSpan FULL_FADE_DURATION = FADE_IN_DURATION + FADE_STAY_DURATION + FADE_OUT_DURATION;
-    private const float SCALE_START = 0.6f;
-    private const float SCALE_END = 0.8f;
 
 
     // Private fields.
     private readonly ILayer _logoLayer;
 
+    private TimeSpan _fadeInDuration = TimeSpan.FromSeconds(2d);
+    private TimeSpan _fadeStayDuration = TimeSpan.FromSeconds(3d);
+    private TimeSpan _fadeOutDuration = TimeSpan.FromSeconds(2d);
+    private float _scaleStart = 0.6f;
+    private float _scaleEnd = 0.8f;
+
     private SpriteItem _logo;
     private TimeSpan _fadeTime;
-    private Vector2 _logoSizeMax;
-    private Vector2 _logoSizeMin;
+    private Vector2 _logoSizeEnd;
+    private Vector2 _logoSizeStart;
     private bool _isFadeFinished = false;
 
 
     // Constructors.
-    public IntroLogoDisplayer(IntroScene scene, GlobalServices sceneServices, ILayer logoLayer) : base(scene, sceneServices)
+    public IntroLogoDisplayer(IGameScene scene, IGenericServices sceneServices, ILayer logoLayer)
+        : base(scene, sceneServices)
     {
         _logoLayer = logoLayer ?? throw new ArgumentNullException(nameof(logoLayer));
     }
@@ -49,41 +127,50 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
     // Methods.
     public void SkipAnimation()
     {
-        _fadeTime = FADE_IN_DURATION + FADE_STAY_DURATION + FADE_OUT_DURATION;
-        _logo.Opacity = 0f;
+        _fadeTime = FulLFadeDuration;
+        Logo.Opacity = 0f;
         _isFadeFinished = true;
     }
 
 
-    // Private methods.
-    private void UpdateLogoAnimation(IProgramTime time)
+    // Protected methods.
+    protected void UpdateLogoAnimation(IProgramTime time)
     {
         _fadeTime += time.PassedTime;
 
-        if (_fadeTime > FULL_FADE_DURATION)
+        if (_fadeTime >= FulLFadeDuration)
         {
             _isFadeFinished = true;
-            _logo.Opacity = 0f;
+            Logo.Opacity = 0f;
             LogoShowFinish?.Invoke(this, EventArgs.Empty);
             return;
         }
 
-        if (_fadeTime < FADE_IN_DURATION)
+        if (_fadeTime < FadeInDuration)
         {
-            _logo.Opacity = (float)(_fadeTime.TotalSeconds / FADE_IN_DURATION.TotalSeconds);
+            Logo.Opacity = (FadeInDuration.Ticks <= 0)
+                ? 1f
+                : ((float)(_fadeTime.TotalSeconds / FadeInDuration.TotalSeconds));
         }
-        else if (_fadeTime < FADE_IN_DURATION + FADE_STAY_DURATION)
+        else if (_fadeTime < FadeInDuration + FadeStayDuration)
         {
-            _logo.Opacity = 1f;
+            Logo.Opacity = 1f;
         }
-        else if (_fadeTime < FULL_FADE_DURATION)
+        else if (_fadeTime < FulLFadeDuration)
         {
-            _logo.Opacity = 1f - (float)((_fadeTime - (FADE_IN_DURATION + FADE_STAY_DURATION)) / FADE_OUT_DURATION);
+            Logo.Opacity = (FadeOutDuration.Ticks <= 0)
+                ? 0f
+                : (1f - (float)((_fadeTime - (FadeInDuration + FadeStayDuration)) / FadeOutDuration));
         }
 
-        float SizeLerpAmount = (float)(_fadeTime.TotalSeconds / (FULL_FADE_DURATION).TotalSeconds);
-        _logo.Size = _logoSizeMin + ((_logoSizeMax - _logoSizeMin) * SizeLerpAmount);
+        float SizeLerpAmount = (FulLFadeDuration.Ticks <= 0)
+            ? 1f
+            : ((float)(_fadeTime.TotalSeconds / (FulLFadeDuration).TotalSeconds));
+
+        Logo.Size = _logoSizeStart + ((_logoSizeEnd - _logoSizeStart) * SizeLerpAmount);
     }
+
+    protected virtual void UpdateOnNonFinishedFade(IProgramTime time) { }
 
 
     // Inherited methods.
@@ -94,18 +181,18 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
         ISceneAssetProvider AssetProvider = SceneServices.GetRequired<ISceneAssetProvider>();
         ISpriteAnimation Animation = AssetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, ASSET_NAME_LOGO)!;
 
-        _logo = new(Animation.CreateInstance());
+        Logo = new(Animation.CreateInstance());
 
         Vector2 LogoBaseSize = new Vector2(1f, _logo.FrameSize.Y / _logo.FrameSize.X);
-        _logoSizeMin = LogoBaseSize * SCALE_START;
-        _logoSizeMax = LogoBaseSize * SCALE_END;
+        _logoSizeStart = LogoBaseSize * ScaleStart;
+        _logoSizeEnd = LogoBaseSize * ScaleEnd;
 
-        _logo.Origin = new(0.5f, 0.5f);
-        _logo.Position = new(0.5f, 0.5f);
-        _logo.IsSizeAdjusted = true;
-        _logo.Opacity = 0f;
+        Logo.Origin = new(0.5f, 0.5f);
+        Logo.Position = new(0.5f, 0.5f);
+        Logo.IsSizeAdjusted = true;
+        Logo.Opacity = 0f;
 
-        _logoLayer.AddItem(_logo);
+        LogoLayer.AddItem(_logo);
         AssetProvider.RegisterRenderedItem(_logo);
     }
 
@@ -116,6 +203,7 @@ public class IntroLogoDisplayer : SceneComponentBase<IntroScene>
         if (!_isFadeFinished)
         {
             UpdateLogoAnimation(time);
+            UpdateOnNonFinishedFade(time);
         }
     }
 }

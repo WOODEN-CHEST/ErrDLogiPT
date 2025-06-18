@@ -84,17 +84,14 @@ public class DefaultLogiAssetManager : ILogiAssetManager
     // Inherited methods.
     public virtual void LoadAssetDefinitions()
     {
-        IAssetDefinitionCollection AssetDefinitions = Services.GetRequired<IAssetDefinitionCollection>();
-        AssetDefinitions.Clear();
-
         IAllAssetDefinitionConverter DefinitionReader  = new JSONAllAssetDefinitionConverter();
-        DefinitionReader.Read(AssetDefinitions, Services.GetRequired<IGamePathStructure>().AssetDefRoot);
+        DefinitionReader.Read(DefinitionCollection, Services.GetRequired<IGamePathStructure>().AssetDefRoot);
 
         foreach (ModPackage Package in Services.GetRequired<IModManager>().Mods)
         {
             foreach (AssetDefinition Definition in Package.AssetDefinitions)
             {
-                AssetDefinitions.Add(Definition);
+                DefinitionCollection.Add(Definition);
             }
         }
 
@@ -166,10 +163,9 @@ public class DefaultLogiAssetManager : ILogiAssetManager
             }
         }
 
-        AssetPaths.Add(Services.GetRequired<IGamePathStructure>().AssetValueRoot);
         OnAssetPathSet(AssetPaths);
+        AssetPaths.Add(Services.GetRequired<IGamePathStructure>().AssetValueRoot);
 
-        IAssetStreamOpener StreamOpener = Services.GetRequired<IAssetStreamOpener>();
         StreamOpener.SetAssetPaths(AssetPaths.ToArray());
     }
 }

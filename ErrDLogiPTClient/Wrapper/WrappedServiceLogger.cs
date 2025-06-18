@@ -8,21 +8,14 @@ using System.Threading.Tasks;
 
 namespace ErrDLogiPTClient.Wrapper;
 
-public class WrappedServiceLogger : ILogger, IServiceWrapperObject
+public class WrappedServiceLogger : ServiceWrapper<ILogger>,  ILogger
 {
     // Fields.
     public event EventHandler<LoggerLogEventArgs>? LogMessage;
 
 
-    // Private fields.
-    private readonly IGenericServices _services;
-
-
     // Constructors.
-    public WrappedServiceLogger(IGenericServices services)
-    {
-        _services = services ?? throw new ArgumentNullException(nameof(services));
-    }
+    public WrappedServiceLogger(IGenericServices services) : base(services) { }
 
 
     // Private methods.
@@ -35,83 +28,46 @@ public class WrappedServiceLogger : ILogger, IServiceWrapperObject
         args.Level = WrappedArgs.Level;
     }
 
-    private void SubscribeToLogger(ILogger logger)
-    {
-        logger.LogMessage += OnLogMessageEvent;
-    }
-
-    private void UnsubscribeFromLogger(ILogger logger)
-    {
-        logger.LogMessage -= OnLogMessageEvent;
-    }
-
-    private void OnServiceChangeEvent(object? sender, GenericServicesChangeEventArgs args)
-    {
-        args.AddSuccessAction(() =>
-        {
-            if (!args.ServiceType.Equals(typeof(ILogger)))
-            {
-                return;
-            }
-
-            if (args.ServiceOldValue != null)
-            {
-                UnsubscribeFromLogger((ILogger)args.ServiceOldValue);
-            }
-            if (args.ServiceNewValue != null)
-            {
-                SubscribeToLogger((ILogger)args.ServiceNewValue);
-            }
-        });
-    }
-
-    private ILogger GetLogger()
-    {
-        return _services.GetRequired<ILogger>();
-    }
-
 
     // Inherited methods.
+    protected override void InitService(ILogger service)
+    {
+        service.LogMessage += OnLogMessageEvent;
+    }
+
+    protected override void DeinitService(ILogger service)
+    {
+        service.LogMessage -= OnLogMessageEvent;
+    }
+
     public string ConvertToLoggedMessage(LogLevel level, DateTime timeStamp, string message)
     {
-        return GetLogger().ConvertToLoggedMessage(level, timeStamp, message);
+        return ServiceObject.ConvertToLoggedMessage(level, timeStamp, message);
     }
 
     public void Critical(string message)
     {
-        GetLogger().Critical(message);
+        ServiceObject.Critical(message);
     }
 
     public void Error(string message)
     {
-        GetLogger().Error(message);
+        ServiceObject.Error(message);
     }
 
     public void Info(string message)
     {
-        GetLogger().Info(message);
+        ServiceObject.Info(message);
     }
 
     public void Log(LogLevel level, string message)
     {
-        GetLogger().Log(level, message);
+        ServiceObject.Log(level, message);
     }
 
     public void Warning(string message)
     {
-        GetLogger().Warning(message);
-    }
-
-    public void InitializeWrapper()
-    {
-        SubscribeToLogger(GetLogger());
-        _services.ServiceChange += OnServiceChangeEvent;
-    }
-
-    public void DeinitializeWrapper()
-    {
-        _services.GetRequired<ILogger>().LogMessage -= OnLogMessageEvent;
-        _services.ServiceChange -= OnServiceChangeEvent;
+        ServiceObject.Warning(message);
     }
 
     public void Dispose() { }

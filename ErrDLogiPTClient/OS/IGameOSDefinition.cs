@@ -17,5 +17,5 @@ public interface IGameOSDefinition
 
 
     // Methods.
-    IGameOSInstance CreateInstance(GlobalServices sceneServices);
+    IGameOSInstance CreateInstance(IGenericServices sceneServices);
 }

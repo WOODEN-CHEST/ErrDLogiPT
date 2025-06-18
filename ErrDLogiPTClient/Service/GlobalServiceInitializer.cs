@@ -40,7 +40,7 @@ public class GlobalServiceInitializer
         ILogiSoundEngine SoundEngine = CreateAudioEngine();
 
         IFrameExecutor FrameExecutor = CreateFrameExecutor(graphicsManager.GraphicsDevice, Display);
-        ISceneExecutor SceneExecutor = new DefaultSceneExecutor(game);
+        ISceneExecutor SceneExecutor = new DefaultSceneExecutor(game, Services);
         IModManager ModManager = new DefaultModManager(Services);
         ILogiAssetManager AssetManager = new DefaultLogiAssetManager(Services, graphicsManager.GraphicsDevice, SoundEngine.Format);
 

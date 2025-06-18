@@ -17,7 +17,7 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
     // Private fields.
     private readonly object _lockObject = new();
     private readonly IGameScene _scene;
-    private GlobalServices _globalServices;
+    private IGenericServices _globalServices;
 
     private bool _isInitialized = false;
     private readonly HashSet<GHFontFamily> _fonts = new();
@@ -25,7 +25,7 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
 
 
     // Constructors.
-    public DefaultSceneAssetProvider(IGameScene scene, GlobalServices sceneServices)
+    public DefaultSceneAssetProvider(IGameScene scene, IGenericServices sceneServices)
     {
         _scene = scene ?? throw new ArgumentNullException(nameof(scene));
         _globalServices = sceneServices ?? throw new ArgumentNullException(nameof(sceneServices));
@@ -38,9 +38,9 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
         UpdateAssets();
     }
 
-    private IAssetProvider GetAssetProvider()
+    private ILogiAssetManager GetAssetManager()
     {
-        return _globalServices.GetRequired<IAssetProvider>();
+        return _globalServices.GetRequired<ILogiAssetManager>();
     }
 
 
@@ -78,7 +78,7 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
 
     public T GetAsset<T>(AssetType type, string name) where T : class
     {
-        T? Asset = GetAssetProvider().GetAsset<T>(_scene, type, name);
+        T? Asset = GetAssetManager().GetAsset<T>(_scene, type, name);
 
         if (Asset == null)
         {
@@ -96,17 +96,17 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
 
     public void ReleaseAsset(AssetType type, string name)
     {
-        GetAssetProvider().ReleaseAsset(_scene, type, name);
+        GetAssetManager().ReleaseAsset(_scene, type, name);
     }
 
     public void ReleaseAsset(object asset)
     {
-        GetAssetProvider().ReleaseAsset(_scene, asset);
+        GetAssetManager().ReleaseAsset(_scene, asset);
     }
 
     public void ReleaseAllAssets()
     {
-        GetAssetProvider().ReleaseUserAssets(_scene);
+        GetAssetManager().ReleaseUserAssets(_scene);
     }
 
     public void RegisterRenderedItem(TextBox item)
@@ -146,4 +146,8 @@ public class DefaultSceneAssetProvider : ISceneAssetProvider
             }
         }
     }
+
+    public void InitializeWrapper() { }
+
+    public void DeinitializeWrapper() { }
 }

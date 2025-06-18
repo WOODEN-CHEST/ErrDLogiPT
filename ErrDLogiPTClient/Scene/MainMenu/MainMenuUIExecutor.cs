@@ -5,7 +5,7 @@ using GHEngine.Frame;
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
 
-public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
+public class MainMenuUIExecutor : SceneComponentBase
 {
     // Fields.
 
@@ -15,6 +15,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
     private const string LAYER_NAME_BACKGROUND = "background";
     private const string LAYER_NAME_FOREGROUND = "foreground";
 
+    /* Values chosen just on preference, they may be changed. */
     private const float BUTTON_LENGTH = 12f;
     private const float BUTTON_SCALE = 0.1f;
     private const float BUTTON_BOUNDS_OFFSET_SCALE = 1.15f;
@@ -37,7 +38,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
 
 
     // Constructors.
-    public MainMenuUIExecutor(MainMenuScene scene, GlobalServices sceneServices) : base(scene, sceneServices) { }
+    public MainMenuUIExecutor(IGameScene scene, IGenericServices sceneServices) : base(scene, sceneServices) { }
 
 
     // Private methods.
@@ -97,7 +98,7 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
         IUIElementFactory Factory = SceneServices.GetRequired<IUIElementFactory>();
         Factory.LoadAssets();
 
-        _logo = new(TypedScene, SceneServices, _foregroundLayer);
+        _logo = new(Scene, SceneServices, _foregroundLayer);
         _logo.IsVisible = true;
         _logo.IsEnabled = true;
         AddComponent(_logo);
@@ -115,18 +116,18 @@ public class MainMenuUIExecutor : SceneComponentBase<MainMenuScene>
             TextBoxScale = DEFAULT_TEXTBOX_SCALE,
         };
 
-        _startingUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);
+        _startingUI = new(Scene, SceneServices, _foregroundLayer, UIProperties);
         _startingUI.IsVisible = true;
         _startingUI.IsEnabled = true;
         AddComponent(_startingUI);
 
-        _playUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);
+        _playUI = new(Scene, SceneServices, _foregroundLayer, UIProperties);
         AddComponent(_playUI);
 
-        _background = new(TypedScene, SceneServices, _backgroundLayer);
+        _background = new(Scene, SceneServices, _backgroundLayer);
         AddComponent(_background);
 
-        _exploreUI = new(TypedScene, SceneServices, _foregroundLayer, UIProperties);
+        _exploreUI = new(Scene, SceneServices, _foregroundLayer, UIProperties);
         AddComponent(_exploreUI);
 
         InitEventHandlers();

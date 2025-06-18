@@ -48,11 +48,11 @@ public class DefaultUIElementFactory : IUIElementFactory
 
 
     // Private fields.
-    private readonly GlobalServices _sceneServices;
+    private readonly IGenericServices _sceneServices;
 
 
     // Constructors.
-    public DefaultUIElementFactory(GlobalServices sceneServices)
+    public DefaultUIElementFactory(IGenericServices sceneServices)
     {
         _sceneServices = sceneServices ?? throw new ArgumentNullException(nameof(sceneServices));
     }
