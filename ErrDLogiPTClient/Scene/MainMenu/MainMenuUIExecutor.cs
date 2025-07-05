@@ -1,6 +1,7 @@
 ﻿using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Service;
 using GHEngine.Frame;
+using System;
 
 
 namespace ErrDLogiPTClient.Scene.MainMenu;
@@ -8,7 +9,7 @@ namespace ErrDLogiPTClient.Scene.MainMenu;
 public class MainMenuUIExecutor : SceneComponentBase
 {
     // Fields.
-
+    public event EventHandler<UIRequestBootIntoOSEventArgs>? RequestBootIntoOS;
 
 
     // Private static fields.
@@ -79,6 +80,13 @@ public class MainMenuUIExecutor : SceneComponentBase
         {
             SwitchUISections(_exploreUI, _playUI);
             _logo.IsVisible = true;
+        };
+
+        _exploreUI.ClickBootIntoOS += (sender, args) =>
+        {
+            UIRequestBootIntoOSEventArgs EventArgs = new(args);
+            RequestBootIntoOS?.Invoke(this, EventArgs);
+            EventArgs.ExecuteActions();
         };
     }
 

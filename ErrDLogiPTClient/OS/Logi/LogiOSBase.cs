@@ -14,14 +14,14 @@ public abstract class LogiOSBase : IGameOSInstance
     // Fields.
     public IGameOSDefinition Definition { get; private init; }
     public bool IsVisible { get; set; } = true;
-    public IGenericServices Services { get; private init; }
+    public IGenericServices OSServices { get; private init; }
 
 
     // Constructors.
     public LogiOSBase(IGameOSDefinition definition, IGenericServices services)
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
-        Services = services ?? throw new ArgumentNullException(nameof(services));
+        OSServices = services ?? throw new ArgumentNullException(nameof(services));
     }
 
 
@@ -32,6 +32,10 @@ public abstract class LogiOSBase : IGameOSInstance
 
 
     // Private methods.
+    private void InitializeServices()
+    {
+
+    }
 
 
     // Inherited methods.
@@ -47,7 +51,7 @@ public abstract class LogiOSBase : IGameOSInstance
 
     public void Start()
     {
-
+        InitializeServices();
     }
 
     public void Update(IProgramTime time)

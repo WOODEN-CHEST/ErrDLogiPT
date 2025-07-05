@@ -18,7 +18,7 @@ public class InGameScene : SceneBase
 
 
     // Constructors.
-    public InGameScene(GlobalServices globalServices, InGameOSCreateOptions osOptions) : base(globalServices)
+    public InGameScene(IGenericServices globalServices, InGameOSCreateOptions osOptions) : base(globalServices)
     {
         _osOptions = osOptions ?? throw new ArgumentNullException(nameof(osOptions));
     }
@@ -27,9 +27,12 @@ public class InGameScene : SceneBase
     // Inherited methods.
     protected override void HandleLoadPreComponent()
     {
+        base.HandleLoadPreComponent();
+
         _osInstance = _osOptions.TargetOS.CreateInstance(SceneServices);
 
-        base.HandleLoadPreComponent();
+        _renderExecutor = new(this, SceneServices);
+        AddComponent(_renderExecutor);
     }
 
     protected override void HandleStartPreComponent()

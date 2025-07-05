@@ -43,7 +43,7 @@ public abstract class AbstractGameOsDefinition : IGameOSDefinition
     {
         IGenericServices OSServices = new GlobalServices();
 
-        OSServices.Set<IUserInput>(new OSUserInput(sceneServices.GetRequired<IUserInput>()));
+        OSServices.Set<IUserInput>(new DefaultLogiOSUserInput(sceneServices.GetRequired<IUserInput>()));
         OSServices.Set<ILogiSoundEngine>(sceneServices.GetRequired<ILogiSoundEngine>());
         OSServices.Set<ISceneAssetProvider>(sceneServices.GetRequired<ISceneAssetProvider>());
         OSServices.Set<ILogger>(sceneServices.Get<ILogger>());

@@ -29,7 +29,7 @@ public class MainMenuBackground : SceneComponentBase
     // Private fields.
 
     private ILayer _targetLayer;
-    private SpriteItem _background;
+    private SpriteItem? _background;
 
 
     // Constructors.
@@ -41,8 +41,13 @@ public class MainMenuBackground : SceneComponentBase
 
 
     // Protected methods.
-    protected virtual SpriteItem CreateBackgroundSprite(ISceneAssetProvider assetProvider)
+    protected virtual SpriteItem? CreateBackgroundSprite(ISceneAssetProvider assetProvider)
     {
+        if (BackgroundAssetName == null)
+        {
+            return null;
+        }
+
         ISpriteAnimation Animation = assetProvider.GetAsset<ISpriteAnimation>(AssetType.Animation, BackgroundAssetName);
 
         return new(Animation.CreateInstance())
@@ -67,8 +72,13 @@ public class MainMenuBackground : SceneComponentBase
     protected override void HandleLoadPreComponent()
     {
         base.HandleLoadPreComponent();
+
         _background = CreateBackgroundSprite(SceneServices.GetRequired<ISceneAssetProvider>());
-        PostProcessBackgroundSprite(_background);
+        if (_background != null)
+        {
+            PostProcessBackgroundSprite(_background);
+        }
+        
         AddBackgroundSpriteToLayer();
     }
 }

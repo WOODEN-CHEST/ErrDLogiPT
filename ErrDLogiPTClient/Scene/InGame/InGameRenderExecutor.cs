@@ -16,7 +16,7 @@ public class InGameRenderExecutor : SceneComponentBase
 
 
     // Constructors.
-    public InGameRenderExecutor(InGameScene scene, GlobalServices services) : base(scene, services) { }
+    public InGameRenderExecutor(InGameScene scene, IGenericServices services) : base(scene, services) { }
 
 
     // Inherited methods.

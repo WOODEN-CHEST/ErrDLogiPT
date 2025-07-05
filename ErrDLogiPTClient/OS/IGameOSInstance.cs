@@ -13,7 +13,7 @@ public interface IGameOSInstance : ITimeUpdatable, IRenderableItem
 {
     // Fields.
     IGameOSDefinition Definition { get; }
-    IGenericServices Services { get; }
+    IGenericServices OSServices { get; }
 
 
     // Methods.

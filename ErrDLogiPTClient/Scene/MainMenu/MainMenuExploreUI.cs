@@ -1,5 +1,6 @@
 ﻿using ErrDLogiPTClient.OS;
 using ErrDLogiPTClient.Registry;
+using ErrDLogiPTClient.Scene.InGame;
 using ErrDLogiPTClient.Scene.UI;
 using ErrDLogiPTClient.Scene.UI.Button;
 using ErrDLogiPTClient.Scene.UI.Dropdown;
@@ -10,6 +11,7 @@ using GHEngine.Assets.Def;
 using GHEngine.Frame;
 using GHEngine.Frame.Item;
 using GHEngine.GameFont;
+using GHEngine.Logging;
 using GHEngine.Screen;
 using Microsoft.Xna.Framework;
 using System;
@@ -44,7 +46,7 @@ public class MainMenuExploreUI : SceneComponentBase, IMainMenuUISection
     }
 
     public event EventHandler<EventArgs>? ClickBack;
-    public event EventHandler<EventArgs>? ClickBootIntoOS;
+    public event EventHandler<InGameOSCreateOptions>? ClickBootIntoOS;
 
 
     // Private static fields.
@@ -194,7 +196,17 @@ public class MainMenuExploreUI : SceneComponentBase, IMainMenuUISection
         button.Text = BUTTON_TEXT_BOOT_INTO_OS;
         button.MainClickAction = args =>
         {
-            ClickBootIntoOS?.Invoke(this, EventArgs.Empty);
+            IGameOSDefinition? OSDefinition = _osSelectionDropdown.SelectedElements.FirstOrDefault()?.Value;
+            if (OSDefinition == null)
+            {
+                SceneServices.Get<ILogger>()?.Warning("Attempted to boot into OS when no OS was selected. " +
+                    $"(function {nameof(InitBootIntoOSButton)})");
+                return;
+            }
+
+            InGameOSCreateOptions CreateOptions = new(OSDefinition);
+
+            ClickBootIntoOS?.Invoke(this, CreateOptions);
         };
     }
 
